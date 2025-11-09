@@ -870,7 +870,8 @@ function showModal(modalId) {
         return;
     }
     
-    // Set display to flex and ensure all styles are applied
+    // Add active class and set display
+    modal.classList.add('modal-active');
     modal.style.display = 'flex';
     modal.style.height = '100vh';
     modal.style.width = '100vw';

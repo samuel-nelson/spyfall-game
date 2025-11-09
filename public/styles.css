@@ -925,7 +925,8 @@ h3 {
 
 /* When modal is shown with flex - perfect viewport centering */
 .modal[style*="display: flex"],
-.modal[style*="display:flex"] {
+.modal[style*="display:flex"],
+.modal.modal-active {
     display: flex !important;
     justify-content: center;
     align-items: center;
