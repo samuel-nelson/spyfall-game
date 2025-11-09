@@ -1502,8 +1502,8 @@ function showRoundResult(game) {
     // Ensure pointer events work on all modal elements
     modal.style.pointerEvents = 'auto';
     if (content) content.style.pointerEvents = 'auto';
-    const modalContent = modal.querySelector('.modal-content');
-    if (modalContent) modalContent.style.pointerEvents = 'auto';
+    const modalContentElement = modal.querySelector('.modal-content');
+    if (modalContentElement) modalContentElement.style.pointerEvents = 'auto';
     
     console.log('showRoundResult: Modal shown. isMole:', isMole);
 }
