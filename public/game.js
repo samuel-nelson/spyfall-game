@@ -64,10 +64,6 @@ function setupEventListeners() {
     // Game actions
     document.getElementById('vote-mole-action-btn').addEventListener('click', showVoteModal);
     document.getElementById('vote-mole-btn').addEventListener('click', showVoteModal);
-    document.getElementById('submit-question-btn').addEventListener('click', submitQuestion);
-    document.getElementById('cancel-question-btn').addEventListener('click', () => {
-        closeModal('question-modal');
-    });
     document.getElementById('submit-answer-btn').addEventListener('click', submitAnswer);
     document.getElementById('submit-vote-btn').addEventListener('click', submitVote);
     document.getElementById('cancel-vote-btn').addEventListener('click', () => {
@@ -427,10 +423,6 @@ let lastGameStatus = null;
 function updateGameScreen(game) {
     if (game.status === 'playing') {
         showScreen('game-screen');
-        // Scroll to top of page
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
         updatePlayingState(game);
     } else if (game.status === 'roundEnd') {
         stopTimer(); // Stop timer when round ends
@@ -438,10 +430,6 @@ function updateGameScreen(game) {
         showRoundResult(game);
         // Keep game screen visible behind modal
         showScreen('game-screen');
-        // Scroll to top of page
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
     } else if (game.status === 'lobby') {
         stopTimer(); // Stop timer when back in lobby
     }
@@ -780,88 +768,6 @@ function updateVotingStatus(game, round) {
     voteStatus.innerHTML = html;
 }
 
-function showQuestionModal() {
-    const game = gameState.game;
-    if (!game || !game.currentRound) return;
-
-    const select = document.getElementById('question-target');
-    if (!select) {
-        console.error('Question target select element not found');
-        return;
-    }
-
-    // Verify it's actually the player's turn before showing modal
-    const round = game.currentRound;
-    if (round.currentTurn !== gameState.playerId) {
-        console.log('Not player\'s turn, not showing question modal');
-        return;
-    }
-
-    select.innerHTML = '';
-
-    // Add other players as options
-    game.players.forEach(player => {
-        if (player.id !== gameState.playerId) {
-            const option = document.createElement('option');
-            option.value = player.id;
-            option.textContent = player.name;
-            select.appendChild(option);
-        }
-    });
-
-    const questionTextElement = document.getElementById('question-text');
-    if (questionTextElement) {
-        questionTextElement.value = '';
-    }
-
-    const modal = document.getElementById('question-modal');
-    if (!modal) {
-        console.error('Question modal element not found');
-        return;
-    }
-
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    modal.scrollTop = 0;
-    // Scroll page to top when modal opens
-    window.scrollTo(0, 0);
-}
-
-async function submitQuestion() {
-    const targetId = document.getElementById('question-target').value;
-    const questionText = document.getElementById('question-text').value.trim();
-
-    if (!questionText) {
-        showNotification('Please enter a question', 'error');
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE}/ask-question`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                gameCode: gameState.gameCode,
-                playerId: gameState.playerId,
-                targetId,
-                question: questionText
-            })
-        });
-
-        const data = await response.json();
-        
-        if (data.error) {
-            showNotification(data.error, 'error');
-            return;
-        }
-
-        closeModal('question-modal');
-        // State will update via polling
-    } catch (error) {
-        console.error('Error asking question:', error);
-        showNotification('Failed to submit question. Please try again.', 'error');
-    }
-}
 
 async function submitAnswer() {
     const answerText = document.getElementById('answer-text').value.trim();

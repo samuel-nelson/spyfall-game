@@ -246,12 +246,7 @@
                 
                 <div id="first-turn-banner" class="first-turn-banner" style="display: none;">
                     <div class="banner-content">
-                        <div class="banner-icon">📜</div>
-                        <div class="banner-text">
-                            <div class="banner-title">CLASSIFIED BRIEFING</div>
-                            <div class="banner-message">You have been selected to initiate the interrogation. Proceed with caution.</div>
-                        </div>
-                        <button class="banner-action-btn" onclick="showQuestionModal()">BEGIN INTERROGATION</button>
+                        <div class="banner-scribble">you first</div>
                     </div>
                 </div>
                 
@@ -283,24 +278,6 @@
                     <button id="guess-location-btn" class="btn btn-primary" style="display: none;">IDENTIFY LOCATION</button>
                 </div>
 
-                <div id="question-modal" class="modal" style="display: none;">
-                    <div class="modal-content">
-                        <button class="modal-close" onclick="closeModal('question-modal')">×</button>
-                        <h3>INTERROGATION</h3>
-                        <div class="form-group">
-                            <label for="question-target">TARGET AGENT</label>
-                            <select id="question-target"></select>
-                        </div>
-                        <div class="form-group">
-                            <label for="question-text">QUESTION</label>
-                            <textarea id="question-text" placeholder="Enter your question..." maxlength="200"></textarea>
-                        </div>
-                        <div class="modal-buttons">
-                            <button id="submit-question-btn" class="btn btn-primary">SUBMIT</button>
-                            <button id="cancel-question-btn" class="btn btn-secondary">CANCEL</button>
-                        </div>
-                    </div>
-                </div>
 
                 <div id="answer-modal" class="modal" style="display: none;">
                     <div class="modal-content">
