@@ -348,20 +348,32 @@ function updateLobby(game) {
 
     const startBtn = document.getElementById('start-round-btn');
     const waitingText = document.querySelector('.waiting-text');
+    const settingsDiv = document.getElementById('game-settings');
+    
+    // Check if current player is the host (first player)
+    const isHost = game.players[0] && game.players[0].id === gameState.playerId;
     
     if (game.players.length >= 3) {
-        // Check if current player is the host (first player)
-        const isHost = game.players[0] && game.players[0].id === gameState.playerId;
         if (isHost) {
             startBtn.style.display = 'block';
             waitingText.style.display = 'none';
+            settingsDiv.style.display = 'block';
+            
+            // Load current settings
+            if (game.settings) {
+                document.getElementById('spy-count').value = game.settings.spyCount || 1;
+                document.getElementById('show-spy-count').value = game.settings.showSpyCount !== false ? 'true' : 'false';
+                document.getElementById('timer-minutes').value = game.settings.timerMinutes || 8;
+            }
         } else {
             startBtn.style.display = 'none';
+            settingsDiv.style.display = 'none';
             waitingText.textContent = 'Waiting for host to start the game...';
             waitingText.style.display = 'block';
         }
     } else {
         startBtn.style.display = 'none';
+        settingsDiv.style.display = isHost ? 'block' : 'none';
         waitingText.textContent = 'Waiting for more players... (Need at least 3)';
         waitingText.style.display = 'block';
     }
@@ -411,7 +423,8 @@ function updatePlayingState(game) {
     } else {
         spyView.style.display = 'none';
         locationView.style.display = 'block';
-        document.getElementById('location-name').textContent = currentRound.location;
+        const locationName = typeof currentRound.location === 'string' ? currentRound.location : currentRound.location.name;
+        document.getElementById('location-name').textContent = locationName;
     }
 
     // Update players status
@@ -551,7 +564,9 @@ function updateVotingStatus(game, round) {
 
     // Count votes
     const voteCounts = {};
-    const nonSpyPlayers = game.players.filter(p => p.id !== round.spyId);
+    // Get all spy IDs (support both single and multiple spies)
+    const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
+    const nonSpyPlayers = game.players.filter(p => !spyIds.includes(p.id));
     
     Object.values(round.votes).forEach(votedPlayerId => {
         voteCounts[votedPlayerId] = (voteCounts[votedPlayerId] || 0) + 1;
@@ -773,13 +788,21 @@ function showNotification(message, type = 'info') {
 }
 
 function showGuessLocationModal() {
-    // Populate datalist with locations
+    // Populate datalist with all available locations
     const datalist = document.getElementById('locations-list');
     datalist.innerHTML = '';
     
-    LOCATIONS.forEach(location => {
+    // Get enabled locations from game settings
+    const game = gameState.game;
+    const enabledSets = game?.settings?.enabledLocationSets || ['spyfall1'];
+    const customLocations = game?.settings?.customLocations || [];
+    
+    const allLocations = getAllEnabledLocations(enabledSets, customLocations);
+    
+    allLocations.forEach(location => {
+        const locationName = typeof location === 'string' ? location : location.name;
         const option = document.createElement('option');
-        option.value = location.name;
+        option.value = locationName;
         datalist.appendChild(option);
     });
 

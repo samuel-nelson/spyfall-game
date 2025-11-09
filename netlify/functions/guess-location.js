@@ -72,8 +72,12 @@ exports.handler = async (event, context) => {
 
         const round = game.currentRound;
 
+        // Check if player is a spy (support both single spy and multiple spies)
+        const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
+        const isSpy = spyIds.includes(playerId);
+        
         // Only spy can guess location
-        if (round.spyId !== playerId) {
+        if (!isSpy) {
             return {
                 statusCode: 403,
                 headers: {
