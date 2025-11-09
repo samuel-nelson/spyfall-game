@@ -875,17 +875,26 @@ function showVoteModal() {
     console.log('Showing vote modal');
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    // Ensure modal is centered
-    setTimeout(() => {
-        modal.scrollTop = 0;
-        const modalContent = modal.querySelector('.modal-content');
-        if (modalContent) {
-            const modalRect = modal.getBoundingClientRect();
-            const contentRect = modalContent.getBoundingClientRect();
-            const scrollTop = (contentRect.top - modalRect.top) / 2;
-            modal.scrollTop = Math.max(0, scrollTop);
-        }
-    }, 0);
+    // Ensure modal is centered - use requestAnimationFrame to wait for render
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modal.scrollTop = 0;
+            const modalContent = modal.querySelector('.modal-content');
+            if (modalContent) {
+                // Force a reflow to ensure measurements are accurate
+                modalContent.offsetHeight;
+                const viewportHeight = window.innerHeight;
+                const contentHeight = modalContent.offsetHeight;
+                const padding = 20; // Modal padding
+                // Center the content vertically
+                if (contentHeight < viewportHeight - (padding * 2)) {
+                    modal.scrollTop = (modal.scrollHeight - viewportHeight) / 2;
+                } else {
+                    modal.scrollTop = 0;
+                }
+            }
+        });
+    });
 }
 
 async function submitVote() {
@@ -1007,17 +1016,26 @@ function showGuessLocationModal() {
     
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    // Ensure modal is centered
-    setTimeout(() => {
-        modal.scrollTop = 0;
-        const modalContent = modal.querySelector('.modal-content');
-        if (modalContent) {
-            const modalRect = modal.getBoundingClientRect();
-            const contentRect = modalContent.getBoundingClientRect();
-            const scrollTop = (contentRect.top - modalRect.top) / 2;
-            modal.scrollTop = Math.max(0, scrollTop);
-        }
-    }, 0);
+    // Ensure modal is centered - use requestAnimationFrame to wait for render
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modal.scrollTop = 0;
+            const modalContent = modal.querySelector('.modal-content');
+            if (modalContent) {
+                // Force a reflow to ensure measurements are accurate
+                modalContent.offsetHeight;
+                const viewportHeight = window.innerHeight;
+                const contentHeight = modalContent.offsetHeight;
+                const padding = 20; // Modal padding
+                // Center the content vertically
+                if (contentHeight < viewportHeight - (padding * 2)) {
+                    modal.scrollTop = (modal.scrollHeight - viewportHeight) / 2;
+                } else {
+                    modal.scrollTop = 0;
+                }
+            }
+        });
+    });
 }
 
 async function submitLocationGuess() {
@@ -1291,17 +1309,26 @@ function showAnswerModal(question) {
     const modal = document.getElementById('answer-modal');
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    // Ensure modal is centered
-    setTimeout(() => {
-        modal.scrollTop = 0;
-        const modalContent = modal.querySelector('.modal-content');
-        if (modalContent) {
-            const modalRect = modal.getBoundingClientRect();
-            const contentRect = modalContent.getBoundingClientRect();
-            const scrollTop = (contentRect.top - modalRect.top) / 2;
-            modal.scrollTop = Math.max(0, scrollTop);
-        }
-    }, 0);
+    // Ensure modal is centered - use requestAnimationFrame to wait for render
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            modal.scrollTop = 0;
+            const modalContent = modal.querySelector('.modal-content');
+            if (modalContent) {
+                // Force a reflow to ensure measurements are accurate
+                modalContent.offsetHeight;
+                const viewportHeight = window.innerHeight;
+                const contentHeight = modalContent.offsetHeight;
+                const padding = 20; // Modal padding
+                // Center the content vertically
+                if (contentHeight < viewportHeight - (padding * 2)) {
+                    modal.scrollTop = (modal.scrollHeight - viewportHeight) / 2;
+                } else {
+                    modal.scrollTop = 0;
+                }
+            }
+        });
+    });
 }
 
 // Update the updateUI function to check for pending actions
