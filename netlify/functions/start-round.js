@@ -77,8 +77,22 @@ exports.handler = async (event, context) => {
         // Explicitly allow 'roundEnd' status and 'lobby' status
         if (game.status === 'playing' && game.currentRound) {
             const now = Date.now();
-            // Only block if round hasn't ended yet (endTime is in the future)
-            if (game.currentRound.endTime && now < game.currentRound.endTime) {
+            
+            // Check if round has ended by any condition:
+            // 1. Time expired (endTime passed)
+            // 2. Someone won (moleWon/spyWon set)
+            // 3. Guess was made (moleGuessedLocation/spyGuessedLocation set)
+            // 4. Accusation was made
+            const timeExpired = game.currentRound.endTime && now >= game.currentRound.endTime;
+            const someoneWon = game.currentRound.moleWon === true || game.currentRound.moleWon === false || 
+                              game.currentRound.spyWon === true || game.currentRound.spyWon === false;
+            const guessWasMade = game.currentRound.moleGuessedLocation || game.currentRound.spyGuessedLocation;
+            const accusationWasMade = game.currentRound.accusation;
+            
+            const roundEnded = timeExpired || someoneWon || guessWasMade || accusationWasMade;
+            
+            // Only block if round is still actively ongoing
+            if (!roundEnded && game.currentRound.endTime && now < game.currentRound.endTime) {
                 return {
                     statusCode: 400,
                     headers: {
@@ -87,8 +101,11 @@ exports.handler = async (event, context) => {
                     body: JSON.stringify({ error: 'Game is already in progress' })
                 };
             }
-            // If we get here, the round has ended (endTime has passed) but status wasn't updated
-            // This is fine - we'll start a new round
+            
+            // If round has ended by any condition, update status and proceed
+            if (roundEnded && game.status === 'playing') {
+                game.status = 'roundEnd';
+            }
         }
         // If status is 'roundEnd' or 'lobby', allow starting new round
 
