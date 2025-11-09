@@ -179,15 +179,51 @@ async function startRound() {
 }
 
 async function leaveGame() {
-    stopPolling();
-    gameState = {
-        gameCode: null,
-        playerId: null,
-        playerName: null,
-        game: null,
-        pollInterval: null
-    };
-    showScreen('main-menu');
+    if (!gameState.gameCode || !gameState.playerId) {
+        stopPolling();
+        gameState = {
+            gameCode: null,
+            playerId: null,
+            playerName: null,
+            game: null,
+            pollInterval: null,
+            timerInterval: null
+        };
+        showScreen('main-menu');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/leave-game`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                gameCode: gameState.gameCode,
+                playerId: gameState.playerId
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.error) {
+            showNotification(data.error, 'error');
+            return;
+        }
+
+        stopPolling();
+        gameState = {
+            gameCode: null,
+            playerId: null,
+            playerName: null,
+            game: null,
+            pollInterval: null,
+            timerInterval: null
+        };
+        showScreen('main-menu');
+    } catch (error) {
+        console.error('Error leaving game:', error);
+        showNotification('Failed to leave game. Please try again.', 'error');
+    }
 }
 
 function startPolling() {
