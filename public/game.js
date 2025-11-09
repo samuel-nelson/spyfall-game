@@ -62,7 +62,20 @@ function setupEventListeners() {
     document.getElementById('theme-toggle-btn-join').addEventListener('click', toggleTheme);
     document.getElementById('theme-toggle-btn-game').addEventListener('click', toggleTheme);
     
-    
+    // Feedback
+    const feedbackBtn = document.getElementById('feedback-btn');
+    if (feedbackBtn) {
+        feedbackBtn.addEventListener('click', () => {
+            showModal('feedback-modal');
+        });
+    }
+    document.getElementById('submit-feedback-btn').addEventListener('click', submitFeedback);
+    document.getElementById('cancel-feedback-btn').addEventListener('click', () => {
+        window.closeModal('feedback-modal');
+        // Clear form
+        document.getElementById('feedback-title').value = '';
+        document.getElementById('feedback-comment').value = '';
+    });
 
     // Game actions
     document.getElementById('vote-mole-action-btn').addEventListener('click', showVoteModal);
@@ -1324,6 +1337,39 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+async function submitFeedback() {
+    const title = document.getElementById('feedback-title').value.trim();
+    const comment = document.getElementById('feedback-comment').value.trim();
+
+    if (!title || !comment) {
+        showNotification('Please fill in both title and details', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/send-feedback`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, comment })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            showNotification('Thank you for your feedback!', 'success');
+            window.closeModal('feedback-modal');
+            // Clear form
+            document.getElementById('feedback-title').value = '';
+            document.getElementById('feedback-comment').value = '';
+        } else {
+            showNotification(data.error || 'Failed to submit feedback. Please try again.', 'error');
+        }
+    } catch (error) {
+        console.error('Error submitting feedback:', error);
+        showNotification('Failed to submit feedback. Please try again.', 'error');
+    }
 }
 
 // Check for pending questions/answers when game state updates

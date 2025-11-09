@@ -1487,8 +1487,8 @@ h3 {
 
 /* Mobile: Show 2 columns to make scrolling less obvious */
 @media (max-width: 768px) {
-    .locations-grid {
-        grid-template-columns: repeat(2, 1fr);
+    .possible-locations .locations-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
         gap: 10px;
         max-height: 300px;
     }
@@ -1773,6 +1773,18 @@ h3 {
 
 .light-mode .faq-item p {
     color: var(--color-text);
+}
+
+/* Feedback Section */
+.feedback-section {
+    margin-top: 40px;
+    text-align: center;
+    padding: 20px 0;
+}
+
+.feedback-section .btn {
+    font-size: 0.9rem;
+    padding: 10px 20px;
 }
 
 /* Modal Close Button */
