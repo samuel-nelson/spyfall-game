@@ -423,6 +423,12 @@ let lastGameStatus = null;
 function updateGameScreen(game) {
     if (game.status === 'playing') {
         showScreen('game-screen');
+        // Scroll to top when game screen is shown
+        setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'instant' });
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+        }, 0);
         updatePlayingState(game);
     } else if (game.status === 'roundEnd') {
         stopTimer(); // Stop timer when round ends
@@ -810,6 +816,11 @@ function showVoteModal() {
     const round = game.currentRound;
 
     const select = document.getElementById('voted-player');
+    if (!select) {
+        console.error('Voted player select element not found');
+        return;
+    }
+    
     select.innerHTML = '';
 
     // Add other players as options
@@ -828,9 +839,16 @@ function showVoteModal() {
     }
 
     const modal = document.getElementById('vote-modal');
+    if (!modal) {
+        console.error('Vote modal element not found');
+        return;
+    }
+    
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     modal.scrollTop = 0;
+    // Scroll page to top when modal opens
+    window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 async function submitVote() {
@@ -945,9 +963,16 @@ function showGuessLocationModal() {
     });
 
     const modal = document.getElementById('guess-location-modal');
+    if (!modal) {
+        console.error('Guess location modal element not found');
+        return;
+    }
+    
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     modal.scrollTop = 0;
+    // Scroll page to top when modal opens
+    window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 async function submitLocationGuess() {
