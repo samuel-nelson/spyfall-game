@@ -17,15 +17,13 @@ const API_BASE = '/.netlify/functions';
 
 // Global button handlers for inline onclick attributes (fallback)
 window.handleNextRound = function() {
-    console.log('🔵 🔵 🔵 handleNextRound called!');
-    console.trace('handleNextRound call stack');
+    console.log('Next Round button clicked');
     nextRound();
     return false;
 };
 
 window.handleBackToLobby = async function() {
-    console.log('🔵 🔵 🔵 handleBackToLobby called!');
-    console.trace('handleBackToLobby call stack');
+    console.log('Back to Lobby button clicked');
     const currentGame = gameState.game;
     const currentIsHost = currentGame && currentGame.players && currentGame.players.length > 0 && currentGame.players[0].id === gameState.playerId;
     
@@ -65,6 +63,29 @@ window.handleBackToLobby = async function() {
     }
     showScreen('main-menu');
     return false;
+};
+
+// Function to close modal - must be defined early as it's used by event listeners
+window.closeModal = function(modalId) {
+    console.log('closeModal called for:', modalId);
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        // Simply remove the 'show' class - CSS handles everything
+        modal.classList.remove('show');
+        
+        // Restore body scroll
+        document.body.style.overflow = '';
+        
+        // Reset the showing flag if closing the result modal
+        if (modalId === 'game-result-modal') {
+            gameState.showingResultModal = false;
+        }
+        
+        // Clear any selected location
+        if (modalId === 'guess-location-modal') {
+            selectedLocationForGuess = null;
+        }
+    }
 };
 
 // Test that handlers are accessible
@@ -1523,31 +1544,6 @@ function showRoundResult(game) {
     
     console.log('showRoundResult: Modal shown. isMole:', isMole);
 }
-
-// Function to close modal and restore body scroll
-// Make it globally accessible for onclick handlers
-// Function to close modal - completely rewritten from scratch
-window.closeModal = function(modalId) {
-    console.log('🔴 closeModal called for:', modalId);
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        // Simply remove the 'show' class - CSS handles everything
-        modal.classList.remove('show');
-        
-        // Restore body scroll
-        document.body.style.overflow = '';
-        
-        // Reset the showing flag if closing the result modal
-        if (modalId === 'game-result-modal') {
-            gameState.showingResultModal = false;
-        }
-        
-        // Clear any selected location
-        if (modalId === 'guess-location-modal') {
-            selectedLocationForGuess = null;
-        }
-    }
-};
 
 async function nextRound() {
     console.log('⭐ nextRound: Starting...');
