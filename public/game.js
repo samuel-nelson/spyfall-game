@@ -1115,7 +1115,7 @@ function showRoundResult(game) {
         return;
     }
 
-    const modal = document.getElementById('game-result-modal');
+    let modal = document.getElementById('game-result-modal');
     if (!modal) {
         console.error('showRoundResult: Modal not found');
         return;
@@ -1292,7 +1292,8 @@ function showRoundResult(game) {
     content.innerHTML = resultText;
     
     // Force show the modal - ensure it's visible for ALL players including moles
-    const modal = document.getElementById('game-result-modal');
+    // Re-get modal reference to ensure we have the latest
+    modal = document.getElementById('game-result-modal');
     if (modal) {
         // Force show using multiple methods
         modal.classList.add('show');
