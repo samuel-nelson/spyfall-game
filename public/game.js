@@ -427,6 +427,10 @@ let lastGameStatus = null;
 function updateGameScreen(game) {
     if (game.status === 'playing') {
         showScreen('game-screen');
+        // Scroll to top of page
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
         updatePlayingState(game);
     } else if (game.status === 'roundEnd') {
         stopTimer(); // Stop timer when round ends
@@ -434,6 +438,10 @@ function updateGameScreen(game) {
         showRoundResult(game);
         // Keep game screen visible behind modal
         showScreen('game-screen');
+        // Scroll to top of page
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
     } else if (game.status === 'lobby') {
         stopTimer(); // Stop timer when back in lobby
     }
@@ -690,16 +698,20 @@ function updateGameActions(game, round, currentPlayer) {
             // Highlight if it's your turn
             if (isMyTurn && !hasPendingQuestion && !isMole) {
                 turnIndicator.classList.add('your-turn');
-                // Automatically show question modal for the current player (only if no modal is open)
-                if (!round.currentQuestion) {
+                // Automatically show question modal for the current player (only if no modal is open and it's actually their turn)
+                if (!round.currentQuestion && round.currentTurn === gameState.playerId) {
                     // Check if any modal is currently open
                     const anyModalOpen = Array.from(document.querySelectorAll('.modal')).some(modal => 
                         modal.style.display === 'flex' || window.getComputedStyle(modal).display === 'flex'
                     );
                     if (!anyModalOpen) {
-                        setTimeout(() => {
-                            showQuestionModal();
-                        }, 500);
+                        // Double-check that the select element exists before opening modal
+                        const selectElement = document.getElementById('question-target');
+                        if (selectElement) {
+                            setTimeout(() => {
+                                showQuestionModal();
+                            }, 500);
+                        }
                     }
                 }
             } else {
@@ -778,6 +790,18 @@ function showQuestionModal() {
     if (!game || !game.currentRound) return;
 
     const select = document.getElementById('question-target');
+    if (!select) {
+        console.error('Question target select element not found');
+        return;
+    }
+
+    // Verify it's actually the player's turn before showing modal
+    const round = game.currentRound;
+    if (round.currentTurn !== gameState.playerId) {
+        console.log('Not player\'s turn, not showing question modal');
+        return;
+    }
+
     select.innerHTML = '';
 
     // Add other players as options
@@ -790,11 +814,22 @@ function showQuestionModal() {
         }
     });
 
-    document.getElementById('question-text').value = '';
+    const questionTextElement = document.getElementById('question-text');
+    if (questionTextElement) {
+        questionTextElement.value = '';
+    }
+
     const modal = document.getElementById('question-modal');
+    if (!modal) {
+        console.error('Question modal element not found');
+        return;
+    }
+
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     modal.scrollTop = 0;
+    // Scroll page to top when modal opens
+    window.scrollTo(0, 0);
 }
 
 async function submitQuestion() {
