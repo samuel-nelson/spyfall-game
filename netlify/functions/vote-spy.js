@@ -62,21 +62,7 @@ exports.handler = async (event, context) => {
 
         const round = game.currentRound;
         
-        // Check if player is a mole (support both single and multiple moles, and legacy spy references)
-        const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
-        const isMole = moleIds.includes(playerId);
-
-        // Only non-moles can vote
-        if (isMole) {
-            return {
-                statusCode: 403,
-                headers: {
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({ error: 'The mole cannot vote' })
-            };
-        }
-
+        // All players (including moles) can vote
         // Initialize votes if not exists
         if (!round.votes) {
             round.votes = {};
