@@ -1,0 +1,17 @@
+{
+  "name": "spyfall-game",
+  "version": "1.0.0",
+  "description": "A multiplayer Spyfall game for Netlify",
+  "main": "index.js",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'No build step required'"
+  },
+  "keywords": ["spyfall", "game", "multiplayer"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  }
+}
+

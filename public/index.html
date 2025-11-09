@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spyfall - Multiplayer Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Main Menu -->
+        <div id="main-menu" class="screen active">
+            <div class="menu-content">
+                <h1>🕵️ Spyfall</h1>
+                <div class="menu-buttons">
+                    <button id="create-game-btn" class="btn btn-primary">Create Game</button>
+                    <button id="join-game-btn" class="btn btn-secondary">Join Game</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Game Screen -->
+        <div id="create-game" class="screen">
+            <div class="menu-content">
+                <h2>Create New Game</h2>
+                <div class="form-group">
+                    <label for="player-name-create">Your Name:</label>
+                    <input type="text" id="player-name-create" placeholder="Enter your name" maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label for="game-code-create">Game Code (optional):</label>
+                    <input type="text" id="game-code-create" placeholder="Leave empty for random" maxlength="6" pattern="[A-Z0-9]*">
+                </div>
+                <button id="start-game-btn" class="btn btn-primary">Start Game</button>
+                <button id="back-to-menu-btn" class="btn btn-secondary">Back</button>
+            </div>
+        </div>
+
+        <!-- Join Game Screen -->
+        <div id="join-game" class="screen">
+            <div class="menu-content">
+                <h2>Join Game</h2>
+                <div class="form-group">
+                    <label for="player-name-join">Your Name:</label>
+                    <input type="text" id="player-name-join" placeholder="Enter your name" maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label for="game-code-join">Game Code:</label>
+                    <input type="text" id="game-code-join" placeholder="Enter game code" maxlength="6" pattern="[A-Z0-9]*">
+                </div>
+                <button id="join-game-submit-btn" class="btn btn-primary">Join</button>
+                <button id="back-to-menu-btn-2" class="btn btn-secondary">Back</button>
+            </div>
+        </div>
+
+        <!-- Lobby Screen -->
+        <div id="lobby" class="screen">
+            <div class="lobby-content">
+                <h2>Game Lobby</h2>
+                <div class="game-info">
+                    <p><strong>Game Code:</strong> <span id="display-game-code"></span></p>
+                    <p><strong>Players:</strong> <span id="player-count">0</span></p>
+                </div>
+                <div id="players-list" class="players-list"></div>
+                <div id="lobby-actions" class="lobby-actions">
+                    <button id="start-round-btn" class="btn btn-primary" style="display: none;">Start Round</button>
+                    <p class="waiting-text">Waiting for more players...</p>
+                </div>
+                <button id="leave-game-btn" class="btn btn-secondary">Leave Game</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="game-content">
+                <div class="game-header">
+                    <h2>Round <span id="round-number">1</span></h2>
+                    <div class="timer">
+                        <span id="timer-display">8:00</span>
+                    </div>
+                </div>
+                
+                <div id="spy-view" class="role-view" style="display: none;">
+                    <div class="role-card spy-card">
+                        <h3>🕵️ You are the SPY!</h3>
+                        <p>Your mission: Figure out the location without revealing you don't know it.</p>
+                        <p class="hint">Listen carefully to the questions and answers!</p>
+                    </div>
+                </div>
+
+                <div id="location-view" class="role-view" style="display: none;">
+                    <div class="role-card location-card">
+                        <h3>📍 Location</h3>
+                        <div id="location-name" class="location-display"></div>
+                        <p class="hint">Your mission: Answer questions without revealing the location. Find the spy!</p>
+                    </div>
+                </div>
+
+                <div id="players-status" class="players-status"></div>
+                
+                <div id="question-area" class="question-area" style="display: none;">
+                    <div class="current-question">
+                        <p id="current-question-text"></p>
+                        <p class="question-meta">
+                            <span id="question-asker"></span> is asking <span id="question-answerer"></span>
+                        </p>
+                    </div>
+                </div>
+
+                <div id="game-actions" class="game-actions">
+                    <button id="ask-question-btn" class="btn btn-primary" style="display: none;">Ask Question</button>
+                    <button id="accuse-spy-btn" class="btn btn-danger" style="display: none;">Accuse Spy</button>
+                    <button id="guess-location-btn" class="btn btn-primary" style="display: none;">Guess Location</button>
+                </div>
+
+                <div id="question-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <h3>Ask a Question</h3>
+                        <div class="form-group">
+                            <label for="question-target">Ask to:</label>
+                            <select id="question-target"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="question-text">Question:</label>
+                            <textarea id="question-text" placeholder="Enter your question..." maxlength="200"></textarea>
+                        </div>
+                        <div class="modal-buttons">
+                            <button id="submit-question-btn" class="btn btn-primary">Submit</button>
+                            <button id="cancel-question-btn" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="answer-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <h3>Answer the Question</h3>
+                        <p id="question-to-answer"></p>
+                        <div class="form-group">
+                            <label for="answer-text">Your Answer:</label>
+                            <textarea id="answer-text" placeholder="Enter your answer..." maxlength="200"></textarea>
+                        </div>
+                        <div class="modal-buttons">
+                            <button id="submit-answer-btn" class="btn btn-primary">Submit</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="accusation-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <h3>Accuse the Spy</h3>
+                        <p>Who do you think is the spy?</p>
+                        <div class="form-group">
+                            <label for="accused-player">Select Player:</label>
+                            <select id="accused-player"></select>
+                        </div>
+                        <div class="modal-buttons">
+                            <button id="submit-accusation-btn" class="btn btn-danger">Accuse</button>
+                            <button id="cancel-accusation-btn" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="guess-location-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <h3>Guess the Location</h3>
+                        <p>What location do you think the other players are at?</p>
+                        <div class="form-group">
+                            <label for="guessed-location">Location:</label>
+                            <input type="text" id="guessed-location" placeholder="Enter location name" list="locations-list">
+                            <datalist id="locations-list"></datalist>
+                        </div>
+                        <div class="modal-buttons">
+                            <button id="submit-guess-btn" class="btn btn-primary">Submit Guess</button>
+                            <button id="cancel-guess-btn" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="game-result-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <h3 id="result-title"></h3>
+                        <div id="result-content"></div>
+                        <div class="modal-buttons">
+                            <button id="next-round-btn" class="btn btn-primary" style="display: none;">Next Round</button>
+                            <button id="back-to-lobby-btn" class="btn btn-secondary">Back to Lobby</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="locations.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
+
