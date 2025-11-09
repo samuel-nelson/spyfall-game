@@ -46,6 +46,14 @@ function setupEventListeners() {
     document.getElementById('manage-locations-btn').addEventListener('click', showLocationManagement);
     document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
     
+    // Theme toggle on all screens
+    const themeToggleMain = document.getElementById('theme-toggle-btn-main');
+    const themeToggleCreate = document.getElementById('theme-toggle-btn-create');
+    const themeToggleJoin = document.getElementById('theme-toggle-btn-join');
+    if (themeToggleMain) themeToggleMain.addEventListener('click', toggleTheme);
+    if (themeToggleCreate) themeToggleCreate.addEventListener('click', toggleTheme);
+    if (themeToggleJoin) themeToggleJoin.addEventListener('click', toggleTheme);
+    
     // Location management
     document.getElementById('close-location-management-btn').addEventListener('click', () => {
         document.getElementById('location-management-modal').style.display = 'none';
@@ -788,9 +796,9 @@ function showNotification(message, type = 'info') {
 }
 
 function showGuessLocationModal() {
-    // Populate datalist with all available locations
-    const datalist = document.getElementById('locations-list');
-    datalist.innerHTML = '';
+    // Populate select dropdown with all available locations
+    const select = document.getElementById('guessed-location');
+    select.innerHTML = '<option value="">-- Select Location --</option>';
     
     // Get enabled locations from game settings
     const game = gameState.game;
@@ -803,10 +811,11 @@ function showGuessLocationModal() {
         const locationName = typeof location === 'string' ? location : location.name;
         const option = document.createElement('option');
         option.value = locationName;
-        datalist.appendChild(option);
+        option.textContent = locationName;
+        select.appendChild(option);
     });
 
-    document.getElementById('guessed-location').value = '';
+    select.value = '';
     document.getElementById('guess-location-modal').style.display = 'flex';
 }
 

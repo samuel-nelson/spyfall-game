@@ -48,6 +48,7 @@
         <!-- Main Menu -->
         <div id="main-menu" class="screen active">
             <div class="menu-content">
+                <button id="theme-toggle-btn-main" class="btn btn-secondary theme-toggle-fixed">TOGGLE THEME</button>
                 <div class="logo">
                     <h1 class="title-main">SPYFALL</h1>
                     <p class="subtitle">CLASSIFIED OPERATION</p>
@@ -62,6 +63,7 @@
         <!-- Create Game Screen -->
         <div id="create-game" class="screen">
             <div class="menu-content">
+                <button id="theme-toggle-btn-create" class="btn btn-secondary theme-toggle-fixed">TOGGLE THEME</button>
                 <h2>CREATE OPERATION</h2>
                 <div class="form-group">
                     <label for="player-name-create">AGENT NAME</label>
@@ -81,6 +83,7 @@
         <!-- Join Game Screen -->
         <div id="join-game" class="screen">
             <div class="menu-content">
+                <button id="theme-toggle-btn-join" class="btn btn-secondary theme-toggle-fixed">TOGGLE THEME</button>
                 <h2>JOIN OPERATION</h2>
                 <div class="form-group">
                     <label for="player-name-join">AGENT NAME</label>
@@ -217,6 +220,7 @@
 
                 <div id="question-modal" class="modal" style="display: none;">
                     <div class="modal-content">
+                        <button class="modal-close" onclick="document.getElementById('question-modal').style.display='none'">×</button>
                         <h3>INTERROGATION</h3>
                         <div class="form-group">
                             <label for="question-target">TARGET AGENT</label>
@@ -235,6 +239,7 @@
 
                 <div id="answer-modal" class="modal" style="display: none;">
                     <div class="modal-content">
+                        <button class="modal-close" onclick="document.getElementById('answer-modal').style.display='none'">×</button>
                         <h3>RESPOND</h3>
                         <p id="question-to-answer" class="question-prompt"></p>
                         <div class="form-group">
@@ -249,6 +254,7 @@
 
                 <div id="vote-modal" class="modal" style="display: none;">
                     <div class="modal-content">
+                        <button class="modal-close" onclick="document.getElementById('vote-modal').style.display='none'">×</button>
                         <h3>CAST YOUR VOTE</h3>
                         <p class="vote-instruction">Select the agent you believe is the spy:</p>
                         <div class="form-group">
@@ -264,12 +270,14 @@
 
                 <div id="guess-location-modal" class="modal" style="display: none;">
                     <div class="modal-content">
+                        <button class="modal-close" onclick="document.getElementById('guess-location-modal').style.display='none'">×</button>
                         <h3>IDENTIFY LOCATION</h3>
                         <p class="guess-instruction">What location do you believe the operation is taking place?</p>
                         <div class="form-group">
                             <label for="guessed-location">LOCATION</label>
-                            <input type="text" id="guessed-location" placeholder="Enter location name" list="locations-list">
-                            <datalist id="locations-list"></datalist>
+                            <select id="guessed-location">
+                                <option value="">-- Select Location --</option>
+                            </select>
                         </div>
                         <div class="modal-buttons">
                             <button id="submit-guess-btn" class="btn btn-primary">SUBMIT</button>
@@ -280,6 +288,7 @@
 
                 <div id="game-result-modal" class="modal" style="display: none;">
                     <div class="modal-content result-content">
+                        <button class="modal-close" onclick="document.getElementById('game-result-modal').style.display='none'">×</button>
                         <h3 id="result-title"></h3>
                         <div id="result-content"></div>
                         <div class="modal-buttons">
@@ -294,6 +303,7 @@
         <!-- Location Management Modal -->
         <div id="location-management-modal" class="modal" style="display: none;">
             <div class="modal-content" style="max-width: 800px;">
+                <button class="modal-close" onclick="document.getElementById('location-management-modal').style.display='none'">×</button>
                 <h3>MANAGE LOCATIONS</h3>
                 <div class="location-tabs">
                     <button class="tab-btn active" data-tab="spyfall1">SPYFALL 1</button>
