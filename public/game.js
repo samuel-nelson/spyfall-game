@@ -17,13 +17,15 @@ const API_BASE = '/.netlify/functions';
 
 // Global button handlers for inline onclick attributes (fallback)
 window.handleNextRound = function() {
-    console.log('handleNextRound called from inline onclick');
+    console.log('🔵 handleNextRound called from inline onclick');
+    alert('Next Round button clicked!'); // Visual confirmation
     nextRound();
     return false;
 };
 
 window.handleBackToLobby = async function() {
-    console.log('handleBackToLobby called from inline onclick');
+    console.log('🔵 handleBackToLobby called from inline onclick');
+    alert('Back to Lobby button clicked!'); // Visual confirmation
     const currentGame = gameState.game;
     const currentIsHost = currentGame && currentGame.players && currentGame.players.length > 0 && currentGame.players[0].id === gameState.playerId;
     
@@ -64,6 +66,13 @@ window.handleBackToLobby = async function() {
     showScreen('main-menu');
     return false;
 };
+
+// Test that handlers are accessible
+console.log('✅ Global handlers defined:', {
+    handleNextRound: typeof window.handleNextRound,
+    handleBackToLobby: typeof window.handleBackToLobby,
+    closeModal: typeof window.closeModal
+});
 
 // Initialize game
 document.addEventListener('DOMContentLoaded', () => {
@@ -1406,7 +1415,7 @@ function showRoundResult(game) {
     const nextRoundBtn = document.getElementById('next-round-btn');
     const backToLobbyBtn = document.getElementById('back-to-lobby-btn');
     
-    console.log('showRoundResult: Setting up buttons. NextBtn:', !!nextRoundBtn, 'BackBtn:', !!backToLobbyBtn, 'isHost:', isHost);
+    console.log('🟢 showRoundResult: Setting up buttons. NextBtn:', !!nextRoundBtn, 'BackBtn:', !!backToLobbyBtn, 'isHost:', isHost);
     
     if (nextRoundBtn) {
         // Show "NEXT ROUND" button only for host
@@ -1418,9 +1427,24 @@ function showRoundResult(game) {
         // Ensure button is clickable
         nextRoundBtn.style.pointerEvents = 'auto';
         nextRoundBtn.style.cursor = 'pointer';
-        console.log('showRoundResult: Next round button display set to:', nextRoundBtn.style.display);
+        
+        // Debug: Log button properties
+        console.log('🟢 Next round button:', {
+            display: nextRoundBtn.style.display,
+            pointerEvents: window.getComputedStyle(nextRoundBtn).pointerEvents,
+            onclick: nextRoundBtn.onclick,
+            getAttribute: nextRoundBtn.getAttribute('onclick'),
+            visibility: window.getComputedStyle(nextRoundBtn).visibility,
+            zIndex: window.getComputedStyle(nextRoundBtn).zIndex
+        });
+        
+        // Add test click handler for debugging
+        nextRoundBtn.addEventListener('click', function(e) {
+            console.log('🟢 CLICK EVENT DETECTED on next-round-btn!', e);
+            alert('Click event fired on Next Round button!');
+        }, { capture: true });
     } else {
-        console.error('showRoundResult: Next round button not found!');
+        console.error('🔴 showRoundResult: Next round button not found!');
     }
     
     if (backToLobbyBtn) {
@@ -1429,10 +1453,40 @@ function showRoundResult(game) {
         // Ensure button is clickable
         backToLobbyBtn.style.pointerEvents = 'auto';
         backToLobbyBtn.style.cursor = 'pointer';
-        console.log('showRoundResult: Back to lobby button display set to:', backToLobbyBtn.style.display);
+        
+        // Debug: Log button properties
+        console.log('🟢 Back to lobby button:', {
+            display: backToLobbyBtn.style.display,
+            pointerEvents: window.getComputedStyle(backToLobbyBtn).pointerEvents,
+            onclick: backToLobbyBtn.onclick,
+            getAttribute: backToLobbyBtn.getAttribute('onclick'),
+            visibility: window.getComputedStyle(backToLobbyBtn).visibility,
+            zIndex: window.getComputedStyle(backToLobbyBtn).zIndex
+        });
+        
+        // Add test click handler for debugging
+        backToLobbyBtn.addEventListener('click', function(e) {
+            console.log('🟢 CLICK EVENT DETECTED on back-to-lobby-btn!', e);
+            alert('Click event fired on Back to Lobby button!');
+        }, { capture: true });
     } else {
-        console.error('showRoundResult: Back to lobby button not found!');
+        console.error('🔴 showRoundResult: Back to lobby button not found!');
     }
+    
+    // Test modal properties
+    const modal = document.getElementById('game-result-modal');
+    const modalContent = modal.querySelector('.modal-content');
+    console.log('🟢 Modal properties:', {
+        modal: {
+            display: window.getComputedStyle(modal).display,
+            pointerEvents: window.getComputedStyle(modal).pointerEvents,
+            zIndex: window.getComputedStyle(modal).zIndex
+        },
+        modalContent: {
+            pointerEvents: window.getComputedStyle(modalContent).pointerEvents,
+            zIndex: window.getComputedStyle(modalContent).zIndex
+        }
+    });
     
     // FORCE SHOW MODAL - Simple and clean
     // Re-get modal reference
@@ -1458,6 +1512,8 @@ function showRoundResult(game) {
 // Make it globally accessible for onclick handlers
 // Function to close modal - completely rewritten from scratch
 window.closeModal = function(modalId) {
+    console.log('🔴 closeModal called for:', modalId);
+    alert('Close modal called for: ' + modalId); // Visual confirmation
     const modal = document.getElementById(modalId);
     if (modal) {
         // Simply remove the 'show' class - CSS handles everything
