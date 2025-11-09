@@ -106,48 +106,44 @@ SPY/
 └── README.md           # This file
 ```
 
-## Neon Database Setup (Required for Multiplayer)
+## Database Setup (Required for Multiplayer)
 
-This game uses Neon (serverless Postgres) to store game state so players can connect to each other across different server instances.
+This game uses Netlify DB (powered by Neon) to store game state so players can connect to each other across different server instances.
 
-### Step 1: Create a Neon Account (Free)
+### Quick Setup (Recommended)
 
-1. Go to [Neon](https://neon.tech/)
-2. Sign up for a free account
-3. Create a new project:
-   - Click "Create Project"
-   - Name it `spyfall` (or any name you prefer)
-   - Choose a region close to you
-   - Click "Create Project"
+The easiest way to set up the database is using Netlify's built-in command:
 
-### Step 2: Connect Neon to Netlify
+```bash
+npx netlify db init
+```
 
-**Option A: Using Netlify UI (Recommended)**
-1. In your Netlify site dashboard, go to **Integrations**
-2. Search for "Neon" and click **Add integration**
-3. Connect your Neon account
-4. Select your Neon project
-5. Netlify will automatically set up the `NETLIFY_DATABASE_URL` environment variable
+That's it! This command will:
+- Provision a Postgres database (powered by Neon)
+- Automatically connect it to your Netlify site
+- Set up the `NETLIFY_DATABASE_URL` environment variable
+- Make your database ready to use
 
-**Option B: Manual Setup**
-1. In your Neon dashboard, get your connection string from "Connection Details"
-2. In Netlify, go to **Site settings** → **Environment variables**
-3. Add a new variable:
+The database table will be created automatically on first use when you deploy!
+
+### Alternative: Manual Setup
+
+If you prefer to set up Neon manually:
+
+1. Go to [Neon](https://neon.tech/) and create a free account
+2. Create a new project
+3. Get your connection string from the Neon dashboard
+4. In Netlify, go to **Site settings** → **Environment variables**
+5. Add:
    - **Key**: `NETLIFY_DATABASE_URL`
    - **Value**: Your Neon connection string
-4. Click **Save**
+6. Save and redeploy your site
 
-### Step 3: Redeploy
+### Local Development
 
-After setting the environment variable, trigger a new deployment:
-- Go to **Deploys** tab
-- Click **Trigger deploy** → **Clear cache and deploy site**
+For local testing with `netlify dev`, the database connection is automatically available if you've run `npx netlify db init`. 
 
-The database table will be created automatically on first use!
-
-### Local Development with Neon
-
-For local testing, create a `.env` file in the project root:
+If you need to set it manually, create a `.env` file in the project root:
 
 ```
 NETLIFY_DATABASE_URL=postgresql://user:password@host/database
