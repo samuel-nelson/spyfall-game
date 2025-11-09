@@ -7,7 +7,8 @@ let gameState = {
     pollInterval: null,
     timerInterval: null,
     bannerFadeTimeout: null,
-    bannerShownForTurn: null // Track which turn the banner was shown for
+    bannerShownForTurn: null, // Track which turn the banner was shown for
+    showingResultModal: false // Prevent multiple calls to showRoundResult
 };
 
 // API base URL - will work with Netlify Functions
@@ -433,12 +434,16 @@ function updateGameScreen(game) {
         // Always show result modal for ALL players including moles - NO EXCEPTIONS
         showScreen('game-screen');
         
-        // Only show modal if it's not already showing (prevent multiple calls)
-        const existingModal = document.getElementById('game-result-modal');
-        if (!existingModal || !existingModal.classList.contains('show')) {
+        // Prevent multiple calls - use a flag
+        if (!gameState.showingResultModal) {
+            gameState.showingResultModal = true;
             // Show modal once - use requestAnimationFrame to ensure DOM is ready
             requestAnimationFrame(() => {
                 showRoundResult(game);
+                // Reset flag after a delay to allow re-showing if needed
+                setTimeout(() => {
+                    gameState.showingResultModal = false;
+                }, 1000);
             });
         }
     } else if (game.status === 'lobby') {
@@ -1144,9 +1149,10 @@ function showRoundResult(game) {
     if (moleGuessedLocation) {
         hasContent = true;
         // Mole guessed the location - check if correct
-        const locationName = typeof round.location === 'string' ? round.location : round.location?.name;
+        const locationName = typeof round.location === 'string' ? round.location : (round.location?.name || 'Unknown');
         const guessedName = moleGuessedLocation.trim();
-        const isCorrect = guessedName.toLowerCase() === locationName.toLowerCase();
+        // Only compare if we have a valid location name
+        const isCorrect = locationName && locationName !== 'Unknown' && guessedName.toLowerCase() === locationName.toLowerCase();
         
         if (isCorrect) {
             title.textContent = 'OPERATION COMPROMISED';
