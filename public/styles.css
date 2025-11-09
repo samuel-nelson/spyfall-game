@@ -1701,6 +1701,71 @@ h3 {
     font-family: var(--font-serif);
 }
 
+/* FAQ Section */
+.faq-section {
+    margin-top: 50px;
+    padding: 40px;
+    background: rgba(10, 10, 10, 0.4);
+    border: 1px solid var(--color-border);
+}
+
+.light-mode .faq-section {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: var(--color-border);
+}
+
+.faq-section h3 {
+    font-family: var(--font-serif);
+    font-size: 1.8rem;
+    color: var(--color-primary);
+    text-align: center;
+    margin-bottom: 30px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.faq-content {
+    font-family: var(--font-elegant);
+    font-size: 1.1rem;
+    line-height: 1.9;
+    color: var(--color-text);
+}
+
+.faq-item {
+    margin-bottom: 30px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.faq-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.faq-item h4 {
+    font-family: var(--font-serif);
+    font-size: 1.3rem;
+    color: var(--color-primary);
+    margin-bottom: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.faq-item p {
+    margin: 0;
+    color: var(--color-text);
+    line-height: 1.8;
+}
+
+.light-mode .faq-item h4 {
+    color: var(--color-primary);
+}
+
+.light-mode .faq-item p {
+    color: var(--color-text);
+}
+
 /* Modal Close Button */
 .modal-close {
     position: absolute;

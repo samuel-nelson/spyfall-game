@@ -448,7 +448,8 @@ function updateGameScreen(game) {
         updatePlayingState(game);
     } else if (game.status === 'roundEnd') {
         stopTimer(); // Stop timer when round ends
-        // Always show result modal for all players including spies
+        // Always show result modal for all players including moles who guessed wrong
+        // Ensure modal is shown even if it was previously closed
         showRoundResult(game);
         // Keep game screen visible behind modal
         showScreen('game-screen');
@@ -1069,7 +1070,10 @@ async function submitLocationGuess() {
             showNotification('Incorrect location. The round has ended.', 'error');
         }
         
-        // State will update via polling
+        // Poll immediately and aggressively for updated game state to see the result modal
+        pollGameState();
+        setTimeout(() => pollGameState(), 500);
+        setTimeout(() => pollGameState(), 1500);
     } catch (error) {
         console.error('Error guessing location:', error);
         showNotification('Failed to submit guess. Please try again.', 'error');
@@ -1225,10 +1229,12 @@ function showRoundResult(game) {
     }
 
     // Show next round button if host (regardless of whether they're mole or not), otherwise show waiting message
-    const isHost = game.players[0] && game.players[0].id === gameState.playerId;
+    // Check if player is host - host is the first player in the players array
+    const isHost = game.players && game.players.length > 0 && game.players[0].id === gameState.playerId;
     if (isHost) {
         nextRoundBtn.style.display = 'block';
-        backToLobbyBtn.style.display = 'none';
+        backToLobbyBtn.style.display = 'block'; // Show both buttons for host
+        resultText += '<p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-style: italic; font-size: 1.2rem;">As the host, you can start the next round or return to the briefing room.</p>';
     } else {
         nextRoundBtn.style.display = 'none';
         backToLobbyBtn.style.display = 'block';
