@@ -469,15 +469,21 @@ function updateGameScreen(game) {
         updatePlayingState(game);
     } else if (game.status === 'roundEnd') {
         stopTimer(); // Stop timer when round ends
-        // Always show result modal for all players including moles who guessed wrong
-        // Ensure modal is shown even if it was previously closed
+        // Always show result modal for ALL players including moles - NO EXCEPTIONS
         showScreen('game-screen');
-        // Force show the modal - do this after screen is shown
+        
+        // Show modal immediately - no delays, no conditions
+        showRoundResult(game);
+        
+        // Also show after screen is fully rendered
         setTimeout(() => {
             showRoundResult(game);
-        }, 50);
-        // Also show immediately
-        showRoundResult(game);
+        }, 100);
+        
+        // And again after a longer delay to catch any edge cases
+        setTimeout(() => {
+            showRoundResult(game);
+        }, 500);
     } else if (game.status === 'lobby') {
         stopTimer(); // Stop timer when back in lobby
         hasScrolledToTopOnGameStart = false; // Reset flag when back in lobby
@@ -1096,12 +1102,16 @@ async function submitLocationGuess() {
         }
         
         // Poll immediately and aggressively for updated game state to see the result modal
-        // This is critical for moles to see the result
+        // This is CRITICAL for moles to see the result - poll very frequently
         pollGameState();
-        setTimeout(() => pollGameState(), 300);
+        setTimeout(() => pollGameState(), 200);
+        setTimeout(() => pollGameState(), 400);
         setTimeout(() => pollGameState(), 600);
+        setTimeout(() => pollGameState(), 800);
         setTimeout(() => pollGameState(), 1000);
+        setTimeout(() => pollGameState(), 1500);
         setTimeout(() => pollGameState(), 2000);
+        setTimeout(() => pollGameState(), 3000);
     } catch (error) {
         console.error('Error guessing location:', error);
         showNotification('Failed to submit guess. Please try again.', 'error');
@@ -1109,9 +1119,19 @@ async function submitLocationGuess() {
 }
 
 function showRoundResult(game) {
+    // This function MUST show the modal for ALL players including moles
+    // No conditions, no exceptions
+    
     const round = game.currentRound;
     if (!round) {
         console.error('showRoundResult: No current round');
+        // Even if no round, try to show modal with generic message
+        const modal = document.getElementById('game-result-modal');
+        if (modal) {
+            modal.classList.add('show');
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
         return;
     }
 
@@ -1129,8 +1149,14 @@ function showRoundResult(game) {
     // Prevent body scroll when modal is open
     document.body.style.overflow = 'hidden';
     
-    // Ensure modal is visible - force show
-    console.log('showRoundResult: Showing modal for round end');
+    // FORCE SHOW MODAL IMMEDIATELY - before any other logic
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    
+    // Log for debugging
+    const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
+    const isMole = moleIds.includes(gameState.playerId);
+    console.log('showRoundResult: Showing modal for round end. isMole:', isMole, 'playerId:', gameState.playerId);
 
     let resultText = '';
     // Check if player is mole (support both single and multiple moles, and legacy spy references)
@@ -1291,48 +1317,49 @@ function showRoundResult(game) {
 
     content.innerHTML = resultText;
     
-    // Force show the modal - ensure it's visible for ALL players including moles
-    // Re-get modal reference to ensure we have the latest
+    // FORCE SHOW MODAL - Multiple redundant checks to ensure it shows for moles
+    // Re-get modal reference
     modal = document.getElementById('game-result-modal');
-    if (modal) {
-        // Force show using multiple methods
-        modal.classList.add('show');
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-        
-        // Also call showModal for consistency
-        showModal('game-result-modal');
-        
-        // Triple-check modal is shown after delays
-        setTimeout(() => {
-            if (modal && !modal.classList.contains('show')) {
-                console.log('showRoundResult: Modal not shown after 50ms, forcing show');
-                modal.classList.add('show');
-                modal.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-            }
-        }, 50);
-        
-        setTimeout(() => {
-            if (modal && !modal.classList.contains('show')) {
-                console.log('showRoundResult: Modal not shown after 200ms, forcing show');
-                modal.classList.add('show');
-                modal.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-            }
-        }, 200);
-        
-        setTimeout(() => {
-            if (modal && !modal.classList.contains('show')) {
-                console.log('showRoundResult: Modal not shown after 500ms, forcing show');
-                modal.classList.add('show');
-                modal.style.display = 'flex';
-                document.body.style.overflow = 'hidden';
-            }
-        }, 500);
-    } else {
-        console.error('showRoundResult: Modal element not found!');
+    if (!modal) {
+        console.error('showRoundResult: Modal element not found after content update!');
+        return;
     }
+    
+    // Force show using ALL methods simultaneously
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    modal.style.visibility = 'visible';
+    modal.style.opacity = '1';
+    modal.style.zIndex = '10000';
+    document.body.style.overflow = 'hidden';
+    
+    // Also call showModal helper
+    showModal('game-result-modal');
+    
+    // Continuous checks to ensure modal stays visible
+    const forceShowModal = () => {
+        const checkModal = document.getElementById('game-result-modal');
+        if (checkModal) {
+            if (!checkModal.classList.contains('show') || checkModal.style.display !== 'flex') {
+                console.log('showRoundResult: Modal not visible, forcing show');
+                checkModal.classList.add('show');
+                checkModal.style.display = 'flex';
+                checkModal.style.visibility = 'visible';
+                checkModal.style.opacity = '1';
+                checkModal.style.zIndex = '10000';
+                document.body.style.overflow = 'hidden';
+            }
+        }
+    };
+    
+    // Check multiple times to ensure it stays visible
+    setTimeout(forceShowModal, 50);
+    setTimeout(forceShowModal, 100);
+    setTimeout(forceShowModal, 200);
+    setTimeout(forceShowModal, 500);
+    setTimeout(forceShowModal, 1000);
+    
+    console.log('showRoundResult: Modal forced to show. isMole:', isMole);
 }
 
 // Function to close modal and restore body scroll
