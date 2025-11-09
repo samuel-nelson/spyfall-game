@@ -492,6 +492,17 @@ function updatePlayingState(game) {
         locationView.style.display = 'block';
         const locationName = typeof currentRound.location === 'string' ? currentRound.location : currentRound.location.name;
         document.getElementById('location-name').textContent = locationName;
+        
+        // Display assigned role for non-mole players
+        const playerRole = currentRound.playerRoles && currentRound.playerRoles[gameState.playerId];
+        const roleDisplay = document.getElementById('player-role');
+        const roleName = document.getElementById('role-name');
+        if (playerRole && roleDisplay && roleName) {
+            roleName.textContent = playerRole;
+            roleDisplay.style.display = 'block';
+        } else if (roleDisplay) {
+            roleDisplay.style.display = 'none';
+        }
     }
 
     // Update possible locations display (front and center during gameplay)

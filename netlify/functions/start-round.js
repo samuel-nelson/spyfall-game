@@ -1,6 +1,6 @@
 // Import database functions
 const { getGameByCode, saveGameState } = require('./game-store');
-const { getRandomLocation } = require('./locations-data');
+const { getRandomLocation, getLocationWithRoles } = require('./locations-data');
 
 exports.handler = async (event, context) => {
     // Handle CORS
@@ -101,7 +101,29 @@ exports.handler = async (event, context) => {
         }
 
         // Select random location from enabled packs
-        const location = getRandomLocation(enabledPacks);
+        const locationName = getRandomLocation(enabledPacks);
+        const locationObj = getLocationWithRoles(locationName, enabledPacks);
+        const location = locationObj || locationName; // Fallback to name if object not found
+
+        // Assign roles to non-mole players
+        const playerRoles = {};
+        const nonMolePlayers = game.players.filter(p => !moleIds.includes(p.id));
+        
+        if (locationObj && locationObj.roles && locationObj.roles.length > 0) {
+            const availableRoles = [...locationObj.roles];
+            
+            // Shuffle roles for random assignment
+            for (let i = availableRoles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [availableRoles[i], availableRoles[j]] = [availableRoles[j], availableRoles[i]];
+            }
+            
+            // Assign roles to non-mole players
+            nonMolePlayers.forEach((player, index) => {
+                const roleIndex = index % availableRoles.length;
+                playerRoles[player.id] = availableRoles[roleIndex];
+            });
+        }
 
         // Determine starting player (random)
         const startingPlayerIndex = Math.floor(Math.random() * game.players.length);
@@ -119,6 +141,7 @@ exports.handler = async (event, context) => {
         game.currentRound = {
             roundNumber,
             location,
+            playerRoles, // Store assigned roles
             moleId: moleIds.length === 1 ? moleIds[0] : null, // New naming
             moleIds: moleIds.length > 1 ? moleIds : (moleIds.length === 1 ? moleIds : null), // New naming
             spyId: moleIds.length === 1 ? moleIds[0] : null, // Legacy support

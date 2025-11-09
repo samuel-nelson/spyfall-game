@@ -80,6 +80,7 @@ exports.handler = async (event, context) => {
             currentRound: game.currentRound ? {
                 roundNumber: game.currentRound.roundNumber,
                 location: game.currentRound.location,
+                playerRoles: game.currentRound.playerRoles || {}, // Include player roles
                 moleId: game.currentRound.moleId || game.currentRound.spyId, // New naming
                 moleIds: Array.isArray(game.currentRound.moleIds) ? game.currentRound.moleIds : (Array.isArray(game.currentRound.spyIds) ? game.currentRound.spyIds : (game.currentRound.moleId || game.currentRound.spyId ? [game.currentRound.moleId || game.currentRound.spyId] : null)),
                 spyId: game.currentRound.spyId || game.currentRound.moleId, // Legacy support
