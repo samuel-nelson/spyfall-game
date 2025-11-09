@@ -378,14 +378,36 @@ function updatePlayersStatus(players, round) {
 
 function updateQuestionArea(round) {
     const questionArea = document.getElementById('question-area');
+    const currentQuestionDiv = questionArea.querySelector('.current-question');
     
     if (round.currentQuestion) {
         questionArea.style.display = 'block';
-        document.getElementById('current-question-text').textContent = round.currentQuestion.text;
+        document.getElementById('current-question-text').textContent = `"${round.currentQuestion.text}"`;
         document.getElementById('question-asker').textContent = round.currentQuestion.askerName;
         document.getElementById('question-answerer').textContent = round.currentQuestion.answererName;
+        
+        // Show answer if available
+        const existingAnswer = currentQuestionDiv.querySelector('.question-answer');
+        if (round.currentQuestion.answer) {
+            if (existingAnswer) {
+                existingAnswer.textContent = `Response: "${round.currentQuestion.answer}"`;
+            } else {
+                const answerDiv = document.createElement('div');
+                answerDiv.className = 'question-answer';
+                answerDiv.style.cssText = 'margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-style: italic;';
+                answerDiv.textContent = `Response: "${round.currentQuestion.answer}"`;
+                currentQuestionDiv.appendChild(answerDiv);
+            }
+        } else if (existingAnswer) {
+            existingAnswer.remove();
+        }
     } else {
         questionArea.style.display = 'none';
+        // Clear any existing answer
+        const existingAnswer = currentQuestionDiv?.querySelector('.question-answer');
+        if (existingAnswer) {
+            existingAnswer.remove();
+        }
     }
 }
 
@@ -558,6 +580,8 @@ async function submitAnswer() {
 function showVoteModal() {
     const game = gameState.game;
     if (!game || !game.currentRound) return;
+    
+    const round = game.currentRound;
 
     const select = document.getElementById('voted-player');
     select.innerHTML = '';
