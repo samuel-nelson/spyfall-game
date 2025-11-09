@@ -475,12 +475,17 @@ let lastGameStatus = null;
 let hasScrolledToTopOnGameStart = false;
 
 function updateGameScreen(game) {
+    console.log('🎮 updateGameScreen: Status =', game.status, 'lastGameStatus =', lastGameStatus);
+    
     if (game.status === 'playing') {
         const wasInLobby = lastGameStatus === 'lobby' || lastGameStatus === null;
         const wasRoundEnd = lastGameStatus === 'roundEnd';
         
+        console.log('🎮 Game is PLAYING. wasRoundEnd:', wasRoundEnd);
+        
         // Close result modal if transitioning from roundEnd to playing
         if (wasRoundEnd) {
+            console.log('🎮 Transitioning from roundEnd to playing - closing modal');
             window.closeModal('game-result-modal');
             gameState.showingResultModal = false; // Reset flag when closing modal
         }
@@ -497,6 +502,7 @@ function updateGameScreen(game) {
         }
         updatePlayingState(game);
     } else if (game.status === 'roundEnd') {
+        console.log('🎮 Game is ROUNDEND');
         stopTimer(); // Stop timer when round ends
         // Always show result modal for ALL players including moles - NO EXCEPTIONS
         showScreen('game-screen');
@@ -505,10 +511,12 @@ function updateGameScreen(game) {
         const modal = document.getElementById('game-result-modal');
         const isModalShowing = modal && modal.classList.contains('show');
         
+        console.log('🎮 isModalShowing:', isModalShowing, 'showingResultModal flag:', gameState.showingResultModal);
+        
         // Only show modal if it's not already showing
         if (!isModalShowing && !gameState.showingResultModal) {
             gameState.showingResultModal = true;
-            console.log('updateGameScreen: Showing result modal for first time');
+            console.log('🎮 Showing result modal for first time');
             // Show modal once - use requestAnimationFrame to ensure DOM is ready
             requestAnimationFrame(() => {
                 showRoundResult(game);
@@ -516,9 +524,10 @@ function updateGameScreen(game) {
                 // The flag will only be reset when the modal is closed or game transitions to another state
             });
         } else {
-            console.log('updateGameScreen: Modal already showing, skipping showRoundResult call');
+            console.log('🎮 Modal already showing, skipping showRoundResult call');
         }
     } else if (game.status === 'lobby') {
+        console.log('🎮 Game is LOBBY');
         stopTimer(); // Stop timer when back in lobby
         hasScrolledToTopOnGameStart = false; // Reset flag when back in lobby
         // Close result modal if returning to lobby
@@ -527,6 +536,7 @@ function updateGameScreen(game) {
     }
     
     lastGameStatus = game.status;
+    console.log('🎮 updateGameScreen complete. lastGameStatus now:', lastGameStatus);
 }
 
 function updatePlayingState(game) {
