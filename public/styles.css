@@ -1485,6 +1485,15 @@ h3 {
     scrollbar-color: var(--color-primary) rgba(10, 10, 10, 0.3);
 }
 
+/* Mobile: Show 2 columns to make scrolling less obvious */
+@media (max-width: 768px) {
+    .locations-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        max-height: 300px;
+    }
+}
+
 .locations-grid::-webkit-scrollbar {
     width: 8px;
 }

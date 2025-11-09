@@ -78,7 +78,30 @@ function setupEventListeners() {
         window.closeModal('guess-location-modal');
     });
     document.getElementById('next-round-btn').addEventListener('click', nextRound);
-    document.getElementById('back-to-lobby-btn').addEventListener('click', () => {
+    document.getElementById('back-to-lobby-btn').addEventListener('click', async () => {
+        const game = gameState.game;
+        const isHost = game && game.players && game.players.length > 0 && game.players[0].id === gameState.playerId;
+        
+        // If host, end the game (kicks everyone out)
+        if (isHost) {
+            try {
+                const response = await fetch(`${API_BASE}/end-game`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        gameCode: gameState.gameCode,
+                        playerId: gameState.playerId
+                    })
+                });
+                
+                if (response.ok) {
+                    showNotification('Game ended. All players have been disconnected.', 'info');
+                }
+            } catch (error) {
+                console.error('Error ending game:', error);
+            }
+        }
+        
         window.closeModal('game-result-modal');
         // Clear game state but keep gameCode and playerName for potential rejoin
         const gameCode = gameState.gameCode;
