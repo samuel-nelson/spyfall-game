@@ -1474,13 +1474,13 @@ function showRoundResult(game) {
     }
     
     // Test modal properties
-    const modal = document.getElementById('game-result-modal');
-    const modalContent = modal.querySelector('.modal-content');
+    const modalForTest = document.getElementById('game-result-modal');
+    const modalContent = modalForTest.querySelector('.modal-content');
     console.log('🟢 Modal properties:', {
         modal: {
-            display: window.getComputedStyle(modal).display,
-            pointerEvents: window.getComputedStyle(modal).pointerEvents,
-            zIndex: window.getComputedStyle(modal).zIndex
+            display: window.getComputedStyle(modalForTest).display,
+            pointerEvents: window.getComputedStyle(modalForTest).pointerEvents,
+            zIndex: window.getComputedStyle(modalForTest).zIndex
         },
         modalContent: {
             pointerEvents: window.getComputedStyle(modalContent).pointerEvents,
