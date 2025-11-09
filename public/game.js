@@ -1252,7 +1252,10 @@ function showRoundResult(game) {
 window.closeModal = function(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
+        modal.classList.remove('modal-active');
         modal.style.display = 'none';
+        modal.style.height = '';
+        modal.style.width = '';
         // Always restore body scroll when closing a modal
         document.body.style.overflow = '';
         // Clear any selected location
