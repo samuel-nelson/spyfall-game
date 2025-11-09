@@ -80,24 +80,36 @@ exports.handler = async (event, context) => {
             currentRound: game.currentRound ? {
                 roundNumber: game.currentRound.roundNumber,
                 location: game.currentRound.location,
-                spyId: game.currentRound.spyId,
+                spyId: game.currentRound.spyId, // Backward compatibility
+                spyIds: Array.isArray(game.currentRound.spyIds) ? game.currentRound.spyIds : (game.currentRound.spyId ? [game.currentRound.spyId] : null),
                 currentTurn: game.currentRound.currentTurn,
                 currentQuestion: game.currentRound.currentQuestion,
                 waitingForAnswer: game.currentRound.waitingForAnswer,
                 endTime: game.currentRound.endTime,
-            spyWon: game.currentRound.spyWon,
-            accusation: game.currentRound.accusation,
-            spyGuessedLocation: game.currentRound.spyGuessedLocation,
-            votes: game.currentRound.votes
-        } : null
+                spyWon: game.currentRound.spyWon,
+                accusation: game.currentRound.accusation,
+                spyGuessedLocation: game.currentRound.spyGuessedLocation,
+                votes: game.currentRound.votes
+            } : null
         };
 
-        // If player is spy, don't reveal location
+        // If player is spy, don't reveal location (support both single and multiple spies)
         if (gameState.currentRound && playerId) {
-            const isSpy = gameState.currentRound.spyId === playerId;
+            const spyIds = Array.isArray(game.currentRound.spyIds) 
+                ? game.currentRound.spyIds 
+                : (game.currentRound.spyId ? [game.currentRound.spyId] : []);
+            const isSpy = spyIds.includes(playerId);
             if (isSpy) {
                 gameState.currentRound.location = null;
             }
+        }
+        
+        // Include spyIds in response for frontend
+        if (gameState.currentRound && game.currentRound) {
+            const spyIds = Array.isArray(game.currentRound.spyIds) 
+                ? game.currentRound.spyIds 
+                : (game.currentRound.spyId ? [game.currentRound.spyId] : []);
+            gameState.currentRound.spyIds = spyIds.length > 0 ? spyIds : null;
         }
 
         // Check if round time has expired

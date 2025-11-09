@@ -42,7 +42,6 @@ function setupEventListeners() {
     // Lobby
     document.getElementById('start-round-btn').addEventListener('click', startRound);
     document.getElementById('leave-game-btn').addEventListener('click', leaveGame);
-    document.getElementById('save-settings-btn').addEventListener('click', saveGameSettings);
     document.getElementById('manage-locations-btn').addEventListener('click', showLocationManagement);
     
     // Auto-save settings on change
@@ -62,8 +61,19 @@ function setupEventListeners() {
     
     // Location management
     document.getElementById('close-location-management-btn').addEventListener('click', () => {
+        // Save any pending location changes before closing
+        saveLocationChangesOnClose();
         document.getElementById('location-management-modal').style.display = 'none';
     });
+    
+    // Also save when closing via X button
+    const locationModalCloseX = document.getElementById('location-modal-close-x');
+    if (locationModalCloseX) {
+        locationModalCloseX.addEventListener('click', () => {
+            saveLocationChangesOnClose();
+            document.getElementById('location-management-modal').style.display = 'none';
+        });
+    }
     document.getElementById('add-custom-location-btn').addEventListener('click', addCustomLocation);
     document.getElementById('export-locations-btn').addEventListener('click', () => exportLocations());
     document.getElementById('import-locations-btn').addEventListener('click', () => {
@@ -1399,12 +1409,39 @@ function updateEnabledLocationSets() {
         }
     });
     
-    // Update game settings
+    // Update game settings immediately
     const game = gameState.game;
     if (game && game.players[0] && game.players[0].id === gameState.playerId) {
-        // Save to game settings
+        // Save to game settings immediately
         saveLocationSettings(Array.from(sets), customLocations);
     }
+}
+
+// Save location changes when closing modal (ensures nothing is lost)
+function saveLocationChangesOnClose() {
+    const game = gameState.game;
+    if (!game || !game.players[0] || game.players[0].id !== gameState.playerId) {
+        return; // Not host, can't save
+    }
+    
+    // Get current enabled locations
+    const sets = new Set();
+    const customLocations = [];
+    
+    enabledLocations.forEach(locationId => {
+        const [set, ...nameParts] = locationId.split('-');
+        const name = nameParts.join('-');
+        
+        if (set === 'custom') {
+            const loc = CUSTOM_LOCATIONS.find(l => l.name === name);
+            if (loc) customLocations.push(loc);
+        } else {
+            sets.add(set);
+        }
+    });
+    
+    // Save final state
+    saveLocationSettings(Array.from(sets), customLocations);
 }
 
 async function saveLocationSettings(enabledSets, customLocations) {
@@ -1472,6 +1509,13 @@ function addCustomLocation() {
     CUSTOM_LOCATIONS.push(newLocation);
     saveCustomLocations();
     
+    // Automatically enable the new custom location
+    const locationId = `custom-${name}`;
+    enabledLocations.add(locationId);
+    
+    // Save the updated settings
+    updateEnabledLocationSets();
+    
     // Refresh custom locations tab
     const customDiv = document.getElementById('custom-locations');
     const item = createLocationItem(newLocation, 'custom', true);
@@ -1481,12 +1525,20 @@ function addCustomLocation() {
     document.getElementById('new-location-name').value = '';
     document.getElementById('new-location-roles').value = '';
     
-    showNotification('Location added', 'success');
+    showNotification('Location added and enabled', 'success');
 }
 
 function removeCustomLocation(name) {
     CUSTOM_LOCATIONS = CUSTOM_LOCATIONS.filter(loc => loc.name !== name);
     saveCustomLocations();
+    
+    // Remove from enabled locations if it was enabled
+    const locationId = `custom-${name}`;
+    enabledLocations.delete(locationId);
+    
+    // Save the updated settings
+    updateEnabledLocationSets();
+    
     loadLocationTabs();
     showNotification('Location removed', 'success');
 }

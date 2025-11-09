@@ -160,7 +160,6 @@
                         </div>
                     </div>
                     <div class="form-actions">
-                        <button id="save-settings-btn" class="btn btn-primary">SAVE SETTINGS</button>
                         <button id="manage-locations-btn" class="btn btn-secondary">MANAGE LOCATIONS</button>
                     </div>
                 </div>
@@ -330,7 +329,7 @@
         <!-- Location Management Modal -->
         <div id="location-management-modal" class="modal" style="display: none;">
             <div class="modal-content" style="max-width: 800px;">
-                <button class="modal-close" onclick="document.getElementById('location-management-modal').style.display='none'">×</button>
+                <button class="modal-close" id="location-modal-close-x">×</button>
                 <h3>MANAGE LOCATIONS</h3>
                 <div class="location-tabs">
                     <button class="tab-btn active" data-tab="spyfall1">SPYFALL 1</button>

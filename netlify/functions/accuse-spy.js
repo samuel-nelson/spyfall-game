@@ -104,8 +104,9 @@ exports.handler = async (event, context) => {
             accusedName: accusedPlayer.name
         };
 
-        // Check if accusation is correct
-        const wasCorrect = accusedId === round.spyId;
+        // Check if accusation is correct (support both single and multiple spies)
+        const spyIds = Array.isArray(round.spyIds) ? round.spyIds : (round.spyId ? [round.spyId] : []);
+        const wasCorrect = spyIds.includes(accusedId);
         
         // End the round
         game.status = 'roundEnd';
