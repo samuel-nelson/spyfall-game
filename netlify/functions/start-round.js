@@ -1,19 +1,6 @@
 // Import database functions
 const { getGameByCode, saveGameState } = require('./game-store');
-
-// Get random location
-const LOCATIONS = [
-    "Airplane", "Bank", "Beach", "Casino", "Cathedral", "Circus Tent",
-    "Corporate Party", "Crusader Army", "Day Spa", "Embassy", "Hospital",
-    "Hotel", "Military Base", "Movie Studio", "Ocean Liner", "Passenger Train",
-    "Pirate Ship", "Polar Station", "Police Station", "Restaurant", "School",
-    "Service Station", "Space Station", "Submarine", "Supermarket", "Theater",
-    "University", "World War II Squad"
-];
-
-function getRandomLocation() {
-    return LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)];
-}
+const { getRandomLocation } = require('./locations-data');
 
 exports.handler = async (event, context) => {
     // Handle CORS
@@ -97,12 +84,25 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Select random spy
-        const spyIndex = Math.floor(Math.random() * game.players.length);
-        const spyId = game.players[spyIndex].id;
+        // Get game settings (defaults if not set)
+        const settings = game.settings || {};
+        const spyCount = Math.max(1, Math.min(2, parseInt(settings.spyCount) || 1));
+        const timerMinutes = Math.max(1, Math.min(60, parseInt(settings.timerMinutes) || 8));
+        const enabledLocationSets = settings.enabledLocationSets || ['spyfall1'];
+        const customLocations = settings.customLocations || [];
 
-        // Select random location
-        const location = getRandomLocation();
+        // Select random spies (1 or 2)
+        const spyIds = [];
+        const availablePlayers = [...game.players];
+        
+        for (let i = 0; i < spyCount && availablePlayers.length > 0; i++) {
+            const spyIndex = Math.floor(Math.random() * availablePlayers.length);
+            spyIds.push(availablePlayers[spyIndex].id);
+            availablePlayers.splice(spyIndex, 1);
+        }
+
+        // Select random location from enabled sets
+        const location = getRandomLocation(enabledLocationSets, customLocations);
 
         // Determine starting player (random)
         const startingPlayerIndex = Math.floor(Math.random() * game.players.length);
@@ -113,14 +113,15 @@ exports.handler = async (event, context) => {
             ? game.currentRound.roundNumber + 1 
             : 1;
 
-        // Start round (8 minutes = 480000 ms)
-        const roundDuration = 8 * 60 * 1000;
+        // Start round with custom timer
+        const roundDuration = timerMinutes * 60 * 1000;
         const endTime = Date.now() + roundDuration;
 
         game.currentRound = {
             roundNumber,
             location,
-            spyId,
+            spyId: spyIds.length === 1 ? spyIds[0] : null, // Backward compatibility
+            spyIds: spyIds.length > 1 ? spyIds : null, // Multiple spies
             currentTurn,
             currentQuestion: null,
             waitingForAnswer: null,
@@ -128,7 +129,8 @@ exports.handler = async (event, context) => {
             spyWon: false,
             accusation: null,
             spyGuessedLocation: null,
-            votes: null
+            votes: null,
+            showSpyCount: settings.showSpyCount !== false // Default to true
         };
 
         game.status = 'playing';

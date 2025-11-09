@@ -42,6 +42,28 @@ function setupEventListeners() {
     // Lobby
     document.getElementById('start-round-btn').addEventListener('click', startRound);
     document.getElementById('leave-game-btn').addEventListener('click', leaveGame);
+    document.getElementById('save-settings-btn').addEventListener('click', saveGameSettings);
+    document.getElementById('manage-locations-btn').addEventListener('click', showLocationManagement);
+    document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
+    
+    // Location management
+    document.getElementById('close-location-management-btn').addEventListener('click', () => {
+        document.getElementById('location-management-modal').style.display = 'none';
+    });
+    document.getElementById('add-custom-location-btn').addEventListener('click', addCustomLocation);
+    document.getElementById('export-locations-btn').addEventListener('click', () => exportLocations());
+    document.getElementById('import-locations-btn').addEventListener('click', () => {
+        document.getElementById('import-locations-file').click();
+    });
+    document.getElementById('import-locations-file').addEventListener('change', handleLocationImport);
+    
+    // Location tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const tab = e.target.dataset.tab;
+            switchLocationTab(tab);
+        });
+    });
 
     // Game actions
     document.getElementById('ask-question-btn').addEventListener('click', showQuestionModal);
@@ -154,6 +176,13 @@ async function joinGame() {
 }
 
 async function startRound() {
+    // Save settings before starting round if host
+    const game = gameState.game;
+    const isHost = game && game.players[0] && game.players[0].id === gameState.playerId;
+    if (isHost && game.status === 'lobby') {
+        await saveGameSettings();
+    }
+    
     try {
         const response = await fetch(`${API_BASE}/start-round`, {
             method: 'POST',
@@ -830,11 +859,15 @@ function showRoundResult(game) {
 
         if (round.accusation.type === 'vote') {
             // Voting result
+            const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
+            const wasCorrect = spyIds.includes(round.accusation.accusedId);
+            
             if (wasCorrect) {
                 title.textContent = 'SPY IDENTIFIED';
                 title.style.color = 'var(--color-success)';
+                const spyNames = spyIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean);
                 resultText = `
-                    <p>Majority vote correctly identified the spy: <strong>${escapeHtml(accusedPlayer.name)}</strong></p>
+                    <p>Majority vote correctly identified the spy${spyIds.length > 1 ? 's' : ''}: <strong>${escapeHtml(spyNames.join(', '))}</strong></p>
                     <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
                 `;
                 
@@ -853,14 +886,18 @@ function showRoundResult(game) {
             } else {
                 title.textContent = 'INCORRECT VOTE';
                 title.style.color = 'var(--color-danger)';
+                const spyNames = spyIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean);
                 resultText = `
                     <p>${escapeHtml(accusedPlayer.name)} was not the spy.</p>
-                    <p>The spy <strong>${escapeHtml(game.players.find(p => p.id === round.spyId).name)}</strong> has evaded detection.</p>
+                    <p>The spy${spyIds.length > 1 ? 's' : ''} <strong>${escapeHtml(spyNames.join(', '))}</strong> ${spyIds.length > 1 ? 'have' : 'has'} evaded detection.</p>
                     <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
                 `;
             }
         } else {
             // Individual accusation
+            const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
+            const wasCorrect = spyIds.includes(round.accusation.accusedId);
+            
             if (wasCorrect) {
                 title.textContent = 'SPY CAUGHT';
                 title.style.color = 'var(--color-success)';
@@ -871,9 +908,10 @@ function showRoundResult(game) {
             } else {
                 title.textContent = 'INCORRECT ACCUSATION';
                 title.style.color = 'var(--color-danger)';
+                const spyNames = spyIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean);
                 resultText = `
                     <p>${escapeHtml(accusedPlayer.name)} was not the spy.</p>
-                    <p>The spy <strong>${escapeHtml(game.players.find(p => p.id === round.spyId).name)}</strong> wins.</p>
+                    <p>The spy${spyIds.length > 1 ? 's' : ''} <strong>${escapeHtml(spyNames.join(', '))}</strong> ${spyIds.length > 1 ? 'win' : 'wins'}.</p>
                     <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
                 `;
             }
@@ -891,7 +929,7 @@ function showRoundResult(game) {
         resultText = `
             <p>The operation has concluded.</p>
             <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
-            <p><strong>Spy:</strong> ${escapeHtml(game.players.find(p => p.id === round.spyId).name)}</p>
+            <p><strong>Spy${spyIds.length > 1 ? 's' : ''}:</strong> ${escapeHtml(spyIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean).join(', '))}</p>
         `;
     }
 
@@ -960,4 +998,197 @@ updateUI = function() {
     originalUpdateUI();
     checkForPendingActions(gameState.game);
 };
+
+// Game settings functions
+async function saveGameSettings() {
+    const spyCount = parseInt(document.getElementById('spy-count').value) || 1;
+    const showSpyCount = document.getElementById('show-spy-count').value === 'true';
+    const timerMinutes = parseInt(document.getElementById('timer-minutes').value) || 8;
+    
+    if (!gameState.gameCode || !gameState.playerId) {
+        showNotification('Not in a game', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE}/update-game-settings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                gameCode: gameState.gameCode,
+                playerId: gameState.playerId,
+                settings: {
+                    spyCount,
+                    showSpyCount,
+                    timerMinutes,
+                    customLocations: CUSTOM_LOCATIONS,
+                    enabledLocationSets: ['spyfall1'] // Default, can be expanded
+                }
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            showNotification(data.error, 'error');
+            return;
+        }
+        
+        showNotification('Settings saved', 'success');
+        // Refresh game state
+        pollGameState();
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        showNotification('Failed to save settings', 'error');
+    }
+}
+
+// Theme toggle
+function toggleTheme() {
+    const html = document.documentElement;
+    const isLight = html.classList.contains('light-mode');
+    
+    if (isLight) {
+        html.classList.remove('light-mode');
+        localStorage.setItem('theme', 'dark');
+    } else {
+        html.classList.add('light-mode');
+        localStorage.setItem('theme', 'light');
+    }
+}
+
+// Location management functions
+function showLocationManagement() {
+    document.getElementById('location-management-modal').style.display = 'flex';
+    loadLocationTabs();
+}
+
+function loadLocationTabs() {
+    // Load Spyfall 1 locations
+    const spyfall1Div = document.getElementById('spyfall1-locations');
+    spyfall1Div.innerHTML = '';
+    SPYFALL1_LOCATIONS.forEach(loc => {
+        const item = createLocationItem(loc, 'spyfall1');
+        spyfall1Div.appendChild(item);
+    });
+    
+    // Load Spyfall 2 locations
+    const spyfall2Div = document.getElementById('spyfall2-locations');
+    spyfall2Div.innerHTML = '';
+    SPYFALL2_LOCATIONS.forEach(loc => {
+        const item = createLocationItem(loc, 'spyfall2');
+        spyfall2Div.appendChild(item);
+    });
+    
+    // Load custom locations
+    loadCustomLocations(); // Refresh from localStorage
+    const customDiv = document.getElementById('custom-locations');
+    customDiv.innerHTML = '';
+    CUSTOM_LOCATIONS.forEach(loc => {
+        const item = createLocationItem(loc, 'custom', true);
+        customDiv.appendChild(item);
+    });
+}
+
+function createLocationItem(location, set, isCustom = false) {
+    const div = document.createElement('div');
+    div.className = 'location-item';
+    div.innerHTML = `
+        <div class="location-item-header">
+            <strong>${escapeHtml(location.name)}</strong>
+            ${isCustom ? '<button class="btn-remove-location" data-location-name="' + escapeHtml(location.name) + '">REMOVE</button>' : ''}
+        </div>
+        <div class="location-item-roles">${location.roles.map(r => escapeHtml(r)).join(', ')}</div>
+    `;
+    
+    if (isCustom) {
+        const removeBtn = div.querySelector('.btn-remove-location');
+        removeBtn.addEventListener('click', () => removeCustomLocation(location.name));
+    }
+    
+    return div;
+}
+
+function addCustomLocation() {
+    const name = document.getElementById('new-location-name').value.trim();
+    const rolesStr = document.getElementById('new-location-roles').value.trim();
+    
+    if (!name) {
+        showNotification('Please enter a location name', 'error');
+        return;
+    }
+    
+    if (!rolesStr) {
+        showNotification('Please enter roles', 'error');
+        return;
+    }
+    
+    const roles = rolesStr.split(',').map(r => r.trim()).filter(r => r.length > 0);
+    
+    if (roles.length === 0) {
+        showNotification('Please enter at least one role', 'error');
+        return;
+    }
+    
+    // Check if location already exists
+    if (CUSTOM_LOCATIONS.some(loc => loc.name.toLowerCase() === name.toLowerCase())) {
+        showNotification('Location already exists', 'error');
+        return;
+    }
+    
+    const newLocation = { name, roles };
+    CUSTOM_LOCATIONS.push(newLocation);
+    saveCustomLocations();
+    
+    // Refresh custom locations tab
+    const customDiv = document.getElementById('custom-locations');
+    const item = createLocationItem(newLocation, 'custom', true);
+    customDiv.appendChild(item);
+    
+    // Clear inputs
+    document.getElementById('new-location-name').value = '';
+    document.getElementById('new-location-roles').value = '';
+    
+    showNotification('Location added', 'success');
+}
+
+function removeCustomLocation(name) {
+    CUSTOM_LOCATIONS = CUSTOM_LOCATIONS.filter(loc => loc.name !== name);
+    saveCustomLocations();
+    loadLocationTabs();
+    showNotification('Location removed', 'success');
+}
+
+function switchLocationTab(tab) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.tab === tab) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Update tab panes
+    document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.remove('active');
+    });
+    
+    document.getElementById(tab + '-tab').classList.add('active');
+}
+
+function handleLocationImport(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    importLocations(file, (success, message) => {
+        if (success) {
+            showNotification(message, 'success');
+            loadLocationTabs();
+        } else {
+            showNotification(message, 'error');
+        }
+        // Reset file input
+        e.target.value = '';
+    });
+}
 

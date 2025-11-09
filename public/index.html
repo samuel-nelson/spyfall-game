@@ -35,6 +35,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="styles.css">
+    <script>
+        // Initialize theme from localStorage
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'light') {
+            document.documentElement.classList.add('light-mode');
+        }
+    </script>
 </head>
 <body>
     <div class="container">
@@ -105,11 +112,44 @@
                     </div>
                 </div>
                 <div id="players-list" class="players-list"></div>
+                
+                <!-- Game Settings (Host Only) -->
+                <div id="game-settings" class="game-settings" style="display: none;">
+                    <h3>GAME SETTINGS</h3>
+                    <div class="settings-grid">
+                        <div class="form-group">
+                            <label for="spy-count">SPY COUNT</label>
+                            <select id="spy-count">
+                                <option value="1">1 Spy</option>
+                                <option value="2">2 Spies</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="show-spy-count">SHOW SPY COUNT</label>
+                            <select id="show-spy-count">
+                                <option value="true">Visible</option>
+                                <option value="false">Hidden</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="timer-minutes">TIMER (MINUTES)</label>
+                            <input type="number" id="timer-minutes" min="1" max="60" value="8">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button id="save-settings-btn" class="btn btn-primary">SAVE SETTINGS</button>
+                        <button id="manage-locations-btn" class="btn btn-secondary">MANAGE LOCATIONS</button>
+                    </div>
+                </div>
+                
                 <div id="lobby-actions" class="lobby-actions">
                     <button id="start-round-btn" class="btn btn-primary" style="display: none;">BEGIN OPERATION</button>
                     <p class="waiting-text">Awaiting additional agents... (Minimum 3 required)</p>
                 </div>
-                <button id="leave-game-btn" class="btn btn-secondary">EXFILTRATE</button>
+                <div class="lobby-footer">
+                    <button id="theme-toggle-btn" class="btn btn-secondary" style="display: inline-block; margin-right: 10px;">TOGGLE THEME</button>
+                    <button id="leave-game-btn" class="btn btn-secondary">EXFILTRATE</button>
+                </div>
             </div>
         </div>
 
@@ -247,6 +287,46 @@
                             <button id="back-to-lobby-btn" class="btn btn-secondary">RETURN TO BRIEFING</button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Location Management Modal -->
+        <div id="location-management-modal" class="modal" style="display: none;">
+            <div class="modal-content" style="max-width: 800px;">
+                <h3>MANAGE LOCATIONS</h3>
+                <div class="location-tabs">
+                    <button class="tab-btn active" data-tab="spyfall1">SPYFALL 1</button>
+                    <button class="tab-btn" data-tab="spyfall2">SPYFALL 2</button>
+                    <button class="tab-btn" data-tab="custom">CUSTOM</button>
+                </div>
+                <div id="location-tab-content" class="location-tab-content">
+                    <div id="spyfall1-tab" class="tab-pane active">
+                        <div class="location-list" id="spyfall1-locations"></div>
+                    </div>
+                    <div id="spyfall2-tab" class="tab-pane">
+                        <div class="location-list" id="spyfall2-locations"></div>
+                    </div>
+                    <div id="custom-tab" class="tab-pane">
+                        <div class="location-list" id="custom-locations"></div>
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label for="new-location-name">NEW LOCATION NAME</label>
+                            <input type="text" id="new-location-name" placeholder="Enter location name">
+                        </div>
+                        <div class="form-group">
+                            <label for="new-location-roles">ROLES (comma-separated)</label>
+                            <input type="text" id="new-location-roles" placeholder="Role1, Role2, Role3, Role4, Role5">
+                        </div>
+                        <button id="add-custom-location-btn" class="btn btn-primary">ADD LOCATION</button>
+                    </div>
+                </div>
+                <div class="location-actions">
+                    <button id="export-locations-btn" class="btn btn-secondary">EXPORT LOCATIONS</button>
+                    <button id="import-locations-btn" class="btn btn-secondary">IMPORT LOCATIONS</button>
+                    <input type="file" id="import-locations-file" accept=".json" style="display: none;">
+                </div>
+                <div class="modal-buttons">
+                    <button id="close-location-management-btn" class="btn btn-primary">CLOSE</button>
                 </div>
             </div>
         </div>
