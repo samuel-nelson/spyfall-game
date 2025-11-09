@@ -243,9 +243,12 @@ async function joinGame() {
 }
 
 async function startRound() {
+    console.log('⭐⭐ startRound: Called');
     // Save settings before starting round if host (but don't block on errors)
     const game = gameState.game;
     const isHost = game && game.players[0] && game.players[0].id === gameState.playerId;
+    console.log('⭐⭐ startRound: Game:', game, 'isHost:', isHost);
+    
     if (isHost && (game.status === 'lobby' || game.status === 'roundEnd')) {
         try {
             await saveGameSettingsSilent();
@@ -256,6 +259,7 @@ async function startRound() {
     }
     
     try {
+        console.log('⭐⭐ startRound: Sending request to start-round API...');
         const response = await fetch(`${API_BASE}/start-round`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -265,7 +269,9 @@ async function startRound() {
             })
         });
 
+        console.log('⭐⭐ startRound: API response status:', response.status);
         const data = await response.json();
+        console.log('⭐⭐ startRound: API response data:', data);
         
         if (data.error) {
             showNotification(data.error, 'error');
@@ -1534,12 +1540,15 @@ window.closeModal = function(modalId) {
 };
 
 async function nextRound() {
+    console.log('⭐ nextRound: Starting...');
     // Close the result modal
     window.closeModal('game-result-modal');
     stopTimer(); // Stop timer before starting new round
     
     try {
+        console.log('⭐ nextRound: Calling startRound()...');
         await startRound();
+        console.log('⭐ nextRound: startRound() completed successfully');
         // Poll immediately and more frequently to get updated state
         pollGameState();
         // Also poll after short delays to catch the state change
@@ -1547,7 +1556,7 @@ async function nextRound() {
         setTimeout(() => pollGameState(), 1500);
         setTimeout(() => pollGameState(), 3000);
     } catch (error) {
-        console.error('Error starting next round:', error);
+        console.error('⭐ nextRound: ERROR:', error);
         showNotification('Failed to start next round. Please try again.', 'error');
         // Reopen modal if there was an error
         const game = gameState.game;
