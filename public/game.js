@@ -1032,10 +1032,16 @@ function showRoundResult(game) {
 
     content.innerHTML = resultText;
 
-    // Show next round button if host
+    // Show next round button if host, otherwise show waiting message
     const isHost = game.players[0] && game.players[0].id === gameState.playerId;
     nextRoundBtn.style.display = isHost ? 'block' : 'none';
     backToLobbyBtn.style.display = isHost ? 'none' : 'block';
+    
+    // Add waiting message for non-host players
+    if (!isHost) {
+        resultText += '<p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-style: italic;">Waiting for host to start the next round...</p>';
+        content.innerHTML = resultText;
+    }
 
     modal.style.display = 'flex';
 }
@@ -1119,7 +1125,7 @@ async function saveGameSettings() {
                     showSpyCount,
                     timerMinutes,
                     customLocations: CUSTOM_LOCATIONS,
-                    enabledLocationSets: ['spyfall1'] // Default, can be expanded
+                    enabledLocationSets: getEnabledLocationSets()
                 }
             })
         });
@@ -1157,6 +1163,38 @@ function toggleTheme() {
 // Location management functions
 function showLocationManagement() {
     document.getElementById('location-management-modal').style.display = 'flex';
+    
+    // Load enabled locations from game settings
+    const game = gameState.game;
+    enabledLocations.clear();
+    
+    if (game?.settings) {
+        const enabledSets = game.settings.enabledLocationSets || ['spyfall1'];
+        const customLocations = game.settings.customLocations || [];
+        
+        // Add all locations from enabled sets
+        if (enabledSets.includes('spyfall1')) {
+            SPYFALL1_LOCATIONS.forEach(loc => {
+                enabledLocations.add(`spyfall1-${loc.name}`);
+            });
+        }
+        if (enabledSets.includes('spyfall2')) {
+            SPYFALL2_LOCATIONS.forEach(loc => {
+                enabledLocations.add(`spyfall2-${loc.name}`);
+            });
+        }
+        if (enabledSets.includes('custom')) {
+            customLocations.forEach(loc => {
+                enabledLocations.add(`custom-${loc.name}`);
+            });
+        }
+    } else {
+        // Default: enable all Spyfall 1 locations
+        SPYFALL1_LOCATIONS.forEach(loc => {
+            enabledLocations.add(`spyfall1-${loc.name}`);
+        });
+    }
+    
     loadLocationTabs();
 }
 
@@ -1187,16 +1225,39 @@ function loadLocationTabs() {
     });
 }
 
+// Track enabled locations
+let enabledLocations = new Set();
+
 function createLocationItem(location, set, isCustom = false) {
     const div = document.createElement('div');
     div.className = 'location-item';
+    
+    const locationId = `${set}-${location.name}`;
+    const isEnabled = enabledLocations.has(locationId);
+    
     div.innerHTML = `
         <div class="location-item-header">
-            <strong>${escapeHtml(location.name)}</strong>
+            <label class="location-checkbox-label">
+                <input type="checkbox" class="location-checkbox" data-location-id="${locationId}" data-location-set="${set}" ${isEnabled ? 'checked' : ''}>
+                <span class="location-checkbox-custom"></span>
+                <strong>${escapeHtml(location.name)}</strong>
+            </label>
             ${isCustom ? '<button class="btn-remove-location" data-location-name="' + escapeHtml(location.name) + '">REMOVE</button>' : ''}
         </div>
         <div class="location-item-roles">${location.roles.map(r => escapeHtml(r)).join(', ')}</div>
     `;
+    
+    // Add checkbox event listener
+    const checkbox = div.querySelector('.location-checkbox');
+    checkbox.addEventListener('change', (e) => {
+        const locationId = e.target.dataset.locationId;
+        if (e.target.checked) {
+            enabledLocations.add(locationId);
+        } else {
+            enabledLocations.delete(locationId);
+        }
+        updateEnabledLocationSets();
+    });
     
     if (isCustom) {
         const removeBtn = div.querySelector('.btn-remove-location');
@@ -1204,6 +1265,64 @@ function createLocationItem(location, set, isCustom = false) {
     }
     
     return div;
+}
+
+function updateEnabledLocationSets() {
+    // Convert enabled locations to sets format
+    const sets = new Set();
+    const customLocations = [];
+    
+    enabledLocations.forEach(locationId => {
+        const [set, ...nameParts] = locationId.split('-');
+        const name = nameParts.join('-');
+        
+        if (set === 'custom') {
+            const loc = CUSTOM_LOCATIONS.find(l => l.name === name);
+            if (loc) customLocations.push(loc);
+        } else {
+            sets.add(set);
+        }
+    });
+    
+    // Update game settings
+    const game = gameState.game;
+    if (game && game.players[0] && game.players[0].id === gameState.playerId) {
+        // Save to game settings
+        saveLocationSettings(Array.from(sets), customLocations);
+    }
+}
+
+async function saveLocationSettings(enabledSets, customLocations) {
+    if (!gameState.gameCode || !gameState.playerId) return;
+    
+    try {
+        // Convert enabledLocations Set to array
+        const enabledLocationsList = Array.from(enabledLocations);
+        
+        const response = await fetch(`${API_BASE}/update-game-settings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                gameCode: gameState.gameCode,
+                playerId: gameState.playerId,
+                settings: {
+                    spyCount: gameState.game?.settings?.spyCount || 1,
+                    showSpyCount: gameState.game?.settings?.showSpyCount !== false,
+                    timerMinutes: gameState.game?.settings?.timerMinutes || 8,
+                    customLocations: customLocations,
+                    enabledLocationSets: enabledSets.length > 0 ? enabledSets : ['spyfall1'],
+                    enabledLocationsList: enabledLocationsList // Store individual location selection
+                }
+            })
+        });
+        
+        const data = await response.json();
+        if (!data.error) {
+            // Settings saved successfully
+        }
+    } catch (error) {
+        console.error('Error saving location settings:', error);
+    }
 }
 
 function addCustomLocation() {
@@ -1287,5 +1406,25 @@ function handleLocationImport(e) {
         // Reset file input
         e.target.value = '';
     });
+}
+
+function getEnabledLocationSets() {
+    const sets = new Set();
+    enabledLocations.forEach(locationId => {
+        const [set] = locationId.split('-');
+        if (set !== 'custom') {
+            sets.add(set);
+        }
+    });
+    
+    // Always include custom if there are custom locations enabled
+    enabledLocations.forEach(locationId => {
+        const [set] = locationId.split('-');
+        if (set === 'custom') {
+            sets.add('custom');
+        }
+    });
+    
+    return sets.size > 0 ? Array.from(sets) : ['spyfall1'];
 }
 

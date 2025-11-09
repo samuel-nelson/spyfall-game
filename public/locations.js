@@ -268,9 +268,31 @@ function saveCustomLocations() {
 loadCustomLocations();
 
 // Get all enabled locations based on game settings
-function getAllEnabledLocations(enabledSets = ['spyfall1'], customLocations = []) {
+// Now supports individual location selection via enabledLocationsList
+function getAllEnabledLocations(enabledSets = ['spyfall1'], customLocations = [], enabledLocationsList = null) {
     let locations = [];
     
+    // If enabledLocationsList is provided, use individual location selection
+    if (enabledLocationsList && Array.isArray(enabledLocationsList) && enabledLocationsList.length > 0) {
+        enabledLocationsList.forEach(locationId => {
+            const [set, ...nameParts] = locationId.split('-');
+            const name = nameParts.join('-');
+            
+            if (set === 'spyfall1') {
+                const loc = SPYFALL1_LOCATIONS.find(l => l.name === name);
+                if (loc) locations.push(loc);
+            } else if (set === 'spyfall2') {
+                const loc = SPYFALL2_LOCATIONS.find(l => l.name === name);
+                if (loc) locations.push(loc);
+            } else if (set === 'custom') {
+                const loc = customLocations.find(l => l.name === name);
+                if (loc) locations.push(loc);
+            }
+        });
+        return locations;
+    }
+    
+    // Fallback to set-based selection
     if (enabledSets.includes('spyfall1')) {
         locations = locations.concat(SPYFALL1_LOCATIONS);
     }

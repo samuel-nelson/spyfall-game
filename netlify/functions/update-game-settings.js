@@ -94,6 +94,9 @@ exports.handler = async (event, context) => {
         if (settings.enabledLocationSets !== undefined) {
             game.settings.enabledLocationSets = Array.isArray(settings.enabledLocationSets) ? settings.enabledLocationSets : ['spyfall1'];
         }
+        if (settings.enabledLocationsList !== undefined) {
+            game.settings.enabledLocationsList = Array.isArray(settings.enabledLocationsList) ? settings.enabledLocationsList : null;
+        }
 
         // Save updated game
         await saveGameState(game);
