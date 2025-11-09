@@ -66,13 +66,15 @@ exports.handler = async (event, context) => {
             };
         }
 
-        if (game.status !== 'lobby') {
+        // Allow joining if game is in lobby, playing, or roundEnd (players can wait for next round)
+        // Only block if game is in an invalid state
+        if (game.status && game.status !== 'lobby' && game.status !== 'playing' && game.status !== 'roundEnd') {
             return {
                 statusCode: 400,
                 headers: {
                     'Access-Control-Allow-Origin': '*'
                 },
-                body: JSON.stringify({ error: 'Game has already started' })
+                body: JSON.stringify({ error: 'Game is not available to join' })
             };
         }
 

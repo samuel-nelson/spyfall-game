@@ -537,35 +537,67 @@ function updatePossibleLocations(game, round) {
     const locationsDiv = document.getElementById('possible-locations');
     if (!locationsDiv) return;
     
+    // Preserve scroll position
+    const grid = locationsDiv.querySelector('.locations-grid');
+    const scrollTop = grid ? grid.scrollTop : 0;
+    
     // Get enabled packs from game settings
     const enabledPacks = game?.settings?.enabledPacks || ['pack1'];
     
     // Get all locations from enabled packs
     const allLocations = getAllEnabledLocations(enabledPacks);
     
-    locationsDiv.innerHTML = '<h3 class="locations-title">POSSIBLE LOCATIONS</h3>';
-    locationsDiv.innerHTML += '<div class="locations-grid"></div>';
-    
-    const grid = locationsDiv.querySelector('.locations-grid');
-    
-    // Get current location name (handle both string and object)
+    // Only update if content actually changed
     const currentLocationName = typeof round.location === 'string' ? round.location : round.location?.name;
     const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
     const isMole = moleIds.includes(gameState.playerId);
     
-    allLocations.forEach(location => {
-        const locationName = typeof location === 'string' ? location : location.name;
-        const locationCard = document.createElement('div');
-        locationCard.className = 'location-card-small';
+    // Check if we need to update (only if grid doesn't exist or content changed)
+    if (!grid) {
+        locationsDiv.innerHTML = '<h3 class="locations-title">POSSIBLE LOCATIONS</h3>';
+        locationsDiv.innerHTML += '<div class="locations-grid"></div>';
+    }
+    
+    const newGrid = locationsDiv.querySelector('.locations-grid');
+    
+    // Only rebuild if grid is empty or structure changed
+    if (!newGrid.children.length || newGrid.children.length !== allLocations.length) {
+        newGrid.innerHTML = '';
         
-        // Highlight if it's the current location (for non-moles only)
-        if (!isMole && locationName === currentLocationName) {
-            locationCard.classList.add('current-location');
+        allLocations.forEach(location => {
+            const locationName = typeof location === 'string' ? location : location.name;
+            const locationCard = document.createElement('div');
+            locationCard.className = 'location-card-small';
+            
+            // Highlight if it's the current location (for non-moles only)
+            if (!isMole && locationName === currentLocationName) {
+                locationCard.classList.add('current-location');
+            }
+            
+            locationCard.textContent = locationName;
+            newGrid.appendChild(locationCard);
+        });
+        
+        // Restore scroll position
+        if (scrollTop > 0) {
+            newGrid.scrollTop = scrollTop;
         }
+    } else {
+        // Just update highlighting without rebuilding
+        Array.from(newGrid.children).forEach((card, index) => {
+            const locationName = typeof allLocations[index] === 'string' ? allLocations[index] : allLocations[index].name;
+            if (!isMole && locationName === currentLocationName) {
+                card.classList.add('current-location');
+            } else {
+                card.classList.remove('current-location');
+            }
+        });
         
-        locationCard.textContent = locationName;
-        grid.appendChild(locationCard);
-    });
+        // Restore scroll position
+        if (scrollTop > 0) {
+            newGrid.scrollTop = scrollTop;
+        }
+    }
     
     // Show the locations display
     locationsDiv.style.display = 'block';
