@@ -8,7 +8,8 @@ let gameState = {
     timerInterval: null,
     bannerFadeTimeout: null,
     bannerShownForTurn: null, // Track which turn the banner was shown for
-    showingResultModal: false // Prevent multiple calls to showRoundResult
+    showingResultModal: false, // Prevent multiple calls to showRoundResult
+    resultModalButtonsSetup: false // Prevent multiple button setups
 };
 
 // API base URL - will work with Netlify Functions
@@ -62,7 +63,7 @@ function setupEventListeners() {
     document.getElementById('theme-toggle-btn-create').addEventListener('click', toggleTheme);
     document.getElementById('theme-toggle-btn-join').addEventListener('click', toggleTheme);
     document.getElementById('theme-toggle-btn-game').addEventListener('click', toggleTheme);
-    
+
     // Game actions
     document.getElementById('vote-mole-action-btn').addEventListener('click', showVoteModal);
     document.getElementById('vote-mole-btn').addEventListener('click', showVoteModal);
@@ -712,8 +713,8 @@ function updateGameActions(game, round, currentPlayer) {
         // Only show banner if we haven't shown it for this specific turn yet
         if (gameState.bannerShownForTurn !== turnKey) {
             // Show the banner
-            firstTurnBanner.style.display = 'block';
-            firstTurnBanner.style.opacity = '1';
+                    firstTurnBanner.style.display = 'block';
+                    firstTurnBanner.style.opacity = '1';
             firstTurnBanner.style.transition = '';
             firstTurnBanner.style.visibility = 'visible';
             
@@ -722,31 +723,31 @@ function updateGameActions(game, round, currentPlayer) {
             
             // Clear any existing timeout
             if (gameState.bannerFadeTimeout) {
-                clearTimeout(gameState.bannerFadeTimeout);
+                    clearTimeout(gameState.bannerFadeTimeout);
             }
             
             // Set new timeout to fade away after 15 seconds
-            gameState.bannerFadeTimeout = setTimeout(() => {
+                    gameState.bannerFadeTimeout = setTimeout(() => {
                 if (firstTurnBanner) {
-                    firstTurnBanner.style.transition = 'opacity 1s ease-out';
-                    firstTurnBanner.style.opacity = '0';
-                    setTimeout(() => {
+                        firstTurnBanner.style.transition = 'opacity 1s ease-out';
+                        firstTurnBanner.style.opacity = '0';
+                        setTimeout(() => {
                         if (firstTurnBanner) {
                             firstTurnBanner.style.display = 'none';
                             firstTurnBanner.style.opacity = '1';
                             firstTurnBanner.style.transition = '';
                         }
-                    }, 1000);
+                        }, 1000);
                 }
-            }, 15000);
-        }
-    } else {
+                    }, 15000);
+                }
+            } else {
         // Hide banner if it's not the player's turn or question has been asked
-        if (firstTurnBanner) {
+                if (firstTurnBanner) {
             if (gameState.bannerFadeTimeout) {
                 clearTimeout(gameState.bannerFadeTimeout);
                 gameState.bannerFadeTimeout = null;
-            }
+                }
             // Reset the turn tracking when conditions change
             if (!shouldShowBanner) {
                 gameState.bannerShownForTurn = null;
@@ -1084,8 +1085,9 @@ function showRoundResult(game) {
     // This function MUST show the modal for ALL players including moles
     // No conditions, no exceptions
     
-    // Reset the flag when function is called (in case it was set)
+    // Reset the flags when function is called (in case they were set)
     gameState.showingResultModal = false;
+    gameState.resultModalButtonsSetup = false; // Allow button setup again
     
     console.log('showRoundResult: Called with game:', game);
     
@@ -1093,7 +1095,7 @@ function showRoundResult(game) {
     if (!round) {
         console.error('showRoundResult: No current round');
         // Even if no round, try to show modal with generic message
-        const modal = document.getElementById('game-result-modal');
+    const modal = document.getElementById('game-result-modal');
         if (modal) {
             modal.classList.add('show');
             modal.style.display = 'flex';
@@ -1129,7 +1131,7 @@ function showRoundResult(game) {
 
     // Prevent body scroll when modal is open
     document.body.style.overflow = 'hidden';
-    
+
     // FORCE SHOW MODAL IMMEDIATELY - before any other logic
     modal.classList.add('show');
     modal.style.display = 'flex';
@@ -1272,11 +1274,11 @@ function showRoundResult(game) {
                 <p style="margin-top: 15px; color: var(--color-danger);"><strong>Mole wins!</strong></p>
             `;
         } else {
-            resultText = `
-                <p>The mole survived until time ran out.</p>
-                <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName)}</p>
+        resultText = `
+            <p>The mole survived until time ran out.</p>
+            <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName)}</p>
                 <p style="margin-top: 15px; color: var(--color-danger);"><strong>Mole wins!</strong></p>
-            `;
+        `;
         }
     } else {
         hasContent = true;
@@ -1353,33 +1355,48 @@ function showRoundResult(game) {
         console.log('showRoundResult: Title computed styles:', window.getComputedStyle(title).display);
     }
     
-    // Use event delegation on modal-buttons container for maximum reliability
-    // This approach works even if buttons are replaced or recreated
-    const modalButtonsContainer = modal.querySelector('.modal-buttons');
-    if (modalButtonsContainer) {
-        // Remove any existing event listeners by cloning the container
-        const newContainer = modalButtonsContainer.cloneNode(true);
-        modalButtonsContainer.replaceWith(newContainer);
+    // Set up button handlers using multiple redundant methods
+    // Use requestAnimationFrame to ensure modal is fully rendered first
+    requestAnimationFrame(() => {
+        // Prevent multiple setups
+        if (gameState.resultModalButtonsSetup) {
+            console.log('showRoundResult: Buttons already set up, skipping');
+            return;
+        }
+        gameState.resultModalButtonsSetup = true;
         
-        // Set up event delegation on the container
-        newContainer.addEventListener('click', async function(e) {
-            const target = e.target;
-            const buttonId = target.id;
+        const modalButtonsContainer = modal.querySelector('.modal-buttons');
+        const nextRoundBtn = document.getElementById('next-round-btn');
+        const backToLobbyBtn = document.getElementById('back-to-lobby-btn');
+        
+        console.log('showRoundResult: Setting up button handlers. Container:', !!modalButtonsContainer, 'NextBtn:', !!nextRoundBtn, 'BackBtn:', !!backToLobbyBtn);
+        
+        if (!modalButtonsContainer) {
+            console.error('showRoundResult: Modal buttons container not found!');
+            gameState.resultModalButtonsSetup = false;
+            return;
+        }
+        
+        // Method 1: Event delegation on container using closest() to handle child element clicks
+        modalButtonsContainer.addEventListener('click', async function(e) {
+            console.log('Modal button container clicked. Target:', e.target, 'Target tag:', e.target.tagName, 'Target id:', e.target.id);
             
-            console.log('Modal button container clicked. Target:', buttonId, 'Element:', target);
+            // Use closest() to find button even if clicking on text node or child element
+            const nextRoundButton = e.target.closest('#next-round-btn');
+            const backToLobbyButton = e.target.closest('#back-to-lobby-btn');
             
-            if (buttonId === 'next-round-btn') {
+            if (nextRoundButton) {
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
-                console.log('Next round button clicked via delegation!');
+                console.log('Next round button clicked via delegation (closest)!');
                 nextRound();
                 return false;
-            } else if (buttonId === 'back-to-lobby-btn') {
+            } else if (backToLobbyButton) {
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
-                console.log('Back to lobby button clicked via delegation!');
+                console.log('Back to lobby button clicked via delegation (closest)!');
                 
                 const currentGame = gameState.game;
                 const currentIsHost = currentGame && currentGame.players && currentGame.players.length > 0 && currentGame.players[0].id === gameState.playerId;
@@ -1420,50 +1437,52 @@ function showRoundResult(game) {
                 }
                 showScreen('main-menu');
                 return false;
+            } else {
+                console.log('showRoundResult: Click detected but not on a button. Target:', e.target);
             }
         }, { capture: true, passive: false });
         
-        // Also set up direct handlers on buttons as backup
-        const nextRoundBtnCurrent = newContainer.querySelector('#next-round-btn');
-        const backToLobbyBtnCurrent = newContainer.querySelector('#back-to-lobby-btn');
-        
-        if (nextRoundBtnCurrent) {
+        // Method 2: Direct event handlers on buttons (backup)
+        if (nextRoundBtn) {
             // Set display
-            if (isHost) {
-                nextRoundBtnCurrent.style.display = 'block';
-            } else {
-                nextRoundBtnCurrent.style.display = 'none';
+    if (isHost) {
+        nextRoundBtn.style.display = 'block';
+    } else {
+        nextRoundBtn.style.display = 'none';
             }
             // Ensure button is clickable
-            nextRoundBtnCurrent.style.pointerEvents = 'auto';
-            nextRoundBtnCurrent.style.cursor = 'pointer';
-            nextRoundBtnCurrent.style.position = 'relative';
-            nextRoundBtnCurrent.style.zIndex = '10003';
-            // Also set onclick as backup
-            nextRoundBtnCurrent.onclick = function(e) {
+            nextRoundBtn.style.pointerEvents = 'auto';
+            nextRoundBtn.style.cursor = 'pointer';
+            nextRoundBtn.style.position = 'relative';
+            nextRoundBtn.style.zIndex = '10003';
+            // Ensure onclick attribute is preserved
+            nextRoundBtn.setAttribute('onclick', 'handleNextRound(); return false;');
+            // Also add event listener as backup
+            nextRoundBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                e.stopImmediatePropagation();
-                console.log('Next round button clicked via onclick!');
+                console.log('Next round button clicked via addEventListener!');
                 nextRound();
-                return false;
-            };
-            console.log('showRoundResult: Next round button set up. Display:', nextRoundBtnCurrent.style.display, 'isHost:', isHost);
+            }, { capture: false, passive: false });
+            console.log('showRoundResult: Next round button set up. Display:', nextRoundBtn.style.display, 'isHost:', isHost);
+        } else {
+            console.error('showRoundResult: Next round button not found!');
         }
         
-        if (backToLobbyBtnCurrent) {
-            backToLobbyBtnCurrent.style.display = 'block';
+        if (backToLobbyBtn) {
+        backToLobbyBtn.style.display = 'block';
             // Ensure button is clickable
-            backToLobbyBtnCurrent.style.pointerEvents = 'auto';
-            backToLobbyBtnCurrent.style.cursor = 'pointer';
-            backToLobbyBtnCurrent.style.position = 'relative';
-            backToLobbyBtnCurrent.style.zIndex = '10003';
-            // Also set onclick as backup
-            backToLobbyBtnCurrent.onclick = async function(e) {
+            backToLobbyBtn.style.pointerEvents = 'auto';
+            backToLobbyBtn.style.cursor = 'pointer';
+            backToLobbyBtn.style.position = 'relative';
+            backToLobbyBtn.style.zIndex = '10003';
+            // Ensure onclick attribute is preserved
+            backToLobbyBtn.setAttribute('onclick', 'handleBackToLobby(); return false;');
+            // Also add event listener as backup
+            backToLobbyBtn.addEventListener('click', async function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                e.stopImmediatePropagation();
-                console.log('Back to lobby button clicked via onclick!');
+                console.log('Back to lobby button clicked via addEventListener!');
                 
                 const currentGame = gameState.game;
                 const currentIsHost = currentGame && currentGame.players && currentGame.players.length > 0 && currentGame.players[0].id === gameState.playerId;
@@ -1503,13 +1522,17 @@ function showRoundResult(game) {
                     sessionStorage.setItem('lastPlayerName', playerName);
                 }
                 showScreen('main-menu');
-                return false;
-            };
+            }, { capture: false, passive: false });
             console.log('showRoundResult: Back to lobby button set up.');
+        } else {
+            console.error('showRoundResult: Back to lobby button not found!');
         }
-    } else {
-        console.error('showRoundResult: Modal buttons container not found!');
-    }
+        
+        // Reset flag after a delay to allow re-setup if modal is closed and reopened
+        setTimeout(() => {
+            gameState.resultModalButtonsSetup = false;
+        }, 2000);
+    });
     
     // FORCE SHOW MODAL - Multiple redundant checks to ensure it shows for moles
     // Re-get modal reference
@@ -1566,7 +1589,7 @@ window.closeModal = function(modalId) {
         modal.classList.remove('show');
         
         // Restore body scroll
-        document.body.style.overflow = '';
+            document.body.style.overflow = '';
         
         // Clear any selected location
         if (modalId === 'guess-location-modal') {

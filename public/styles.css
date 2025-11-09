@@ -1022,10 +1022,14 @@ h3 {
     font-size: 1.1rem;
     min-width: 120px;
     cursor: pointer;
-    z-index: 10;
+    z-index: 10003;
     position: relative;
-    pointer-events: auto;
+    pointer-events: auto !important;
     flex-shrink: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .question-prompt, .vote-instruction, .guess-instruction {
