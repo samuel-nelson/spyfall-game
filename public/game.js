@@ -698,24 +698,19 @@ function updateGameActions(game, round, currentPlayer) {
             // Highlight if it's your turn
             if (isMyTurn && !hasPendingQuestion && !isMole) {
                 turnIndicator.classList.add('your-turn');
-                // Automatically show question modal for the current player (only if no modal is open and it's actually their turn)
-                if (!round.currentQuestion && round.currentTurn === gameState.playerId) {
-                    // Check if any modal is currently open
-                    const anyModalOpen = Array.from(document.querySelectorAll('.modal')).some(modal => 
-                        modal.style.display === 'flex' || window.getComputedStyle(modal).display === 'flex'
-                    );
-                    if (!anyModalOpen) {
-                        // Double-check that the select element exists before opening modal
-                        const selectElement = document.getElementById('question-target');
-                        if (selectElement) {
-                            setTimeout(() => {
-                                showQuestionModal();
-                            }, 500);
-                        }
-                    }
+                // Show cryptic banner for first player instead of modal
+                const firstTurnBanner = document.getElementById('first-turn-banner');
+                if (firstTurnBanner && !round.currentQuestion && round.currentTurn === gameState.playerId) {
+                    firstTurnBanner.style.display = 'block';
+                } else if (firstTurnBanner) {
+                    firstTurnBanner.style.display = 'none';
                 }
             } else {
                 turnIndicator.classList.remove('your-turn');
+                const firstTurnBanner = document.getElementById('first-turn-banner');
+                if (firstTurnBanner) {
+                    firstTurnBanner.style.display = 'none';
+                }
             }
         }
     } else {

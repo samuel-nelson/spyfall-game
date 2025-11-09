@@ -864,6 +864,182 @@ h3 {
     }
 }
 
+/* First Turn Banner - Cryptic Note/Scroll Style */
+.first-turn-banner {
+    margin: 30px 0;
+    padding: 0;
+    display: none;
+    animation: fadeInSlide 0.6s ease-out;
+}
+
+.banner-content {
+    position: relative;
+    background: rgba(10, 10, 10, 0.6);
+    border: 2px solid var(--color-primary);
+    padding: 35px 40px;
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(201, 169, 97, 0.2);
+    background-image: 
+        repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(201, 169, 97, 0.03) 2px, rgba(201, 169, 97, 0.03) 4px),
+        url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="paper-texture" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="0.5" fill="%23C9A961" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23paper-texture)"/></svg>');
+    position: relative;
+    overflow: hidden;
+}
+
+.banner-content::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(201, 169, 97, 0.1) 0%, transparent 70%);
+    animation: rotate 20s linear infinite;
+}
+
+.banner-content::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 1px solid rgba(201, 169, 97, 0.3);
+    pointer-events: none;
+}
+
+.light-mode .banner-content {
+    background: rgba(250, 249, 246, 0.9);
+    border-color: var(--color-primary);
+    background-image: 
+        repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(184, 134, 11, 0.05) 2px, rgba(184, 134, 11, 0.05) 4px),
+        url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="paper-texture-light" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="0.5" fill="%23B8860B" opacity="0.08"/></pattern></defs><rect width="100" height="100" fill="url(%23paper-texture-light)"/></svg>');
+}
+
+.light-mode .banner-content::before {
+    background: radial-gradient(circle, rgba(184, 134, 11, 0.08) 0%, transparent 70%);
+}
+
+.light-mode .banner-content::after {
+    border-color: rgba(184, 134, 11, 0.2);
+}
+
+.banner-icon {
+    font-size: 3rem;
+    opacity: 0.8;
+    filter: drop-shadow(0 2px 4px rgba(201, 169, 97, 0.3));
+    flex-shrink: 0;
+}
+
+.banner-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.banner-title {
+    font-family: var(--font-serif);
+    font-size: 1.4rem;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.banner-message {
+    font-family: var(--font-elegant);
+    font-size: 1.2rem;
+    color: var(--color-text);
+    line-height: 1.6;
+    font-style: italic;
+    letter-spacing: 0.5px;
+}
+
+.banner-action-btn {
+    padding: 14px 28px;
+    background: transparent;
+    border: 2px solid var(--color-primary);
+    color: var(--color-primary);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+}
+
+.banner-action-btn:hover {
+    background: var(--color-primary);
+    color: var(--color-darker);
+    box-shadow: 0 0 20px rgba(201, 169, 97, 0.5);
+    transform: translateY(-2px);
+}
+
+.light-mode .banner-action-btn {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.light-mode .banner-action-btn:hover {
+    background: var(--color-primary);
+    color: var(--color-darker);
+    box-shadow: 0 0 20px rgba(184, 134, 11, 0.5);
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 768px) {
+    .banner-content {
+        flex-direction: column;
+        text-align: center;
+        padding: 25px 20px;
+        gap: 20px;
+    }
+    
+    .banner-icon {
+        font-size: 2.5rem;
+    }
+    
+    .banner-title {
+        font-size: 1.2rem;
+    }
+    
+    .banner-message {
+        font-size: 1.1rem;
+    }
+    
+    .banner-action-btn {
+        width: 100%;
+        padding: 12px 24px;
+    }
+}
+
 /* Modals */
 .modal {
     position: fixed;
