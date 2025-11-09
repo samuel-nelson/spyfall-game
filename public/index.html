@@ -328,7 +328,7 @@
     <!-- Modals - Moved outside all containers to be direct children of body -->
     <div id="answer-modal" class="modal">
                     <div class="modal-content">
-                        <button class="modal-close" onclick="closeModal('answer-modal')">×</button>
+                        <button class="modal-close" onclick="window.closeModal('answer-modal')">×</button>
                         <h3>RESPOND</h3>
                         <p id="question-to-answer" class="question-prompt"></p>
                         <div class="form-group">
@@ -343,7 +343,7 @@
 
     <div id="vote-modal" class="modal">
                     <div class="modal-content">
-                        <button class="modal-close" onclick="closeModal('vote-modal')">×</button>
+                        <button class="modal-close" onclick="window.closeModal('vote-modal')">×</button>
                         <h3>CAST YOUR VOTE</h3>
                         <p class="vote-instruction">Select the agent you believe is the mole:</p>
                         <div class="form-group">
@@ -359,7 +359,7 @@
 
     <div id="guess-location-modal" class="modal">
                     <div class="modal-content">
-                        <button class="modal-close" onclick="closeModal('guess-location-modal')">×</button>
+                        <button class="modal-close" onclick="window.closeModal('guess-location-modal')">×</button>
                         <h3>IDENTIFY LOCATION</h3>
                         <p class="guess-instruction">What location do you believe the operation is taking place?</p>
                         <div class="form-group">
@@ -375,7 +375,7 @@
 
     <div id="game-result-modal" class="modal">
                     <div class="modal-content result-content">
-                        <button class="modal-close" onclick="closeModal('game-result-modal')">×</button>
+                        <button class="modal-close" onclick="window.closeModal('game-result-modal')">×</button>
                         <h3 id="result-title"></h3>
                         <div id="result-content"></div>
                         <div class="modal-buttons">
