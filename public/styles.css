@@ -816,11 +816,20 @@ h3 {
 
 /* First Turn Banner - Cryptic Scribble Style */
 .first-turn-banner {
-    margin: 0 0 20px 0;
-    padding: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 999;
+    margin: 0;
+    padding: 30px 0;
     display: none;
     animation: fadeInSlide 0.6s ease-out;
     text-align: center;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
 }
 
 .banner-content {
@@ -906,12 +915,16 @@ h3 {
     left: 0;
     width: 100%;
     height: 100%;
+    min-height: 100vh;
     background: rgba(0, 0, 0, 0.85);
     display: none;
     z-index: 1000;
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
     box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* When modal is shown with flex */
@@ -919,11 +932,9 @@ h3 {
 .modal[style*="display:flex"] {
     display: flex !important;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     padding: 20px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
+    padding-top: 80px;
 }
 
 /* When modal is shown with block */
@@ -931,18 +942,17 @@ h3 {
 .modal[style*="display: block"] {
     display: block !important;
     padding: 20px;
-    overflow-y: auto;
-    overflow-x: hidden;
+    padding-top: 80px;
 }
 
 .modal-content {
     background: rgba(26, 26, 26, 0.98);
     border: 2px solid var(--color-primary);
-    padding: 50px 40px 50px 40px;
+    padding: 50px 40px;
     padding-top: 70px;
-    width: calc(100% - 40px);
+    width: 90%;
     max-width: 600px;
-    max-height: calc(100vh - 40px);
+    max-height: calc(100vh - 100px);
     overflow-y: auto;
     overflow-x: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
@@ -950,8 +960,9 @@ h3 {
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
     z-index: 1001;
-    /* Centering for flex parent */
-    margin: auto;
+    /* Perfect centering */
+    margin: 0 auto;
+    display: block;
 }
 
 .modal-content .form-group {
@@ -1839,11 +1850,14 @@ h3 {
     .modal[style*="display: flex"],
     .modal[style*="display:flex"] {
         padding: 10px;
+        padding-top: 60px;
+        align-items: flex-start;
     }
     
     .modal[style*="display:block"],
     .modal[style*="display: block"] {
         padding: 10px;
+        padding-top: 60px;
     }
     
     .modal-content {
@@ -1852,8 +1866,8 @@ h3 {
         padding-bottom: 40px;
         width: calc(100% - 20px);
         max-width: none;
-        max-height: calc(100vh - 20px);
-        margin: auto;
+        max-height: calc(100vh - 80px);
+        margin: 0 auto;
     }
     
     .modal-content .form-group {

@@ -211,7 +211,7 @@ async function startRound() {
     // Save settings before starting round if host (but don't block on errors)
     const game = gameState.game;
     const isHost = game && game.players[0] && game.players[0].id === gameState.playerId;
-    if (isHost && game.status === 'lobby') {
+    if (isHost && (game.status === 'lobby' || game.status === 'roundEnd')) {
         try {
             await saveGameSettingsSilent();
         } catch (error) {
@@ -874,7 +874,7 @@ function showModal(modalId) {
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     
-    // Ensure modal is properly centered
+    // Ensure modal is properly centered and scrolled to top
     setTimeout(() => {
         modal.scrollTop = 0;
         const modalContent = modal.querySelector('.modal-content');
@@ -882,6 +882,12 @@ function showModal(modalId) {
             modalContent.scrollTop = 0;
             // Force reflow to ensure centering
             void modalContent.offsetHeight;
+            // Center vertically by scrolling modal to show content
+            const modalHeight = modalContent.offsetHeight;
+            const viewportHeight = window.innerHeight;
+            if (modalHeight < viewportHeight) {
+                modal.scrollTop = (modal.scrollHeight - modalHeight) / 2;
+            }
         }
     }, 10);
 }
@@ -1265,7 +1271,11 @@ window.closeModal = function(modalId) {
 };
 
 async function nextRound() {
-    window.closeModal('game-result-modal');
+    const modal = document.getElementById('game-result-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    document.body.style.overflow = '';
     stopTimer(); // Stop timer before starting new round
     
     try {
