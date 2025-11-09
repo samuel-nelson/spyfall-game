@@ -693,6 +693,7 @@ function updateGameActions(game, round, currentPlayer) {
     const hasPendingQuestion = round.waitingForAnswer;
 
     // Show current turn indicator only for first player (when there's no current question)
+    const firstTurnBanner = document.getElementById('first-turn-banner');
     if (round.currentTurn && !round.currentQuestion) {
         const currentTurnPlayer = game.players.find(p => p.id === round.currentTurn);
         if (currentTurnPlayer) {
@@ -702,9 +703,9 @@ function updateGameActions(game, round, currentPlayer) {
                 turnIndicator.style.display = 'block';
                 turnIndicator.classList.add('your-turn');
                 // Show cryptic banner for first player
-                const firstTurnBanner = document.getElementById('first-turn-banner');
                 if (firstTurnBanner) {
                     firstTurnBanner.style.display = 'block';
+                    firstTurnBanner.style.opacity = '1';
                     // Fade away after 15 seconds
                     clearTimeout(gameState.bannerFadeTimeout);
                     gameState.bannerFadeTimeout = setTimeout(() => {
@@ -720,7 +721,6 @@ function updateGameActions(game, round, currentPlayer) {
             } else {
                 turnIndicator.style.display = 'none';
                 turnIndicator.classList.remove('your-turn');
-                const firstTurnBanner = document.getElementById('first-turn-banner');
                 if (firstTurnBanner) {
                     firstTurnBanner.style.display = 'none';
                 }
@@ -729,7 +729,6 @@ function updateGameActions(game, round, currentPlayer) {
     } else {
         turnIndicator.style.display = 'none';
         turnIndicator.classList.remove('your-turn');
-        const firstTurnBanner = document.getElementById('first-turn-banner');
         if (firstTurnBanner) {
             firstTurnBanner.style.display = 'none';
         }
@@ -875,26 +874,7 @@ function showVoteModal() {
     console.log('Showing vote modal');
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    // Ensure modal is centered - use requestAnimationFrame to wait for render
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            modal.scrollTop = 0;
-            const modalContent = modal.querySelector('.modal-content');
-            if (modalContent) {
-                // Force a reflow to ensure measurements are accurate
-                modalContent.offsetHeight;
-                const viewportHeight = window.innerHeight;
-                const contentHeight = modalContent.offsetHeight;
-                const padding = 20; // Modal padding
-                // Center the content vertically
-                if (contentHeight < viewportHeight - (padding * 2)) {
-                    modal.scrollTop = (modal.scrollHeight - viewportHeight) / 2;
-                } else {
-                    modal.scrollTop = 0;
-                }
-            }
-        });
-    });
+    modal.scrollTop = 0;
 }
 
 async function submitVote() {
@@ -1016,26 +996,7 @@ function showGuessLocationModal() {
     
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    // Ensure modal is centered - use requestAnimationFrame to wait for render
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            modal.scrollTop = 0;
-            const modalContent = modal.querySelector('.modal-content');
-            if (modalContent) {
-                // Force a reflow to ensure measurements are accurate
-                modalContent.offsetHeight;
-                const viewportHeight = window.innerHeight;
-                const contentHeight = modalContent.offsetHeight;
-                const padding = 20; // Modal padding
-                // Center the content vertically
-                if (contentHeight < viewportHeight - (padding * 2)) {
-                    modal.scrollTop = (modal.scrollHeight - viewportHeight) / 2;
-                } else {
-                    modal.scrollTop = 0;
-                }
-            }
-        });
-    });
+    modal.scrollTop = 0;
 }
 
 async function submitLocationGuess() {
@@ -1240,8 +1201,7 @@ function showRoundResult(game) {
 
     content.innerHTML = resultText;
     modal.style.display = 'flex';
-    
-    // Scroll modal to top when opened
+    document.body.style.overflow = 'hidden';
     modal.scrollTop = 0;
 }
 
@@ -1309,26 +1269,7 @@ function showAnswerModal(question) {
     const modal = document.getElementById('answer-modal');
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    // Ensure modal is centered - use requestAnimationFrame to wait for render
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            modal.scrollTop = 0;
-            const modalContent = modal.querySelector('.modal-content');
-            if (modalContent) {
-                // Force a reflow to ensure measurements are accurate
-                modalContent.offsetHeight;
-                const viewportHeight = window.innerHeight;
-                const contentHeight = modalContent.offsetHeight;
-                const padding = 20; // Modal padding
-                // Center the content vertically
-                if (contentHeight < viewportHeight - (padding * 2)) {
-                    modal.scrollTop = (modal.scrollHeight - viewportHeight) / 2;
-                } else {
-                    modal.scrollTop = 0;
-                }
-            }
-        });
-    });
+    modal.scrollTop = 0;
 }
 
 // Update the updateUI function to check for pending actions
