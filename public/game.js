@@ -1075,6 +1075,8 @@ function showRoundResult(game) {
     // This function MUST show the modal for ALL players including moles
     // No conditions, no exceptions
     
+    console.log('showRoundResult: Called with game:', game);
+    
     const round = game.currentRound;
     if (!round) {
         console.error('showRoundResult: No current round');
@@ -1098,6 +1100,20 @@ function showRoundResult(game) {
     const content = document.getElementById('result-content');
     const nextRoundBtn = document.getElementById('next-round-btn');
     const backToLobbyBtn = document.getElementById('back-to-lobby-btn');
+    
+    // Verify all elements exist
+    if (!title) {
+        console.error('showRoundResult: Title element not found!');
+    }
+    if (!content) {
+        console.error('showRoundResult: Content element not found!');
+    }
+    if (!nextRoundBtn) {
+        console.error('showRoundResult: Next round button not found!');
+    }
+    if (!backToLobbyBtn) {
+        console.error('showRoundResult: Back to lobby button not found!');
+    }
 
     // Prevent body scroll when modal is open
     document.body.style.overflow = 'hidden';
@@ -1111,7 +1127,7 @@ function showRoundResult(game) {
     const isMole = moleIds.includes(gameState.playerId);
     
     // Log for debugging
-    console.log('showRoundResult: Showing modal for round end. isMole:', isMole, 'playerId:', gameState.playerId);
+    console.log('showRoundResult: Showing modal for round end. isMole:', isMole, 'playerId:', gameState.playerId, 'round:', round);
 
     let resultText = '';
     const moleWon = round.moleWon || round.spyWon;
@@ -1293,30 +1309,45 @@ function showRoundResult(game) {
         resultText += '<p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-style: italic; font-size: 1.2rem;">Waiting for host to start the next round...</p>';
     }
 
-    // Set content - ensure it's always set
-    if (content) {
-        content.innerHTML = resultText;
-        console.log('showRoundResult: Content set. resultText length:', resultText.length, 'isMole:', isMole, 'resultText:', resultText.substring(0, 100));
+    // Set content - ensure it's always set with defensive checks
+    if (!content) {
+        console.error('showRoundResult: Content element is null! Cannot set content.');
     } else {
-        console.error('showRoundResult: Content element not found!');
+        // Clear any existing content first
+        content.innerHTML = '';
+        // Set new content
+        content.innerHTML = resultText;
+        // Force visibility
+        content.style.display = 'block';
+        content.style.visibility = 'visible';
+        content.style.opacity = '1';
+        console.log('showRoundResult: Content set. resultText length:', resultText.length, 'isMole:', isMole);
+        console.log('showRoundResult: Content element after setting:', content.innerHTML.substring(0, 200));
     }
     
-    // Set title
+    // Set title - ensure it's visible
     if (title) {
-        // Title should already be set, but ensure it's visible
         title.style.display = 'block';
+        title.style.visibility = 'visible';
+        title.style.opacity = '1';
+        console.log('showRoundResult: Title set to:', title.textContent);
     }
     
     // Set up buttons using onclick for maximum reliability
+    // Re-get buttons to ensure we have current references
     const nextRoundBtnCurrent = document.getElementById('next-round-btn');
     const backToLobbyBtnCurrent = document.getElementById('back-to-lobby-btn');
     
-    if (nextRoundBtnCurrent) {
-        // Use onclick attribute for reliability
-        nextRoundBtnCurrent.onclick = (e) => {
+    if (!nextRoundBtnCurrent) {
+        console.error('showRoundResult: Next round button not found when setting up!');
+    } else {
+        // Remove any existing onclick
+        nextRoundBtnCurrent.onclick = null;
+        // Set new onclick handler
+        nextRoundBtnCurrent.onclick = function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Next round button clicked via onclick');
+            console.log('Next round button clicked!');
             nextRound();
             return false;
         };
@@ -1326,19 +1357,27 @@ function showRoundResult(game) {
         } else {
             nextRoundBtnCurrent.style.display = 'none';
         }
+        // Ensure button is clickable
+        nextRoundBtnCurrent.style.pointerEvents = 'auto';
+        nextRoundBtnCurrent.style.cursor = 'pointer';
+        console.log('showRoundResult: Next round button set up. Display:', nextRoundBtnCurrent.style.display, 'isHost:', isHost);
     }
     
-    if (backToLobbyBtnCurrent) {
-        // Use onclick attribute for reliability
-        backToLobbyBtnCurrent.onclick = async (e) => {
+    if (!backToLobbyBtnCurrent) {
+        console.error('showRoundResult: Back to lobby button not found when setting up!');
+    } else {
+        // Remove any existing onclick
+        backToLobbyBtnCurrent.onclick = null;
+        // Set new onclick handler
+        backToLobbyBtnCurrent.onclick = async function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Back to lobby button clicked via onclick');
-            const game = gameState.game;
-            const isHost = game && game.players && game.players.length > 0 && game.players[0].id === gameState.playerId;
+            console.log('Back to lobby button clicked!');
+            const currentGame = gameState.game;
+            const currentIsHost = currentGame && currentGame.players && currentGame.players.length > 0 && currentGame.players[0].id === gameState.playerId;
             
             // If host, end the game (kicks everyone out)
-            if (isHost) {
+            if (currentIsHost) {
                 try {
                     const response = await fetch(`${API_BASE}/end-game`, {
                         method: 'POST',
@@ -1375,6 +1414,10 @@ function showRoundResult(game) {
             return false;
         };
         backToLobbyBtnCurrent.style.display = 'block';
+        // Ensure button is clickable
+        backToLobbyBtnCurrent.style.pointerEvents = 'auto';
+        backToLobbyBtnCurrent.style.cursor = 'pointer';
+        console.log('showRoundResult: Back to lobby button set up.');
     }
     
     // FORCE SHOW MODAL - Multiple redundant checks to ensure it shows for moles
