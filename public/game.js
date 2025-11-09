@@ -1142,10 +1142,6 @@ function showRoundResult(game) {
     // This function MUST show the modal for ALL players including moles
     // No conditions, no exceptions
     
-    // Reset the flags when function is called (in case they were set)
-    gameState.showingResultModal = false;
-    gameState.resultModalButtonsSetup = false; // Allow button setup again
-    
     console.log('showRoundResult: Called with game:', game);
     
     const round = game.currentRound;
