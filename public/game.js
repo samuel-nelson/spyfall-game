@@ -870,8 +870,14 @@ function showModal(modalId) {
         return;
     }
     
+    // Set display to flex and ensure all styles are applied
     modal.style.display = 'flex';
+    modal.style.height = '100vh';
+    modal.style.width = '100vw';
     document.body.style.overflow = 'hidden';
+    
+    // Force reflow to ensure styles are applied
+    void modal.offsetHeight;
     
     // Scroll modal content to top (CSS handles centering)
     requestAnimationFrame(() => {
