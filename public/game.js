@@ -865,8 +865,11 @@ function checkForPendingActions(game) {
 }
 
 function showAnswerModal(question) {
-    document.getElementById('question-to-answer').textContent = 
-        `${escapeHtml(question.askerName)} asks: "${escapeHtml(question.text)}"`;
+    const questionPrompt = document.getElementById('question-to-answer');
+    questionPrompt.innerHTML = `
+        <span style="color: var(--color-primary); font-weight: 500;">${escapeHtml(question.askerName)}</span> asks:<br>
+        <span style="font-size: 1.2rem; margin-top: 10px; display: block;">"${escapeHtml(question.text)}"</span>
+    `;
     document.getElementById('answer-text').value = '';
     document.getElementById('answer-modal').style.display = 'flex';
 }
