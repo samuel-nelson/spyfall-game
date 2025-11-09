@@ -15,15 +15,13 @@ let gameState = {
 // API base URL - will work with Netlify Functions
 const API_BASE = '/.netlify/functions';
 
-// Global button handlers for inline onclick attributes (fallback)
+// Global button handlers for inline onclick attributes
 window.handleNextRound = function() {
-    console.log('Next Round button clicked');
     nextRound();
     return false;
 };
 
 window.handleBackToLobby = async function() {
-    console.log('Back to Lobby button clicked');
     const currentGame = gameState.game;
     const currentIsHost = currentGame && currentGame.players && currentGame.players.length > 0 && currentGame.players[0].id === gameState.playerId;
     
@@ -67,11 +65,13 @@ window.handleBackToLobby = async function() {
 
 // Function to close modal - must be defined early as it's used by event listeners
 window.closeModal = function(modalId) {
-    console.log('closeModal called for:', modalId);
     const modal = document.getElementById(modalId);
     if (modal) {
-        // Simply remove the 'show' class - CSS handles everything
+        // Remove the 'show' class
         modal.classList.remove('show');
+        
+        // Force display: none as backup
+        modal.style.display = 'none';
         
         // Restore body scroll
         document.body.style.overflow = '';
@@ -968,7 +968,8 @@ function showModal(modalId) {
         return;
     }
     
-    // Simply add the 'show' class - CSS handles everything
+    // Reset any inline display style and add show class
+    modal.style.display = '';
     modal.classList.add('show');
     document.body.style.overflow = 'hidden';
     
