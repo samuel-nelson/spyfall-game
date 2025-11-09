@@ -1,5 +1,5 @@
-// Import shared games store
-const { games } = require('./game-store');
+// Import database functions
+const { getGameByCode, saveGameState } = require('./game-store');
 
 exports.handler = async (event, context) => {
     // Handle CORS
@@ -38,7 +38,7 @@ exports.handler = async (event, context) => {
             };
         }
 
-        const game = games[gameCode.toUpperCase()];
+        const game = await getGameByCode(gameCode.toUpperCase());
 
         if (!game) {
             return {
@@ -111,8 +111,8 @@ exports.handler = async (event, context) => {
         game.status = 'roundEnd';
         round.spyWon = !wasCorrect;
         
-        // Reset to lobby after round ends (so players can start new round)
-        // Actually, keep it as roundEnd so players can see results, then host can start new round
+        // Save updated game
+        await saveGameState(game);
 
         return {
             statusCode: 200,

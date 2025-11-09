@@ -1,5 +1,5 @@
-// Import shared games store
-const { games } = require('./game-store');
+// Import database functions
+const { getGameByCode, saveGameState } = require('./game-store');
 
 // Get all locations
 const LOCATIONS = [
@@ -48,7 +48,7 @@ exports.handler = async (event, context) => {
             };
         }
 
-        const game = games[gameCode.toUpperCase()];
+        const game = await getGameByCode(gameCode.toUpperCase());
 
         if (!game) {
             return {
@@ -91,6 +91,8 @@ exports.handler = async (event, context) => {
             game.status = 'roundEnd';
             round.spyWon = true;
             round.spyGuessedLocation = guessedLocation.trim();
+            // Save updated game
+            await saveGameState(game);
         }
 
         return {

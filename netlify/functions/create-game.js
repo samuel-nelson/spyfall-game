@@ -1,5 +1,5 @@
-// Import shared games store
-const { games } = require('./game-store');
+// Import database functions
+const { getGameByCode, saveGameState } = require('./game-store');
 
 // Generate random game code
 function generateGameCode() {
@@ -59,7 +59,8 @@ exports.handler = async (event, context) => {
             : generateGameCode();
 
         // Check if game code already exists
-        if (games[finalGameCode]) {
+        const existingGame = await getGameByCode(finalGameCode);
+        if (existingGame) {
             if (gameCode && gameCode.trim().length > 0) {
                 return {
                     statusCode: 400,
@@ -70,7 +71,7 @@ exports.handler = async (event, context) => {
                 };
             } else {
                 // Generate a new one if random code collides
-                while (games[finalGameCode]) {
+                while (await getGameByCode(finalGameCode)) {
                     finalGameCode = generateGameCode();
                 }
             }
@@ -79,7 +80,7 @@ exports.handler = async (event, context) => {
         const playerId = generatePlayerId();
 
         // Create new game
-        games[finalGameCode] = {
+        const newGame = {
             code: finalGameCode,
             status: 'lobby',
             players: [{
@@ -89,6 +90,8 @@ exports.handler = async (event, context) => {
             createdAt: Date.now(),
             currentRound: null
         };
+
+        await saveGameState(newGame);
 
         return {
             statusCode: 200,

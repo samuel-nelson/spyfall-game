@@ -1,5 +1,5 @@
-// Import shared games store
-const { games } = require('./game-store');
+// Import database functions
+const { getGameByCode, saveGameState } = require('./game-store');
 
 // Generate unique player ID
 function generatePlayerId() {
@@ -54,7 +54,7 @@ exports.handler = async (event, context) => {
         }
 
         const code = gameCode.trim().toUpperCase();
-        const game = games[code];
+        const game = await getGameByCode(code);
 
         if (!game) {
             return {
@@ -94,6 +94,9 @@ exports.handler = async (event, context) => {
             id: playerId,
             name: playerName.trim()
         });
+
+        // Save updated game
+        await saveGameState(game);
 
         return {
             statusCode: 200,

@@ -1,28 +1,24 @@
-// Shared game store for all functions
-// Note: This uses in-memory storage. For production with multiple Lambda instances,
-// replace this with a database (MongoDB, PostgreSQL, DynamoDB, Redis, etc.)
+// Game store using MongoDB for persistent storage
+// This allows games to be shared across different Netlify Function invocations
+const { getGame, saveGame, deleteGame, cleanupOldGames } = require('./db');
 
-const games = {};
-
-// Clean up old games (older than 24 hours)
-function cleanupOldGames() {
-    const now = Date.now();
-    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
-    
-    for (const code in games) {
-        if (games[code].createdAt && (now - games[code].createdAt) > maxAge) {
-            delete games[code];
-        }
-    }
+// Wrapper functions to maintain compatibility with existing code
+async function getGameByCode(gameCode) {
+    return await getGame(gameCode);
 }
 
-// Run cleanup periodically
-if (typeof setInterval !== 'undefined') {
-    setInterval(cleanupOldGames, 60 * 60 * 1000); // Every hour
+async function saveGameState(game) {
+    return await saveGame(game);
 }
 
+async function removeGame(gameCode) {
+    return await deleteGame(gameCode);
+}
+
+// Export async-compatible functions
 module.exports = {
-    games,
+    getGameByCode,
+    saveGameState,
+    removeGame,
     cleanupOldGames
 };
-

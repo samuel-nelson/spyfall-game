@@ -106,19 +106,58 @@ SPY/
 └── README.md           # This file
 ```
 
+## MongoDB Setup (Required for Multiplayer)
+
+This game uses MongoDB to store game state so players can connect to each other across different server instances.
+
+### Step 1: Create a MongoDB Atlas Account (Free)
+
+1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register)
+2. Sign up for a free account
+3. Create a new cluster (choose the FREE tier)
+4. Wait for the cluster to be created (takes a few minutes)
+
+### Step 2: Get Your Connection String
+
+1. Click "Connect" on your cluster
+2. Choose "Connect your application"
+3. Copy the connection string (looks like: `mongodb+srv://username:password@cluster.mongodb.net/`)
+4. Replace `<password>` with your database password
+5. Replace `<dbname>` with `spyfall` (or leave it to use default)
+
+### Step 3: Set Environment Variable in Netlify
+
+1. Go to your Netlify site dashboard
+2. Navigate to **Site settings** → **Environment variables**
+3. Add a new variable:
+   - **Key**: `MONGODB_URI`
+   - **Value**: Your MongoDB connection string (from Step 2)
+4. Click **Save**
+
+### Step 4: Redeploy
+
+After setting the environment variable, trigger a new deployment:
+- Go to **Deploys** tab
+- Click **Trigger deploy** → **Clear cache and deploy site**
+
+### Local Development with MongoDB
+
+For local testing, create a `.env` file in the project root:
+
+```
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/spyfall
+```
+
+**Note**: Never commit your `.env` file to Git! It's already in `.gitignore`.
+
 ## Technical Notes
 
 ### Game State Storage
 
-The game currently uses in-memory storage for game state. This works well for:
-- Small to medium number of concurrent games
-- Short-lived games (games are cleaned up after 24 hours)
-- Development and testing
-
-For production with high traffic or persistent games, consider:
-- **MongoDB** or **PostgreSQL** for persistent storage
-- **Redis** for fast in-memory storage with persistence
-- **DynamoDB** for serverless-friendly NoSQL storage
+The game uses **MongoDB** for persistent storage, which allows:
+- Multiple players to connect from different devices
+- Game state to persist across server restarts
+- Games to work across different Netlify Function instances
 
 ### Multiplayer Synchronization
 

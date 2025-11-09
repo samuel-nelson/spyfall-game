@@ -1,5 +1,5 @@
-// Import shared games store
-const { games } = require('./game-store');
+// Import database functions
+const { getGameByCode } = require('./game-store');
 
 // Get random location (simplified - in production, load from locations.js)
 const LOCATIONS = [
@@ -49,7 +49,7 @@ exports.handler = async (event, context) => {
             };
         }
 
-        const game = games[gameCode.toUpperCase()];
+        const game = await getGameByCode(gameCode.toUpperCase());
 
         if (!game) {
             return {
@@ -111,6 +111,9 @@ exports.handler = async (event, context) => {
                     game.currentRound.spyWon = true;
                     gameState.currentRound.spyWon = true;
                 }
+                // Save updated game state
+                const { saveGameState } = require('./game-store');
+                await saveGameState(game);
             }
         }
 

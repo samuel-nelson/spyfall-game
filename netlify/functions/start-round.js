@@ -1,5 +1,5 @@
-// Import shared games store
-const { games } = require('./game-store');
+// Import database functions
+const { getGameByCode, saveGameState } = require('./game-store');
 
 // Get random location
 const LOCATIONS = [
@@ -52,7 +52,7 @@ exports.handler = async (event, context) => {
             };
         }
 
-        const game = games[gameCode.toUpperCase()];
+        const game = await getGameByCode(gameCode.toUpperCase());
 
         if (!game) {
             return {
@@ -130,6 +130,9 @@ exports.handler = async (event, context) => {
         };
 
         game.status = 'playing';
+
+        // Save game to database
+        await saveGameState(game);
 
         return {
             statusCode: 200,
