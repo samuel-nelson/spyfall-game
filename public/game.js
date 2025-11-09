@@ -5,7 +5,9 @@ let gameState = {
     playerName: null,
     game: null,
     pollInterval: null,
-    timerInterval: null
+    timerInterval: null,
+    bannerFadeTimeout: null,
+    bannerShownForTurn: null // Track which turn the banner was shown for
 };
 
 // API base URL - will work with Netlify Functions
@@ -709,17 +711,20 @@ function updateGameActions(game, round, currentPlayer) {
                              isMyTurn && 
                              !hasPendingQuestion;
     
+    // Create a unique key for this turn (playerId + round number + turn)
+    const turnKey = `${gameState.playerId}-${round.currentTurn}-${round.roundNumber || 0}`;
+    
     if (shouldShowBanner && firstTurnBanner) {
-        // Check if banner is currently hidden
-        const isCurrentlyHidden = firstTurnBanner.style.display === 'none' || 
-                                  window.getComputedStyle(firstTurnBanner).display === 'none';
-        
-        if (isCurrentlyHidden) {
+        // Only show banner if we haven't shown it for this specific turn yet
+        if (gameState.bannerShownForTurn !== turnKey) {
             // Show the banner
             firstTurnBanner.style.display = 'block';
             firstTurnBanner.style.opacity = '1';
             firstTurnBanner.style.transition = '';
             firstTurnBanner.style.visibility = 'visible';
+            
+            // Mark that we've shown the banner for this turn
+            gameState.bannerShownForTurn = turnKey;
             
             // Clear any existing timeout
             if (gameState.bannerFadeTimeout) {
@@ -747,6 +752,10 @@ function updateGameActions(game, round, currentPlayer) {
             if (gameState.bannerFadeTimeout) {
                 clearTimeout(gameState.bannerFadeTimeout);
                 gameState.bannerFadeTimeout = null;
+            }
+            // Reset the turn tracking when conditions change
+            if (!shouldShowBanner) {
+                gameState.bannerShownForTurn = null;
             }
             firstTurnBanner.style.display = 'none';
             firstTurnBanner.style.visibility = 'hidden';
