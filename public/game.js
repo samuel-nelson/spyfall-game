@@ -1468,7 +1468,12 @@ window.closeModal = function(modalId) {
         modal.classList.remove('show');
         
         // Restore body scroll
-            document.body.style.overflow = '';
+        document.body.style.overflow = '';
+        
+        // Reset the showing flag if closing the result modal
+        if (modalId === 'game-result-modal') {
+            gameState.showingResultModal = false;
+        }
         
         // Clear any selected location
         if (modalId === 'guess-location-modal') {
