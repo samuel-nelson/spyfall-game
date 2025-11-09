@@ -490,13 +490,17 @@ function updatePlayingState(game) {
     } else {
         moleView.style.display = 'none';
         locationView.style.display = 'block';
-        const locationName = typeof currentRound.location === 'string' ? currentRound.location : currentRound.location.name;
+        const locationName = typeof currentRound.location === 'string' ? currentRound.location : (currentRound.location?.name || currentRound.location);
         document.getElementById('location-name').textContent = locationName;
         
         // Display assigned role for non-mole players
-        const playerRole = currentRound.playerRoles && currentRound.playerRoles[gameState.playerId];
+        const playerRoles = currentRound.playerRoles || {};
+        const playerRole = playerRoles[gameState.playerId];
         const roleDisplay = document.getElementById('player-role');
         const roleName = document.getElementById('role-name');
+        
+        console.log('Role check:', { playerRoles, playerId: gameState.playerId, playerRole });
+        
         if (playerRole && roleDisplay && roleName) {
             roleName.textContent = playerRole;
             roleDisplay.style.display = 'block';
@@ -653,8 +657,8 @@ function updateGameActions(game, round, currentPlayer) {
     const canAsk = isMyTurn && !hasPendingQuestion && !isMole;
     askBtn.style.display = canAsk ? 'block' : 'none';
 
-    // Non-moles can vote at any time (not just on their turn)
-    const canVote = !isMole;
+    // All players (including moles) can vote at any time
+    const canVote = true;
     voteBtn.style.display = canVote ? 'block' : 'none';
 
     // Mole can guess location at any time, but only if they haven't guessed yet
