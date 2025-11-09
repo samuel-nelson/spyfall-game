@@ -411,6 +411,20 @@ function updatePlayingState(game) {
 
     document.getElementById('round-number').textContent = currentRound.roundNumber || 1;
 
+    // Show spy count if enabled
+    const showSpyCount = game.settings?.showSpyCount !== false; // Default to true
+    const spyCountElement = document.getElementById('spy-count-display');
+    if (spyCountElement) {
+        if (showSpyCount) {
+            const spyIds = Array.isArray(currentRound.spyIds) ? currentRound.spyIds : [currentRound.spyId];
+            const spyCount = spyIds.filter(id => id).length;
+            spyCountElement.textContent = `${spyCount} SPY${spyCount > 1 ? 'IES' : ''}`;
+            spyCountElement.style.display = 'block';
+        } else {
+            spyCountElement.style.display = 'none';
+        }
+    }
+
     // Start/update timer with real-time updates
     if (currentRound.endTime) {
         startTimer(currentRound.endTime);
@@ -468,11 +482,13 @@ function updatePossibleLocations(game, round) {
     const locationsDiv = document.getElementById('possible-locations');
     if (!locationsDiv) return;
     
-    // Get enabled locations from game settings
+    // Get enabled locations from game settings - use individual location selection if available
     const enabledSets = game?.settings?.enabledLocationSets || ['spyfall1'];
     const customLocations = game?.settings?.customLocations || [];
+    const enabledLocationsList = game?.settings?.enabledLocationsList || null;
     
-    const allLocations = getAllEnabledLocations(enabledSets, customLocations);
+    // Use individual location selection if available, otherwise fall back to set-based
+    const allLocations = getAllEnabledLocations(enabledSets, customLocations, enabledLocationsList);
     
     locationsDiv.innerHTML = '<h3 class="locations-title">POSSIBLE LOCATIONS</h3>';
     locationsDiv.innerHTML += '<div class="locations-grid"></div>';
@@ -942,14 +958,29 @@ function showRoundResult(game) {
     const spyWon = round.spyWon;
 
     if (round.spyGuessedLocation) {
-        // Spy guessed the location
-        title.textContent = 'OPERATION COMPROMISED';
-        title.style.color = 'var(--color-danger)';
-        resultText = `
-            <p>The spy successfully identified the location.</p>
-            <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
-            <p><strong>Spy's guess:</strong> ${escapeHtml(round.spyGuessedLocation)}</p>
-        `;
+        // Spy guessed the location - check if correct
+        const locationName = typeof round.location === 'string' ? round.location : round.location?.name;
+        const guessedName = round.spyGuessedLocation.trim();
+        const isCorrect = guessedName.toLowerCase() === locationName.toLowerCase();
+        
+        if (isCorrect) {
+            title.textContent = 'OPERATION COMPROMISED';
+            title.style.color = 'var(--color-danger)';
+            resultText = `
+                <p>The spy successfully identified the location.</p>
+                <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName)}</p>
+                <p><strong>Spy's guess:</strong> ${escapeHtml(guessedName)}</p>
+            `;
+        } else {
+            title.textContent = 'INCORRECT GUESS';
+            title.style.color = 'var(--color-success)';
+            resultText = `
+                <p>The spy incorrectly identified the location.</p>
+                <p style="margin-top: 20px;"><strong>Actual Location:</strong> ${escapeHtml(locationName)}</p>
+                <p><strong>Spy's guess:</strong> ${escapeHtml(guessedName)}</p>
+                <p style="margin-top: 15px; color: var(--color-success);"><strong>Non-spies win!</strong></p>
+            `;
+        }
     } else if (round.accusation) {
         const accusedPlayer = game.players.find(p => p.id === round.accusation.accusedId);
         const wasCorrect = round.accusation.accusedId === round.spyId;

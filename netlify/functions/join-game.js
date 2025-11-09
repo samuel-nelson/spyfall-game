@@ -76,24 +76,38 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Check if player name already exists
-        if (game.players.some(p => p.name.toLowerCase() === playerName.trim().toLowerCase())) {
-            return {
-                statusCode: 400,
-                headers: {
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({ error: 'Player name already taken in this game' })
-            };
+        const trimmedName = playerName.trim();
+        const nameLower = trimmedName.toLowerCase();
+        
+        // Check if player with this name already exists (allow rejoin)
+        const existingPlayer = game.players.find(p => p.name.toLowerCase() === nameLower);
+        
+        let playerId;
+        if (existingPlayer) {
+            // Player rejoining - reuse their player ID
+            playerId = existingPlayer.id;
+            // Update name in case it changed slightly (trimmed)
+            existingPlayer.name = trimmedName;
+        } else {
+            // New player - check if name is taken by another player
+            if (game.players.some(p => p.name.toLowerCase() === nameLower)) {
+                return {
+                    statusCode: 400,
+                    headers: {
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    body: JSON.stringify({ error: 'Player name already taken in this game' })
+                };
+            }
+            // Generate new player ID
+            playerId = generatePlayerId();
+            
+            // Add new player to game
+            game.players.push({
+                id: playerId,
+                name: trimmedName
+            });
         }
-
-        const playerId = generatePlayerId();
-
-        // Add player to game
-        game.players.push({
-            id: playerId,
-            name: playerName.trim()
-        });
 
         // Save updated game
         await saveGameState(game);

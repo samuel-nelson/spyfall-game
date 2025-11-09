@@ -99,7 +99,10 @@ exports.handler = async (event, context) => {
         }
 
         // Check if guess is correct
-        const isCorrect = guessedLocation.trim().toLowerCase() === round.location.toLowerCase();
+        // Handle both string and object location formats
+        const locationName = typeof round.location === 'string' ? round.location : round.location?.name || round.location;
+        const guessedName = guessedLocation.trim();
+        const isCorrect = guessedName.toLowerCase() === locationName.toLowerCase();
         
         // Record the guess (whether correct or not)
         round.spyGuessedLocation = guessedLocation.trim();
