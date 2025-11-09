@@ -461,8 +461,9 @@ function updatePlayingState(game) {
     const moleCountElement = document.getElementById('mole-count-display');
     if (moleCountElement) {
         // Check if explicitly set to false
-        const explicitlyHidden = game.settings?.showMoleCount === false || game.settings?.showSpyCount === false;
-        if (!explicitlyHidden && showMoleCount) {
+        if (game.settings?.showMoleCount === false || game.settings?.showSpyCount === false) {
+            moleCountElement.style.display = 'none';
+        } else if (showMoleCount) {
             const moleIds = Array.isArray(currentRound.moleIds) ? currentRound.moleIds : (Array.isArray(currentRound.spyIds) ? currentRound.spyIds : [currentRound.spyId || currentRound.moleId]);
             const moleCount = moleIds.filter(id => id).length;
             moleCountElement.textContent = `${moleCount} MOLE${moleCount > 1 ? 'S' : ''}`;
@@ -874,7 +875,17 @@ function showVoteModal() {
     console.log('Showing vote modal');
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    modal.scrollTop = 0;
+    // Ensure modal is centered
+    setTimeout(() => {
+        modal.scrollTop = 0;
+        const modalContent = modal.querySelector('.modal-content');
+        if (modalContent) {
+            const modalRect = modal.getBoundingClientRect();
+            const contentRect = modalContent.getBoundingClientRect();
+            const scrollTop = (contentRect.top - modalRect.top) / 2;
+            modal.scrollTop = Math.max(0, scrollTop);
+        }
+    }, 0);
 }
 
 async function submitVote() {
@@ -996,7 +1007,17 @@ function showGuessLocationModal() {
     
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    modal.scrollTop = 0;
+    // Ensure modal is centered
+    setTimeout(() => {
+        modal.scrollTop = 0;
+        const modalContent = modal.querySelector('.modal-content');
+        if (modalContent) {
+            const modalRect = modal.getBoundingClientRect();
+            const contentRect = modalContent.getBoundingClientRect();
+            const scrollTop = (contentRect.top - modalRect.top) / 2;
+            modal.scrollTop = Math.max(0, scrollTop);
+        }
+    }, 0);
 }
 
 async function submitLocationGuess() {
@@ -1270,7 +1291,17 @@ function showAnswerModal(question) {
     const modal = document.getElementById('answer-modal');
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    modal.scrollTop = 0;
+    // Ensure modal is centered
+    setTimeout(() => {
+        modal.scrollTop = 0;
+        const modalContent = modal.querySelector('.modal-content');
+        if (modalContent) {
+            const modalRect = modal.getBoundingClientRect();
+            const contentRect = modalContent.getBoundingClientRect();
+            const scrollTop = (contentRect.top - modalRect.top) / 2;
+            modal.scrollTop = Math.max(0, scrollTop);
+        }
+    }, 0);
 }
 
 // Update the updateUI function to check for pending actions

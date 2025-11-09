@@ -987,6 +987,7 @@ h3 {
     margin: auto;
     flex-shrink: 0;
     align-self: center;
+    min-height: fit-content;
 }
 
 .modal-content::before,
