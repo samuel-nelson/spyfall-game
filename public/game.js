@@ -1353,63 +1353,118 @@ function showRoundResult(game) {
         console.log('showRoundResult: Title computed styles:', window.getComputedStyle(title).display);
     }
     
-    // Set up buttons using onclick for maximum reliability
-    // Re-get buttons AFTER modal is shown to ensure they're in the DOM
-    setTimeout(() => {
-        const nextRoundBtnCurrent = document.getElementById('next-round-btn');
-        const backToLobbyBtnCurrent = document.getElementById('back-to-lobby-btn');
+    // Use event delegation on modal-buttons container for maximum reliability
+    // This approach works even if buttons are replaced or recreated
+    const modalButtonsContainer = modal.querySelector('.modal-buttons');
+    if (modalButtonsContainer) {
+        // Remove any existing event listeners by cloning the container
+        const newContainer = modalButtonsContainer.cloneNode(true);
+        modalButtonsContainer.replaceWith(newContainer);
         
-        if (!nextRoundBtnCurrent) {
-            console.error('showRoundResult: Next round button not found when setting up!');
-        } else {
-            // Remove any existing onclick and event listeners
-            nextRoundBtnCurrent.onclick = null;
-            nextRoundBtnCurrent.replaceWith(nextRoundBtnCurrent.cloneNode(true));
-            const newNextBtn = document.getElementById('next-round-btn');
+        // Set up event delegation on the container
+        newContainer.addEventListener('click', function(e) {
+            const target = e.target;
+            const buttonId = target.id;
             
-            // Set new onclick handler
-            newNextBtn.onclick = function(e) {
+            console.log('Modal button container clicked. Target:', buttonId, 'Element:', target);
+            
+            if (buttonId === 'next-round-btn') {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Next round button clicked!');
+                e.stopImmediatePropagation();
+                console.log('Next round button clicked via delegation!');
                 nextRound();
                 return false;
-            };
-            // Also add event listener as backup
-            newNextBtn.addEventListener('click', function(e) {
+            } else if (buttonId === 'back-to-lobby-btn') {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Next round button clicked via addEventListener!');
-                nextRound();
-            }, { once: false, capture: false });
-            
+                e.stopImmediatePropagation();
+                console.log('Back to lobby button clicked via delegation!');
+                
+                const currentGame = gameState.game;
+                const currentIsHost = currentGame && currentGame.players && currentGame.players.length > 0 && currentGame.players[0].id === gameState.playerId;
+                
+                // If host, end the game (kicks everyone out)
+                if (currentIsHost) {
+                    try {
+                        const response = await fetch(`${API_BASE}/end-game`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                gameCode: gameState.gameCode,
+                                playerId: gameState.playerId
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            showNotification('Game ended. All players have been disconnected.', 'info');
+                        }
+                    } catch (error) {
+                        console.error('Error ending game:', error);
+                    }
+                }
+                
+                window.closeModal('game-result-modal');
+                // Clear game state but keep gameCode and playerName for potential rejoin
+                const gameCode = gameState.gameCode;
+                const playerName = gameState.playerName;
+                gameState.gameCode = null;
+                gameState.playerId = null;
+                gameState.game = null;
+                stopPolling();
+                stopTimer();
+                // Store for potential rejoin
+                if (gameCode && playerName) {
+                    sessionStorage.setItem('lastGameCode', gameCode);
+                    sessionStorage.setItem('lastPlayerName', playerName);
+                }
+                showScreen('main-menu');
+                return false;
+            }
+        }, { capture: true, passive: false });
+        
+        // Also set up direct handlers on buttons as backup
+        const nextRoundBtnCurrent = newContainer.querySelector('#next-round-btn');
+        const backToLobbyBtnCurrent = newContainer.querySelector('#back-to-lobby-btn');
+        
+        if (nextRoundBtnCurrent) {
             // Set display
             if (isHost) {
-                newNextBtn.style.display = 'block';
+                nextRoundBtnCurrent.style.display = 'block';
             } else {
-                newNextBtn.style.display = 'none';
+                nextRoundBtnCurrent.style.display = 'none';
             }
             // Ensure button is clickable
-            newNextBtn.style.pointerEvents = 'auto';
-            newNextBtn.style.cursor = 'pointer';
-            newNextBtn.style.position = 'relative';
-            newNextBtn.style.zIndex = '10001';
-            console.log('showRoundResult: Next round button set up. Display:', newNextBtn.style.display, 'isHost:', isHost);
-        }
-        
-        if (!backToLobbyBtnCurrent) {
-            console.error('showRoundResult: Back to lobby button not found when setting up!');
-        } else {
-            // Remove any existing onclick and event listeners
-            backToLobbyBtnCurrent.onclick = null;
-            backToLobbyBtnCurrent.replaceWith(backToLobbyBtnCurrent.cloneNode(true));
-            const newBackBtn = document.getElementById('back-to-lobby-btn');
-            
-            // Set new onclick handler
-            newBackBtn.onclick = async function(e) {
+            nextRoundBtnCurrent.style.pointerEvents = 'auto';
+            nextRoundBtnCurrent.style.cursor = 'pointer';
+            nextRoundBtnCurrent.style.position = 'relative';
+            nextRoundBtnCurrent.style.zIndex = '10003';
+            // Also set onclick as backup
+            nextRoundBtnCurrent.onclick = function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Back to lobby button clicked!');
+                e.stopImmediatePropagation();
+                console.log('Next round button clicked via onclick!');
+                nextRound();
+                return false;
+            };
+            console.log('showRoundResult: Next round button set up. Display:', nextRoundBtnCurrent.style.display, 'isHost:', isHost);
+        }
+        
+        if (backToLobbyBtnCurrent) {
+            backToLobbyBtnCurrent.style.display = 'block';
+            // Ensure button is clickable
+            backToLobbyBtnCurrent.style.pointerEvents = 'auto';
+            backToLobbyBtnCurrent.style.cursor = 'pointer';
+            backToLobbyBtnCurrent.style.position = 'relative';
+            backToLobbyBtnCurrent.style.zIndex = '10003';
+            // Also set onclick as backup
+            backToLobbyBtnCurrent.onclick = async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                console.log('Back to lobby button clicked via onclick!');
+                
                 const currentGame = gameState.game;
                 const currentIsHost = currentGame && currentGame.players && currentGame.players.length > 0 && currentGame.players[0].id === gameState.playerId;
                 
@@ -1450,60 +1505,11 @@ function showRoundResult(game) {
                 showScreen('main-menu');
                 return false;
             };
-            // Also add event listener as backup
-            newBackBtn.addEventListener('click', async function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Back to lobby button clicked via addEventListener!');
-                const currentGame = gameState.game;
-                const currentIsHost = currentGame && currentGame.players && currentGame.players.length > 0 && currentGame.players[0].id === gameState.playerId;
-                
-                // If host, end the game (kicks everyone out)
-                if (currentIsHost) {
-                    try {
-                        const response = await fetch(`${API_BASE}/end-game`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                gameCode: gameState.gameCode,
-                                playerId: gameState.playerId
-                            })
-                        });
-                        
-                        if (response.ok) {
-                            showNotification('Game ended. All players have been disconnected.', 'info');
-                        }
-                    } catch (error) {
-                        console.error('Error ending game:', error);
-                    }
-                }
-                
-                window.closeModal('game-result-modal');
-                // Clear game state but keep gameCode and playerName for potential rejoin
-                const gameCode = gameState.gameCode;
-                const playerName = gameState.playerName;
-                gameState.gameCode = null;
-                gameState.playerId = null;
-                gameState.game = null;
-                stopPolling();
-                stopTimer();
-                // Store for potential rejoin
-                if (gameCode && playerName) {
-                    sessionStorage.setItem('lastGameCode', gameCode);
-                    sessionStorage.setItem('lastPlayerName', playerName);
-                }
-                showScreen('main-menu');
-            }, { once: false, capture: false });
-            
-            newBackBtn.style.display = 'block';
-            // Ensure button is clickable
-            newBackBtn.style.pointerEvents = 'auto';
-            newBackBtn.style.cursor = 'pointer';
-            newBackBtn.style.position = 'relative';
-            newBackBtn.style.zIndex = '10001';
             console.log('showRoundResult: Back to lobby button set up.');
         }
-    }, 100);
+    } else {
+        console.error('showRoundResult: Modal buttons container not found!');
+    }
     
     // FORCE SHOW MODAL - Multiple redundant checks to ensure it shows for moles
     // Re-get modal reference
