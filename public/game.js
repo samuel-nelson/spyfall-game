@@ -864,32 +864,12 @@ function showModal(modalId) {
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     
-    // Immediately center the modal by scrolling to center
-    // Use double requestAnimationFrame to ensure layout is complete
+    // Scroll modal content to top (CSS handles centering)
     requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            const modalContent = modal.querySelector('.modal-content');
-            if (modalContent) {
-                // Force layout calculation
-                void modalContent.offsetHeight;
-                
-                // Calculate center position
-                const modalContentHeight = modalContent.offsetHeight;
-                const viewportHeight = window.innerHeight;
-                
-                // If content is smaller than viewport, center it
-                if (modalContentHeight < viewportHeight) {
-                    const scrollPosition = (modal.scrollHeight - viewportHeight) / 2;
-                    modal.scrollTop = scrollPosition;
-                } else {
-                    // If content is larger, scroll to top
-                    modal.scrollTop = 0;
-                }
-                
-                // Always scroll content to top
-                modalContent.scrollTop = 0;
-            }
-        });
+        const modalContent = modal.querySelector('.modal-content');
+        if (modalContent) {
+            modalContent.scrollTop = 0;
+        }
     });
 }
 
@@ -1257,13 +1237,8 @@ window.closeModal = function(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'none';
-        // Only restore body scroll if no other modals are open
-        const anyModalOpen = Array.from(document.querySelectorAll('.modal')).some(m => 
-            m.id !== modalId && (m.style.display === 'flex' || window.getComputedStyle(m).display === 'flex')
-        );
-        if (!anyModalOpen) {
-            document.body.style.overflow = '';
-        }
+        // Always restore body scroll when closing a modal
+        document.body.style.overflow = '';
         // Clear any selected location
         if (modalId === 'guess-location-modal') {
             selectedLocationForGuess = null;
@@ -1272,11 +1247,8 @@ window.closeModal = function(modalId) {
 };
 
 async function nextRound() {
-    const modal = document.getElementById('game-result-modal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-    document.body.style.overflow = '';
+    // Close the result modal
+    window.closeModal('game-result-modal');
     stopTimer(); // Stop timer before starting new round
     
     try {
@@ -1290,6 +1262,11 @@ async function nextRound() {
     } catch (error) {
         console.error('Error starting next round:', error);
         showNotification('Failed to start next round. Please try again.', 'error');
+        // Reopen modal if there was an error
+        const game = gameState.game;
+        if (game && game.status === 'roundEnd') {
+            showRoundResult(game);
+        }
     }
 }
 

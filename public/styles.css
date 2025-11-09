@@ -922,12 +922,13 @@ h3 {
     -webkit-overflow-scrolling: touch;
 }
 
-/* When modal is shown with flex */
+/* When modal is shown with flex - perfect centering */
 .modal[style*="display: flex"],
 .modal[style*="display:flex"] {
     display: flex !important;
     justify-content: center;
     align-items: center;
+    align-items: safe center;
     padding: 20px;
 }
 
@@ -953,9 +954,9 @@ h3 {
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
     z-index: 1001;
+    /* Perfect centering in viewport */
     margin: auto;
-    /* Ensure immediate centering */
-    transform: translateY(0);
+    flex-shrink: 0;
 }
 
 .modal-content .form-group {
@@ -1844,6 +1845,7 @@ h3 {
     .modal[style*="display:flex"] {
         padding: 10px;
         align-items: center;
+        justify-content: center;
     }
     
     .modal[style*="display:block"],
@@ -1859,6 +1861,7 @@ h3 {
         max-width: none;
         max-height: 85vh;
         margin: auto;
+        flex-shrink: 0;
     }
     
     .modal-content .form-group {
