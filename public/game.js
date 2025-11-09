@@ -1362,7 +1362,7 @@ function showRoundResult(game) {
         modalButtonsContainer.replaceWith(newContainer);
         
         // Set up event delegation on the container
-        newContainer.addEventListener('click', function(e) {
+        newContainer.addEventListener('click', async function(e) {
             const target = e.target;
             const buttonId = target.id;
             
