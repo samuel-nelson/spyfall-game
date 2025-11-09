@@ -75,47 +75,8 @@ function setupEventListeners() {
     document.getElementById('cancel-guess-btn').addEventListener('click', () => {
         window.closeModal('guess-location-modal');
     });
-    document.getElementById('next-round-btn').addEventListener('click', nextRound);
-    document.getElementById('back-to-lobby-btn').addEventListener('click', async () => {
-        const game = gameState.game;
-        const isHost = game && game.players && game.players.length > 0 && game.players[0].id === gameState.playerId;
-        
-        // If host, end the game (kicks everyone out)
-        if (isHost) {
-            try {
-                const response = await fetch(`${API_BASE}/end-game`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        gameCode: gameState.gameCode,
-                        playerId: gameState.playerId
-                    })
-                });
-                
-                if (response.ok) {
-                    showNotification('Game ended. All players have been disconnected.', 'info');
-                }
-            } catch (error) {
-                console.error('Error ending game:', error);
-            }
-        }
-        
-        window.closeModal('game-result-modal');
-        // Clear game state but keep gameCode and playerName for potential rejoin
-        const gameCode = gameState.gameCode;
-        const playerName = gameState.playerName;
-        gameState.gameCode = null;
-        gameState.playerId = null;
-        gameState.game = null;
-        stopPolling();
-        stopTimer();
-        // Store for potential rejoin
-        if (gameCode && playerName) {
-            sessionStorage.setItem('lastGameCode', gameCode);
-            sessionStorage.setItem('lastPlayerName', playerName);
-        }
-        showScreen('main-menu');
-    });
+    // Buttons will use onclick attributes for reliability
+    // These are set up in showRoundResult to ensure they always work
 }
 
 function showScreen(screenId) {
@@ -472,18 +433,10 @@ function updateGameScreen(game) {
         // Always show result modal for ALL players including moles - NO EXCEPTIONS
         showScreen('game-screen');
         
-        // Show modal immediately - no delays, no conditions
-        showRoundResult(game);
-        
-        // Also show after screen is fully rendered
-        setTimeout(() => {
+        // Show modal once - use requestAnimationFrame to ensure DOM is ready
+        requestAnimationFrame(() => {
             showRoundResult(game);
-        }, 100);
-        
-        // And again after a longer delay to catch any edge cases
-        setTimeout(() => {
-            showRoundResult(game);
-        }, 500);
+        });
     } else if (game.status === 'lobby') {
         stopTimer(); // Stop timer when back in lobby
         hasScrolledToTopOnGameStart = false; // Reset flag when back in lobby
@@ -1343,41 +1296,44 @@ function showRoundResult(game) {
     // Set content - ensure it's always set
     if (content) {
         content.innerHTML = resultText;
-        console.log('showRoundResult: Content set. resultText length:', resultText.length, 'isMole:', isMole);
+        console.log('showRoundResult: Content set. resultText length:', resultText.length, 'isMole:', isMole, 'resultText:', resultText.substring(0, 100));
     } else {
         console.error('showRoundResult: Content element not found!');
     }
     
-    // ALWAYS ensure buttons work - remove old listeners and reattach
-    // Re-get button references to ensure they're current
+    // Set title
+    if (title) {
+        // Title should already be set, but ensure it's visible
+        title.style.display = 'block';
+    }
+    
+    // Set up buttons using onclick for maximum reliability
     const nextRoundBtnCurrent = document.getElementById('next-round-btn');
     const backToLobbyBtnCurrent = document.getElementById('back-to-lobby-btn');
     
-    // Remove any existing listeners by cloning and replacing
     if (nextRoundBtnCurrent) {
-        const newNextBtn = nextRoundBtnCurrent.cloneNode(true);
-        nextRoundBtnCurrent.parentNode.replaceChild(newNextBtn, nextRoundBtnCurrent);
-        newNextBtn.addEventListener('click', (e) => {
+        // Use onclick attribute for reliability
+        nextRoundBtnCurrent.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Next round button clicked');
+            console.log('Next round button clicked via onclick');
             nextRound();
-        });
-        // Update the reference
+            return false;
+        };
+        // Set display
         if (isHost) {
-            newNextBtn.style.display = 'block';
+            nextRoundBtnCurrent.style.display = 'block';
         } else {
-            newNextBtn.style.display = 'none';
+            nextRoundBtnCurrent.style.display = 'none';
         }
     }
     
     if (backToLobbyBtnCurrent) {
-        const newBackBtn = backToLobbyBtnCurrent.cloneNode(true);
-        backToLobbyBtnCurrent.parentNode.replaceChild(newBackBtn, backToLobbyBtnCurrent);
-        newBackBtn.addEventListener('click', async (e) => {
+        // Use onclick attribute for reliability
+        backToLobbyBtnCurrent.onclick = async (e) => {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Back to lobby button clicked');
+            console.log('Back to lobby button clicked via onclick');
             const game = gameState.game;
             const isHost = game && game.players && game.players.length > 0 && game.players[0].id === gameState.playerId;
             
@@ -1416,8 +1372,9 @@ function showRoundResult(game) {
                 sessionStorage.setItem('lastPlayerName', playerName);
             }
             showScreen('main-menu');
-        });
-        newBackBtn.style.display = 'block';
+            return false;
+        };
+        backToLobbyBtnCurrent.style.display = 'block';
     }
     
     // FORCE SHOW MODAL - Multiple redundant checks to ensure it shows for moles
