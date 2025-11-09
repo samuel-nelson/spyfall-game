@@ -13,8 +13,15 @@ async function initializeSchema() {
                 status VARCHAR(20) NOT NULL,
                 players JSONB NOT NULL,
                 current_round JSONB,
+                settings JSONB,
                 created_at BIGINT NOT NULL
             )
+        `;
+        
+        // Add settings column if it doesn't exist (for existing tables)
+        await sql`
+            ALTER TABLE games 
+            ADD COLUMN IF NOT EXISTS settings JSONB
         `;
         
         // Create index on code for faster lookups
@@ -47,7 +54,7 @@ async function getGame(gameCode) {
     
     try {
         const result = await sql`
-            SELECT code, status, players, current_round, created_at 
+            SELECT code, status, players, current_round, settings, created_at 
             FROM games 
             WHERE code = ${gameCode.toUpperCase()}
         `;
@@ -62,6 +69,7 @@ async function getGame(gameCode) {
             status: row.status,
             players: row.players,
             currentRound: row.current_round,
+            settings: row.settings || null,
             createdAt: row.created_at
         };
     } catch (error) {
@@ -75,29 +83,32 @@ async function saveGame(game) {
     const gameCode = game.code.toUpperCase();
     const playersJson = JSON.stringify(game.players);
     const currentRoundJson = game.currentRound ? JSON.stringify(game.currentRound) : null;
+    const settingsJson = game.settings ? JSON.stringify(game.settings) : null;
     const createdAt = game.createdAt || Date.now();
     
     try {
         // PostgreSQL automatically converts JSON strings to JSONB when inserting into JSONB columns
         if (currentRoundJson) {
             await sql`
-                INSERT INTO games (code, status, players, current_round, created_at)
-                VALUES (${gameCode}, ${game.status}, ${playersJson}::jsonb, ${currentRoundJson}::jsonb, ${createdAt})
+                INSERT INTO games (code, status, players, current_round, settings, created_at)
+                VALUES (${gameCode}, ${game.status}, ${playersJson}::jsonb, ${currentRoundJson}::jsonb, ${settingsJson}::jsonb, ${createdAt})
                 ON CONFLICT (code) 
                 DO UPDATE SET 
                     status = EXCLUDED.status,
                     players = EXCLUDED.players,
-                    current_round = EXCLUDED.current_round
+                    current_round = EXCLUDED.current_round,
+                    settings = EXCLUDED.settings
             `;
         } else {
             await sql`
-                INSERT INTO games (code, status, players, current_round, created_at)
-                VALUES (${gameCode}, ${game.status}, ${playersJson}::jsonb, NULL, ${createdAt})
+                INSERT INTO games (code, status, players, current_round, settings, created_at)
+                VALUES (${gameCode}, ${game.status}, ${playersJson}::jsonb, NULL, ${settingsJson}::jsonb, ${createdAt})
                 ON CONFLICT (code) 
                 DO UPDATE SET 
                     status = EXCLUDED.status,
                     players = EXCLUDED.players,
-                    current_round = EXCLUDED.current_round
+                    current_round = EXCLUDED.current_round,
+                    settings = EXCLUDED.settings
             `;
         }
     } catch (error) {
