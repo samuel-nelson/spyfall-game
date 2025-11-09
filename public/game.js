@@ -689,24 +689,22 @@ function updateGameActions(game, round, currentPlayer) {
     const isMyTurn = round.currentTurn === gameState.playerId;
     const hasPendingQuestion = round.waitingForAnswer;
 
-    // Show current turn indicator
-    if (round.currentTurn) {
+    // Show current turn indicator only for first player (when there's no current question)
+    if (round.currentTurn && !round.currentQuestion) {
         const currentTurnPlayer = game.players.find(p => p.id === round.currentTurn);
         if (currentTurnPlayer) {
             turnPlayer.textContent = currentTurnPlayer.name;
-            turnIndicator.style.display = 'block';
-            
-            // Highlight if it's your turn
+            // Only show if it's the first player's turn (no question has been asked yet)
             if (isMyTurn && !hasPendingQuestion && !isMole) {
+                turnIndicator.style.display = 'block';
                 turnIndicator.classList.add('your-turn');
-                // Show cryptic banner for first player instead of modal
+                // Show cryptic banner for first player
                 const firstTurnBanner = document.getElementById('first-turn-banner');
-                if (firstTurnBanner && !round.currentQuestion && round.currentTurn === gameState.playerId) {
+                if (firstTurnBanner) {
                     firstTurnBanner.style.display = 'block';
-                } else if (firstTurnBanner) {
-                    firstTurnBanner.style.display = 'none';
                 }
             } else {
+                turnIndicator.style.display = 'none';
                 turnIndicator.classList.remove('your-turn');
                 const firstTurnBanner = document.getElementById('first-turn-banner');
                 if (firstTurnBanner) {
@@ -716,6 +714,11 @@ function updateGameActions(game, round, currentPlayer) {
         }
     } else {
         turnIndicator.style.display = 'none';
+        turnIndicator.classList.remove('your-turn');
+        const firstTurnBanner = document.getElementById('first-turn-banner');
+        if (firstTurnBanner) {
+            firstTurnBanner.style.display = 'none';
+        }
     }
 
     // All players (including moles) can vote at any time
