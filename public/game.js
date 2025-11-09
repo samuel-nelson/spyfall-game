@@ -864,14 +864,33 @@ function showModal(modalId) {
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     
-    // Scroll modal content to top
-    setTimeout(() => {
-        modal.scrollTop = 0;
-        const modalContent = modal.querySelector('.modal-content');
-        if (modalContent) {
-            modalContent.scrollTop = 0;
-        }
-    }, 10);
+    // Immediately center the modal by scrolling to center
+    // Use double requestAnimationFrame to ensure layout is complete
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            const modalContent = modal.querySelector('.modal-content');
+            if (modalContent) {
+                // Force layout calculation
+                void modalContent.offsetHeight;
+                
+                // Calculate center position
+                const modalContentHeight = modalContent.offsetHeight;
+                const viewportHeight = window.innerHeight;
+                
+                // If content is smaller than viewport, center it
+                if (modalContentHeight < viewportHeight) {
+                    const scrollPosition = (modal.scrollHeight - viewportHeight) / 2;
+                    modal.scrollTop = scrollPosition;
+                } else {
+                    // If content is larger, scroll to top
+                    modal.scrollTop = 0;
+                }
+                
+                // Always scroll content to top
+                modalContent.scrollTop = 0;
+            }
+        });
+    });
 }
 
 function showVoteModal() {

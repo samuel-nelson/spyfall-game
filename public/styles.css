@@ -816,20 +816,15 @@ h3 {
 
 /* First Turn Banner - Cryptic Scribble Style */
 .first-turn-banner {
-    position: fixed;
-    top: 0;
-    left: 0;
+    position: relative;
     width: 100%;
-    z-index: 999;
-    margin: 0;
-    padding: 30px 0;
+    z-index: 10;
+    margin: 0 0 20px 0;
+    padding: 20px 0;
     display: none;
     animation: fadeInSlide 0.6s ease-out;
     text-align: center;
     pointer-events: none;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
 }
 
 .banner-content {
@@ -959,6 +954,8 @@ h3 {
     -webkit-overflow-scrolling: touch;
     z-index: 1001;
     margin: auto;
+    /* Ensure immediate centering */
+    transform: translateY(0);
 }
 
 .modal-content .form-group {
