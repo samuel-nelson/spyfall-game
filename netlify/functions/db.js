@@ -1,72 +1,121 @@
-// MongoDB connection module
-const { MongoClient } = require('mongodb');
+// FaunaDB connection module for Netlify
+const faunadb = require('faunadb');
+const q = faunadb.query;
+
+// Get FaunaDB secret from environment variable
+const FAUNA_SECRET = process.env.FAUNA_SECRET || process.env.FAUNADB_SECRET_KEY;
 
 let client = null;
-let db = null;
 
-// MongoDB connection string from environment variable
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/spyfall';
-
-// Database and collection names
-const DB_NAME = 'spyfall';
-const COLLECTION_NAME = 'games';
-
-async function connect() {
-    if (client && db) {
-        return db;
+function getClient() {
+    if (!FAUNA_SECRET) {
+        throw new Error('FAUNA_SECRET or FAUNADB_SECRET_KEY environment variable is required');
     }
+    
+    if (!client) {
+        client = new faunadb.Client({ secret: FAUNA_SECRET });
+    }
+    
+    return client;
+}
 
+// Game store functions using FaunaDB
+async function getGame(gameCode) {
     try {
-        client = new MongoClient(MONGODB_URI);
-        await client.connect();
-        db = client.db(DB_NAME);
-        return db;
+        const client = getClient();
+        const result = await client.query(
+            q.Get(q.Match(q.Index('games_by_code'), gameCode.toUpperCase()))
+        );
+        return result.data;
     } catch (error) {
-        console.error('MongoDB connection error:', error);
+        if (error.name === 'NotFound') {
+            return null;
+        }
         throw error;
     }
 }
 
-async function getCollection() {
-    const database = await connect();
-    return database.collection(COLLECTION_NAME);
-}
-
-// Game store functions using MongoDB
-async function getGame(gameCode) {
-    const collection = await getCollection();
-    return await collection.findOne({ code: gameCode.toUpperCase() });
-}
-
 async function saveGame(game) {
-    const collection = await getCollection();
-    await collection.updateOne(
-        { code: game.code },
-        { $set: game },
-        { upsert: true }
-    );
+    const client = getClient();
+    const gameCode = game.code.toUpperCase();
+    
+    try {
+        // Try to get existing game
+        const existing = await client.query(
+            q.Get(q.Match(q.Index('games_by_code'), gameCode))
+        );
+        
+        // Update existing game
+        await client.query(
+            q.Update(existing.ref, {
+                data: game
+            })
+        );
+    } catch (error) {
+        if (error.name === 'NotFound') {
+            // Create new game
+            await client.query(
+                q.Create(q.Collection('games'), {
+                    data: game
+                })
+            );
+        } else {
+            throw error;
+        }
+    }
 }
 
 async function deleteGame(gameCode) {
-    const collection = await getCollection();
-    await collection.deleteOne({ code: gameCode.toUpperCase() });
+    try {
+        const client = getClient();
+        const existing = await client.query(
+            q.Get(q.Match(q.Index('games_by_code'), gameCode.toUpperCase()))
+        );
+        await client.query(q.Delete(existing.ref));
+    } catch (error) {
+        if (error.name === 'NotFound') {
+            // Game doesn't exist, nothing to delete
+            return;
+        }
+        throw error;
+    }
 }
 
 async function cleanupOldGames() {
-    const collection = await getCollection();
+    const client = getClient();
     const maxAge = 24 * 60 * 60 * 1000; // 24 hours
     const cutoffTime = Date.now() - maxAge;
     
-    await collection.deleteMany({
-        createdAt: { $lt: cutoffTime }
-    });
+    try {
+        // Get all games older than cutoff
+        const oldGames = await client.query(
+            q.Filter(
+                q.Paginate(q.Documents(q.Collection('games'))),
+                q.Lambda('game', 
+                    q.LT(
+                        q.Select(['data', 'createdAt'], q.Get(q.Var('game'))),
+                        cutoffTime
+                    )
+                )
+            )
+        );
+        
+        // Delete old games
+        await client.query(
+            q.Map(
+                oldGames.data,
+                q.Lambda('gameRef', q.Delete(q.Var('gameRef')))
+            )
+        );
+    } catch (error) {
+        console.error('Error cleaning up old games:', error);
+        // Don't throw - cleanup is not critical
+    }
 }
 
 module.exports = {
-    connect,
     getGame,
     saveGame,
     deleteGame,
     cleanupOldGames
 };
-

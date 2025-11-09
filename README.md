@@ -106,46 +106,61 @@ SPY/
 └── README.md           # This file
 ```
 
-## MongoDB Setup (Required for Multiplayer)
+## FaunaDB Setup (Required for Multiplayer)
 
-This game uses MongoDB to store game state so players can connect to each other across different server instances.
+This game uses FaunaDB (Netlify's recommended database) to store game state so players can connect to each other across different server instances.
 
-### Step 1: Create a MongoDB Atlas Account (Free)
+### Step 1: Create a FaunaDB Account (Free)
 
-1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register)
+1. Go to [FaunaDB](https://fauna.com/)
 2. Sign up for a free account
-3. Create a new cluster (choose the FREE tier)
-4. Wait for the cluster to be created (takes a few minutes)
+3. Create a new database:
+   - Click "New Database"
+   - Name it `spyfall` (or any name you prefer)
+   - Choose a region close to you
+   - Click "Create"
 
-### Step 2: Get Your Connection String
+### Step 2: Create the Collection and Index
 
-1. Click "Connect" on your cluster
-2. Choose "Connect your application"
-3. Copy the connection string (looks like: `mongodb+srv://username:password@cluster.mongodb.net/`)
-4. Replace `<password>` with your database password
-5. Replace `<dbname>` with `spyfall` (or leave it to use default)
+1. In your database, click "New Collection"
+2. Name it `games` and click "Save"
+3. Create an index:
+   - Click "New Index" in the `games` collection
+   - Name: `games_by_code`
+   - Terms: `data.code`
+   - Unique: Check this box
+   - Click "Save"
 
-### Step 3: Set Environment Variable in Netlify
+### Step 3: Get Your Secret Key
+
+1. Click on "Security" in the left sidebar
+2. Click "New Key"
+3. Name it `Netlify` (or any name)
+4. Role: Select "Server" (not Admin - for security)
+5. Click "Save"
+6. **Copy the secret key** (you won't be able to see it again!)
+
+### Step 4: Set Environment Variable in Netlify
 
 1. Go to your Netlify site dashboard
 2. Navigate to **Site settings** → **Environment variables**
 3. Add a new variable:
-   - **Key**: `MONGODB_URI`
-   - **Value**: Your MongoDB connection string (from Step 2)
+   - **Key**: `FAUNA_SECRET` (or `FAUNADB_SECRET_KEY`)
+   - **Value**: Your FaunaDB secret key (from Step 3)
 4. Click **Save**
 
-### Step 4: Redeploy
+### Step 5: Redeploy
 
 After setting the environment variable, trigger a new deployment:
 - Go to **Deploys** tab
 - Click **Trigger deploy** → **Clear cache and deploy site**
 
-### Local Development with MongoDB
+### Local Development with FaunaDB
 
 For local testing, create a `.env` file in the project root:
 
 ```
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/spyfall
+FAUNA_SECRET=your_fauna_secret_key_here
 ```
 
 **Note**: Never commit your `.env` file to Git! It's already in `.gitignore`.
@@ -154,10 +169,11 @@ MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/spyfall
 
 ### Game State Storage
 
-The game uses **MongoDB** for persistent storage, which allows:
+The game uses **FaunaDB** (Netlify's recommended database) for persistent storage, which allows:
 - Multiple players to connect from different devices
 - Game state to persist across server restarts
 - Games to work across different Netlify Function instances
+- Fast, serverless-friendly database with generous free tier
 
 ### Multiplayer Synchronization
 
