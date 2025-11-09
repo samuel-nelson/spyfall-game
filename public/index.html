@@ -273,69 +273,69 @@
                     <button id="vote-mole-action-btn" class="btn btn-secondary" style="display: none;">VOTE FOR MOLE</button>
                     <button id="guess-location-btn" class="btn btn-primary" style="display: none;">IDENTIFY LOCATION</button>
                 </div>
-
-
-                <div id="answer-modal" class="modal" style="display: none;">
-                    <div class="modal-content">
-                        <button class="modal-close" onclick="closeModal('answer-modal')">×</button>
-                        <h3>RESPOND</h3>
-                        <p id="question-to-answer" class="question-prompt"></p>
-                        <div class="form-group">
-                            <label for="answer-text">YOUR RESPONSE</label>
-                            <textarea id="answer-text" placeholder="Enter your answer..." maxlength="200"></textarea>
-                        </div>
-                        <div class="modal-buttons">
-                            <button id="submit-answer-btn" class="btn btn-primary">SUBMIT</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="vote-modal" class="modal" style="display: none;">
-                    <div class="modal-content">
-                        <button class="modal-close" onclick="closeModal('vote-modal')">×</button>
-                        <h3>CAST YOUR VOTE</h3>
-                        <p class="vote-instruction">Select the agent you believe is the mole:</p>
-                        <div class="form-group">
-                            <label for="voted-player">SUSPECT</label>
-                            <select id="voted-player"></select>
-                        </div>
-                        <div class="modal-buttons">
-                            <button id="submit-vote-btn" class="btn btn-primary">VOTE</button>
-                            <button id="cancel-vote-btn" class="btn btn-secondary">CANCEL</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="guess-location-modal" class="modal" style="display: none;">
-                    <div class="modal-content">
-                        <button class="modal-close" onclick="closeModal('guess-location-modal')">×</button>
-                        <h3>IDENTIFY LOCATION</h3>
-                        <p class="guess-instruction">What location do you believe the operation is taking place?</p>
-                        <div class="form-group">
-                            <label for="guessed-location">LOCATION</label>
-                            <div id="location-select-grid" class="location-select-grid"></div>
-                        </div>
-                        <div class="modal-buttons">
-                            <button id="submit-guess-btn" class="btn btn-primary">SUBMIT</button>
-                            <button id="cancel-guess-btn" class="btn btn-secondary">CANCEL</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="game-result-modal" class="modal" style="display: none;">
-                    <div class="modal-content result-content">
-                        <button class="modal-close" onclick="closeModal('game-result-modal')">×</button>
-                        <h3 id="result-title"></h3>
-                        <div id="result-content"></div>
-                        <div class="modal-buttons">
-                            <button id="next-round-btn" class="btn btn-primary" style="display: none;">NEXT ROUND</button>
-                            <button id="back-to-lobby-btn" class="btn btn-secondary">RETURN TO BRIEFING</button>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
         
+    </div>
+
+    <!-- Modals - Moved outside all containers to be direct children of body -->
+    <div id="answer-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('answer-modal')">×</button>
+            <h3>RESPOND</h3>
+            <p id="question-to-answer" class="question-prompt"></p>
+            <div class="form-group">
+                <label for="answer-text">YOUR RESPONSE</label>
+                <textarea id="answer-text" placeholder="Enter your answer..." maxlength="200"></textarea>
+            </div>
+            <div class="modal-buttons">
+                <button id="submit-answer-btn" class="btn btn-primary">SUBMIT</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="vote-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('vote-modal')">×</button>
+            <h3>CAST YOUR VOTE</h3>
+            <p class="vote-instruction">Select the agent you believe is the mole:</p>
+            <div class="form-group">
+                <label for="voted-player">SUSPECT</label>
+                <select id="voted-player"></select>
+            </div>
+            <div class="modal-buttons">
+                <button id="submit-vote-btn" class="btn btn-primary">VOTE</button>
+                <button id="cancel-vote-btn" class="btn btn-secondary">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="guess-location-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('guess-location-modal')">×</button>
+            <h3>IDENTIFY LOCATION</h3>
+            <p class="guess-instruction">What location do you believe the operation is taking place?</p>
+            <div class="form-group">
+                <label for="guessed-location">LOCATION</label>
+                <div id="location-select-grid" class="location-select-grid"></div>
+            </div>
+            <div class="modal-buttons">
+                <button id="submit-guess-btn" class="btn btn-primary">SUBMIT</button>
+                <button id="cancel-guess-btn" class="btn btn-secondary">CANCEL</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-result-modal" class="modal">
+        <div class="modal-content result-content">
+            <button class="modal-close" onclick="closeModal('game-result-modal')">×</button>
+            <h3 id="result-title"></h3>
+            <div id="result-content"></div>
+            <div class="modal-buttons">
+                <button id="next-round-btn" class="btn btn-primary" style="display: none;">NEXT ROUND</button>
+                <button id="back-to-lobby-btn" class="btn btn-secondary">RETURN TO BRIEFING</button>
+            </div>
+        </div>
     </div>
 
     <script src="locations.js"></script>

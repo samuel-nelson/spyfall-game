@@ -903,89 +903,69 @@ h3 {
     }
 }
 
-/* Modals - Complete rework for perfect centering */
+/* Modals - Complete rewrite from scratch - Simple and bulletproof */
 .modal {
+    /* Base state - hidden */
+    display: none;
+    
+    /* When shown - perfect viewport centering */
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    width: 100vw;
-    width: 100dvw; /* Dynamic viewport width for mobile */
-    height: 100vh;
-    height: 100dvh; /* Dynamic viewport height for mobile */
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    
+    /* Flexbox for centering - applied when shown */
+    justify-content: center;
+    align-items: center;
+    
+    /* Styling */
     background: rgba(0, 0, 0, 0.85);
-    display: none;
-    z-index: 10000; /* Very high z-index to ensure it's on top */
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
+    
+    /* Reset everything */
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
-    /* Remove overflow from modal container - only content scrolls */
     overflow: hidden;
-    margin: 0;
-    padding: 0;
-    /* Ensure modal is always relative to viewport, not parent */
-    transform: none !important;
-    will-change: auto;
 }
 
-/* When modal is shown with flex - perfect viewport centering */
-.modal[style*="display: flex"],
-.modal[style*="display:flex"],
-.modal.modal-active {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    /* Explicit viewport dimensions for perfect centering */
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100vw !important;
-    width: 100dvw !important; /* Dynamic viewport width for mobile */
-    height: 100vh !important;
-    height: 100dvh !important; /* Dynamic viewport height for mobile */
-    position: fixed !important;
-    transform: none !important;
+/* When modal is shown */
+.modal.show {
+    display: flex;
 }
 
-/* When modal is shown with block */
-.modal[style*="display:block"],
-.modal[style*="display: block"] {
-    display: block !important;
-    padding: 0;
-    margin: 0;
-    height: 100vh !important;
-    height: 100dvh !important;
-    width: 100vw;
-    width: 100dvw;
-}
-
+/* Modal content - centered box */
 .modal-content {
-    background: rgba(26, 26, 26, 0.98);
-    border: 2px solid var(--color-primary);
-    padding: 50px 40px;
-    padding-top: 70px;
+    /* Positioning */
+    position: relative;
+    margin: auto;
+    
+    /* Sizing */
     width: 90%;
     max-width: 600px;
     max-height: 90vh;
     max-height: 90dvh; /* Dynamic viewport height for mobile */
+    
+    /* Styling */
+    background: rgba(26, 26, 26, 0.98);
+    border: 2px solid var(--color-primary);
+    padding: 50px 40px;
+    padding-top: 70px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    box-sizing: border-box;
+    
+    /* Scrolling */
     overflow-y: auto;
     overflow-x: hidden;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-    position: relative;
-    box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
-    z-index: 10001;
-    /* Perfect centering - margin auto works with flex parent */
-    margin: 0;
+    
+    /* Prevent shrinking in flex */
     flex-shrink: 0;
-    /* Ensure content doesn't get cut off */
-    transform: translateZ(0); /* Force hardware acceleration */
-    /* Ensure it's visible and properly positioned */
-    display: block;
 }
 
 .modal-content .form-group {
@@ -1870,33 +1850,8 @@ h3 {
         font-size: 1.4rem;
     }
     
-    .modal[style*="display: flex"],
-    .modal[style*="display:flex"],
-    .modal.modal-active {
-        padding: 0 !important;
-        margin: 0 !important;
-        align-items: center !important;
-        justify-content: center !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        height: 100vh !important;
-        height: 100dvh !important;
-        width: 100vw !important;
-        width: 100dvw !important;
-        position: fixed !important;
-        transform: none !important;
-    }
-    
-    .modal[style*="display:block"],
-    .modal[style*="display: block"] {
-        padding: 0;
-        margin: 0;
-        height: 100vh !important;
-        height: 100dvh !important;
-        width: 100vw;
-        width: 100dvw;
+    .modal.show {
+        display: flex;
     }
     
     .modal-content {
@@ -1907,8 +1862,6 @@ h3 {
         max-width: none;
         max-height: 90vh;
         max-height: 90dvh;
-        margin: 0 auto;
-        flex-shrink: 0;
     }
     
     .modal-content .form-group {

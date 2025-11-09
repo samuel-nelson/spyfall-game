@@ -862,7 +862,7 @@ async function submitAnswer() {
     }
 }
 
-// Helper function to show and center modal
+// Helper function to show modal - completely rewritten from scratch
 function showModal(modalId) {
     const modal = document.getElementById(modalId);
     if (!modal) {
@@ -870,40 +870,15 @@ function showModal(modalId) {
         return;
     }
     
-    // Add active class and set all positioning styles explicitly
-    modal.classList.add('modal-active');
-    modal.style.display = 'flex';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.right = '0';
-    modal.style.bottom = '0';
-    modal.style.width = '100vw';
-    modal.style.height = '100vh';
-    modal.style.margin = '0';
-    modal.style.padding = '0';
-    modal.style.justifyContent = 'center';
-    modal.style.alignItems = 'center';
-    modal.style.zIndex = '10000';
-    modal.style.transform = 'none';
+    // Simply add the 'show' class - CSS handles everything
+    modal.classList.add('show');
     document.body.style.overflow = 'hidden';
     
-    // Force reflow to ensure styles are applied
-    void modal.offsetHeight;
-    
-    // Double-check positioning after a frame
-    requestAnimationFrame(() => {
-        // Ensure modal is still properly positioned
-        modal.style.top = '0';
-        modal.style.left = '0';
-        modal.style.right = '0';
-        modal.style.bottom = '0';
-        
-        const modalContent = modal.querySelector('.modal-content');
-        if (modalContent) {
-            modalContent.scrollTop = 0;
-        }
-    });
+    // Reset scroll position of modal content
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.scrollTop = 0;
+    }
 }
 
 function showVoteModal() {
@@ -1266,27 +1241,16 @@ function showRoundResult(game) {
 
 // Function to close modal and restore body scroll
 // Make it globally accessible for onclick handlers
+// Function to close modal - completely rewritten from scratch
 window.closeModal = function(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
-        modal.classList.remove('modal-active');
-        modal.style.display = 'none';
-        // Reset all positioning styles
-        modal.style.position = '';
-        modal.style.top = '';
-        modal.style.left = '';
-        modal.style.right = '';
-        modal.style.bottom = '';
-        modal.style.width = '';
-        modal.style.height = '';
-        modal.style.margin = '';
-        modal.style.padding = '';
-        modal.style.justifyContent = '';
-        modal.style.alignItems = '';
-        modal.style.zIndex = '';
-        modal.style.transform = '';
-        // Always restore body scroll when closing a modal
+        // Simply remove the 'show' class - CSS handles everything
+        modal.classList.remove('show');
+        
+        // Restore body scroll
         document.body.style.overflow = '';
+        
         // Clear any selected location
         if (modalId === 'guess-location-modal') {
             selectedLocationForGuess = null;
