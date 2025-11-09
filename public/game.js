@@ -15,6 +15,56 @@ let gameState = {
 // API base URL - will work with Netlify Functions
 const API_BASE = '/.netlify/functions';
 
+// Global button handlers for inline onclick attributes (fallback)
+window.handleNextRound = function() {
+    console.log('handleNextRound called from inline onclick');
+    nextRound();
+    return false;
+};
+
+window.handleBackToLobby = async function() {
+    console.log('handleBackToLobby called from inline onclick');
+    const currentGame = gameState.game;
+    const currentIsHost = currentGame && currentGame.players && currentGame.players.length > 0 && currentGame.players[0].id === gameState.playerId;
+    
+    // If host, end the game (kicks everyone out)
+    if (currentIsHost) {
+        try {
+            const response = await fetch(`${API_BASE}/end-game`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    gameCode: gameState.gameCode,
+                    playerId: gameState.playerId
+                })
+            });
+            
+            if (response.ok) {
+                showNotification('Game ended. All players have been disconnected.', 'info');
+            }
+        } catch (error) {
+            console.error('Error ending game:', error);
+        }
+    }
+    
+    window.closeModal('game-result-modal');
+    // Clear game state but keep gameCode and playerName for potential rejoin
+    const gameCode = gameState.gameCode;
+    const playerName = gameState.playerName;
+    gameState.gameCode = null;
+    gameState.playerId = null;
+    gameState.game = null;
+    stopPolling();
+    stopTimer();
+    // Store for potential rejoin
+    if (gameCode && playerName) {
+        sessionStorage.setItem('lastGameCode', gameCode);
+        sessionStorage.setItem('lastPlayerName', playerName);
+    }
+    showScreen('main-menu');
+    return false;
+};
+
 // Initialize game
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();

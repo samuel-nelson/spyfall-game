@@ -1014,7 +1014,7 @@ h3 {
     z-index: 10002;
     width: 100%;
     box-sizing: border-box;
-    pointer-events: auto;
+    pointer-events: auto !important;
 }
 
 .modal-buttons .btn {
