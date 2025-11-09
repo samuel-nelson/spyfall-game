@@ -54,14 +54,11 @@ function setupEventListeners() {
     document.getElementById('pack2-checkbox').addEventListener('change', autoSaveSettings);
     document.getElementById('countries-checkbox').addEventListener('change', autoSaveSettings);
     document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
+    document.getElementById('theme-toggle-btn-main').addEventListener('click', toggleTheme);
+    document.getElementById('theme-toggle-btn-create').addEventListener('click', toggleTheme);
+    document.getElementById('theme-toggle-btn-join').addEventListener('click', toggleTheme);
+    document.getElementById('theme-toggle-btn-game').addEventListener('click', toggleTheme);
     
-    // Theme toggle on all screens
-    const themeToggleMain = document.getElementById('theme-toggle-btn-main');
-    const themeToggleCreate = document.getElementById('theme-toggle-btn-create');
-    const themeToggleJoin = document.getElementById('theme-toggle-btn-join');
-    if (themeToggleMain) themeToggleMain.addEventListener('click', toggleTheme);
-    if (themeToggleCreate) themeToggleCreate.addEventListener('click', toggleTheme);
-    if (themeToggleJoin) themeToggleJoin.addEventListener('click', toggleTheme);
     
 
     // Game actions
@@ -498,8 +495,6 @@ function updatePlayingState(game) {
         const playerRole = playerRoles[gameState.playerId];
         const roleDisplay = document.getElementById('player-role');
         const roleName = document.getElementById('role-name');
-        
-        console.log('Role check:', { playerRoles, playerId: gameState.playerId, playerRole });
         
         if (playerRole && roleDisplay && roleName) {
             roleName.textContent = playerRole;
@@ -1109,9 +1104,10 @@ function showRoundResult(game) {
                 title.textContent = 'MOLE IDENTIFIED';
                 title.style.color = 'var(--color-success)';
                 const moleNames = moleIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean);
+                const locationName = typeof round.location === 'string' ? round.location : round.location?.name;
                 resultText = `
                     <p>Majority vote correctly identified the mole${moleIds.length > 1 ? 's' : ''}: <strong>${escapeHtml(moleNames.join(', '))}</strong></p>
-                    <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
+                    <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName)}</p>
                 `;
                 
                 // Show vote breakdown
@@ -1130,10 +1126,11 @@ function showRoundResult(game) {
                 title.textContent = 'INCORRECT VOTE';
                 title.style.color = 'var(--color-danger)';
                 const moleNames = moleIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean);
+                const locationName = typeof round.location === 'string' ? round.location : round.location?.name;
                 resultText = `
                     <p>${escapeHtml(accusedPlayer.name)} was not the mole.</p>
                     <p>The mole${moleIds.length > 1 ? 's' : ''} <strong>${escapeHtml(moleNames.join(', '))}</strong> ${moleIds.length > 1 ? 'have' : 'has'} evaded detection.</p>
-                    <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
+                    <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName)}</p>
                 `;
             }
         } else {
@@ -1143,35 +1140,39 @@ function showRoundResult(game) {
             if (wasCorrect) {
                 title.textContent = 'MOLE CAUGHT';
                 title.style.color = 'var(--color-success)';
+                const locationName = typeof round.location === 'string' ? round.location : round.location?.name;
                 resultText = `
                     <p>The mole <strong>${escapeHtml(accusedPlayer.name)}</strong> was correctly identified.</p>
-                    <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
+                    <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName)}</p>
                 `;
             } else {
                 title.textContent = 'INCORRECT ACCUSATION';
                 title.style.color = 'var(--color-danger)';
                 const moleNames = moleIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean);
+                const locationName = typeof round.location === 'string' ? round.location : round.location?.name;
                 resultText = `
                     <p>${escapeHtml(accusedPlayer.name)} was not the mole.</p>
                     <p>The mole${moleIds.length > 1 ? 's' : ''} <strong>${escapeHtml(moleNames.join(', '))}</strong> ${moleIds.length > 1 ? 'win' : 'wins'}.</p>
-                    <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
+                    <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName)}</p>
                 `;
             }
         }
     } else if (round.moleWon || round.spyWon) {
         title.textContent = 'TIME EXPIRED';
         title.style.color = 'var(--color-danger)';
+        const locationName = typeof round.location === 'string' ? round.location : round.location?.name;
         resultText = `
             <p>The mole survived until time ran out.</p>
-            <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
+            <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName)}</p>
         `;
     } else {
         title.textContent = 'ROUND CONCLUDED';
         title.style.color = 'var(--color-primary)';
         const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
+        const locationName = typeof round.location === 'string' ? round.location : round.location?.name;
         resultText = `
             <p>The operation has concluded.</p>
-            <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
+            <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName)}</p>
             <p><strong>Mole${moleIds.length > 1 ? 's' : ''}:</strong> ${escapeHtml(moleIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean).join(', '))}</p>
         `;
     }
