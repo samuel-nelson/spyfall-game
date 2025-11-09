@@ -1335,12 +1335,8 @@ function showRoundResult(game) {
     // Check if player is host - host is the first player in the players array
     const isHost = game.players && game.players.length > 0 && game.players[0].id === gameState.playerId;
     if (isHost) {
-        nextRoundBtn.style.display = 'block';
-        backToLobbyBtn.style.display = 'block'; // Show both buttons for host
         resultText += '<p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-style: italic; font-size: 1.2rem;">As the host, you can start the next round or return to the briefing room.</p>';
     } else {
-        nextRoundBtn.style.display = 'none';
-        backToLobbyBtn.style.display = 'block';
         resultText += '<p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-style: italic; font-size: 1.2rem;">Waiting for host to start the next round...</p>';
     }
 
