@@ -1218,34 +1218,6 @@ function debounce(func, wait) {
     };
 }
 
-// Show elegant game intro transition
-function showGameIntro() {
-    const introOverlay = document.getElementById('game-intro-overlay');
-    if (!introOverlay) {
-        // Create intro overlay if it doesn't exist
-        const overlay = document.createElement('div');
-        overlay.id = 'game-intro-overlay';
-        overlay.className = 'game-intro-overlay';
-        overlay.innerHTML = `
-            <div class="game-intro-content">
-                <div class="intro-title">OPERATION INITIATED</div>
-                <div class="intro-subtitle">The mission begins...</div>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-    } else {
-        introOverlay.style.display = 'flex';
-    }
-    
-    // Hide after animation
-    setTimeout(() => {
-        const overlay = document.getElementById('game-intro-overlay');
-        if (overlay) {
-            overlay.style.display = 'none';
-        }
-    }, 3500);
-}
-
 // Theme toggle
 function toggleTheme() {
     const html = document.documentElement;
