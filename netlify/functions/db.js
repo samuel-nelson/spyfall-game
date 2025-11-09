@@ -87,26 +87,23 @@ async function cleanupOldGames() {
     const cutoffTime = Date.now() - maxAge;
     
     try {
-        // Get all games older than cutoff
-        const oldGames = await client.query(
-            q.Filter(
-                q.Paginate(q.Documents(q.Collection('games'))),
-                q.Lambda('game', 
-                    q.LT(
-                        q.Select(['data', 'createdAt'], q.Get(q.Var('game'))),
-                        cutoffTime
-                    )
-                )
-            )
+        // Get all games
+        const allGames = await client.query(
+            q.Paginate(q.Documents(q.Collection('games')))
         );
         
-        // Delete old games
-        await client.query(
-            q.Map(
-                oldGames.data,
-                q.Lambda('gameRef', q.Delete(q.Var('gameRef')))
-            )
-        );
+        // Filter and delete old games
+        for (const gameRef of allGames.data) {
+            try {
+                const game = await client.query(q.Get(gameRef));
+                if (game.data.createdAt && game.data.createdAt < cutoffTime) {
+                    await client.query(q.Delete(gameRef));
+                }
+            } catch (error) {
+                // Skip if game was already deleted
+                console.error('Error deleting game:', error);
+            }
+        }
     } catch (error) {
         console.error('Error cleaning up old games:', error);
         // Don't throw - cleanup is not critical
