@@ -433,10 +433,14 @@ function updateGameScreen(game) {
         // Always show result modal for ALL players including moles - NO EXCEPTIONS
         showScreen('game-screen');
         
-        // Show modal once - use requestAnimationFrame to ensure DOM is ready
-        requestAnimationFrame(() => {
-            showRoundResult(game);
-        });
+        // Only show modal if it's not already showing (prevent multiple calls)
+        const existingModal = document.getElementById('game-result-modal');
+        if (!existingModal || !existingModal.classList.contains('show')) {
+            // Show modal once - use requestAnimationFrame to ensure DOM is ready
+            requestAnimationFrame(() => {
+                showRoundResult(game);
+            });
+        }
     } else if (game.status === 'lobby') {
         stopTimer(); // Stop timer when back in lobby
         hasScrolledToTopOnGameStart = false; // Reset flag when back in lobby
@@ -1313,16 +1317,21 @@ function showRoundResult(game) {
     if (!content) {
         console.error('showRoundResult: Content element is null! Cannot set content.');
     } else {
-        // Clear any existing content first
-        content.innerHTML = '';
-        // Set new content
+        // Set new content directly (don't clear first to avoid flicker)
         content.innerHTML = resultText;
-        // Force visibility
+        // Force visibility with !important-level styles
         content.style.display = 'block';
         content.style.visibility = 'visible';
         content.style.opacity = '1';
+        content.style.height = 'auto';
+        content.style.minHeight = '50px';
+        // Remove any hiding styles
+        content.style.maxHeight = 'none';
+        // Ensure it's in the document flow
+        content.removeAttribute('hidden');
         console.log('showRoundResult: Content set. resultText length:', resultText.length, 'isMole:', isMole);
         console.log('showRoundResult: Content element after setting:', content.innerHTML.substring(0, 200));
+        console.log('showRoundResult: Content computed styles:', window.getComputedStyle(content).display, window.getComputedStyle(content).visibility);
     }
     
     // Set title - ensure it's visible
@@ -1330,7 +1339,9 @@ function showRoundResult(game) {
         title.style.display = 'block';
         title.style.visibility = 'visible';
         title.style.opacity = '1';
+        title.removeAttribute('hidden');
         console.log('showRoundResult: Title set to:', title.textContent);
+        console.log('showRoundResult: Title computed styles:', window.getComputedStyle(title).display);
     }
     
     // Set up buttons using onclick for maximum reliability
