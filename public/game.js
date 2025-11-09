@@ -1169,24 +1169,32 @@ function showLocationManagement() {
     enabledLocations.clear();
     
     if (game?.settings) {
-        const enabledSets = game.settings.enabledLocationSets || ['spyfall1'];
-        const customLocations = game.settings.customLocations || [];
-        
-        // Add all locations from enabled sets
-        if (enabledSets.includes('spyfall1')) {
-            SPYFALL1_LOCATIONS.forEach(loc => {
-                enabledLocations.add(`spyfall1-${loc.name}`);
+        // If individual location selection exists, use that
+        if (game.settings.enabledLocationsList && Array.isArray(game.settings.enabledLocationsList) && game.settings.enabledLocationsList.length > 0) {
+            game.settings.enabledLocationsList.forEach(locationId => {
+                enabledLocations.add(locationId);
             });
-        }
-        if (enabledSets.includes('spyfall2')) {
-            SPYFALL2_LOCATIONS.forEach(loc => {
-                enabledLocations.add(`spyfall2-${loc.name}`);
-            });
-        }
-        if (enabledSets.includes('custom')) {
-            customLocations.forEach(loc => {
-                enabledLocations.add(`custom-${loc.name}`);
-            });
+        } else {
+            // Fallback to set-based selection
+            const enabledSets = game.settings.enabledLocationSets || ['spyfall1'];
+            const customLocations = game.settings.customLocations || [];
+            
+            // Add all locations from enabled sets
+            if (enabledSets.includes('spyfall1')) {
+                SPYFALL1_LOCATIONS.forEach(loc => {
+                    enabledLocations.add(`spyfall1-${loc.name}`);
+                });
+            }
+            if (enabledSets.includes('spyfall2')) {
+                SPYFALL2_LOCATIONS.forEach(loc => {
+                    enabledLocations.add(`spyfall2-${loc.name}`);
+                });
+            }
+            if (enabledSets.includes('custom')) {
+                customLocations.forEach(loc => {
+                    enabledLocations.add(`custom-${loc.name}`);
+                });
+            }
         }
     } else {
         // Default: enable all Spyfall 1 locations
