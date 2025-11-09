@@ -327,7 +327,7 @@ function stopTimer() {
 }
 
 async function pollGameState() {
-    if (!gameState.gameCode || !gameState.playerId) return;
+    if (!gameState.gameCode || !gameState.playerId) return Promise.resolve();
 
     try {
         const response = await fetch(`${API_BASE}/game-state?gameCode=${gameState.gameCode}&playerId=${gameState.playerId}`);
@@ -335,13 +335,15 @@ async function pollGameState() {
 
         if (data.error) {
             console.error('Error fetching game state:', data.error);
-            return;
+            return Promise.resolve();
         }
 
         gameState.game = data.game;
         updateUI();
+        return Promise.resolve();
     } catch (error) {
         console.error('Error polling game state:', error);
+        return Promise.resolve();
     }
 }
 
@@ -1234,48 +1236,51 @@ function toggleTheme() {
 
 // Location management functions
 function showLocationManagement() {
-    document.getElementById('location-management-modal').style.display = 'flex';
-    
-    // Load enabled locations from game settings
-    const game = gameState.game;
-    enabledLocations.clear();
-    
-    if (game?.settings) {
-        // If individual location selection exists, use that
-        if (game.settings.enabledLocationsList && Array.isArray(game.settings.enabledLocationsList) && game.settings.enabledLocationsList.length > 0) {
-            game.settings.enabledLocationsList.forEach(locationId => {
-                enabledLocations.add(locationId);
-            });
+    // Refresh game state first to ensure we have latest settings
+    pollGameState().then(() => {
+        document.getElementById('location-management-modal').style.display = 'flex';
+        
+        // Load enabled locations from game settings
+        const game = gameState.game;
+        enabledLocations.clear();
+        
+        if (game?.settings) {
+            // If individual location selection exists, use that
+            if (game.settings.enabledLocationsList && Array.isArray(game.settings.enabledLocationsList) && game.settings.enabledLocationsList.length > 0) {
+                game.settings.enabledLocationsList.forEach(locationId => {
+                    enabledLocations.add(locationId);
+                });
+            } else {
+                // Fallback to set-based selection
+                const enabledSets = game.settings.enabledLocationSets || ['spyfall1'];
+                const customLocations = game.settings.customLocations || [];
+                
+                // Add all locations from enabled sets
+                if (enabledSets.includes('spyfall1')) {
+                    SPYFALL1_LOCATIONS.forEach(loc => {
+                        enabledLocations.add(`spyfall1-${loc.name}`);
+                    });
+                }
+                if (enabledSets.includes('spyfall2')) {
+                    SPYFALL2_LOCATIONS.forEach(loc => {
+                        enabledLocations.add(`spyfall2-${loc.name}`);
+                    });
+                }
+                if (enabledSets.includes('custom')) {
+                    customLocations.forEach(loc => {
+                        enabledLocations.add(`custom-${loc.name}`);
+                    });
+                }
+            }
         } else {
-            // Fallback to set-based selection
-            const enabledSets = game.settings.enabledLocationSets || ['spyfall1'];
-            const customLocations = game.settings.customLocations || [];
-            
-            // Add all locations from enabled sets
-            if (enabledSets.includes('spyfall1')) {
-                SPYFALL1_LOCATIONS.forEach(loc => {
-                    enabledLocations.add(`spyfall1-${loc.name}`);
-                });
-            }
-            if (enabledSets.includes('spyfall2')) {
-                SPYFALL2_LOCATIONS.forEach(loc => {
-                    enabledLocations.add(`spyfall2-${loc.name}`);
-                });
-            }
-            if (enabledSets.includes('custom')) {
-                customLocations.forEach(loc => {
-                    enabledLocations.add(`custom-${loc.name}`);
-                });
-            }
+            // Default: enable all Spyfall 1 locations
+            SPYFALL1_LOCATIONS.forEach(loc => {
+                enabledLocations.add(`spyfall1-${loc.name}`);
+            });
         }
-    } else {
-        // Default: enable all Spyfall 1 locations
-        SPYFALL1_LOCATIONS.forEach(loc => {
-            enabledLocations.add(`spyfall1-${loc.name}`);
-        });
-    }
-    
-    loadLocationTabs();
+        
+        loadLocationTabs();
+    });
 }
 
 function loadLocationTabs() {
@@ -1327,16 +1332,35 @@ function createLocationItem(location, set, isCustom = false) {
         <div class="location-item-roles">${location.roles.map(r => escapeHtml(r)).join(', ')}</div>
     `;
     
-    // Add checkbox event listener
+    // Add checkbox event listener - use click on label for better reliability
     const checkbox = div.querySelector('.location-checkbox');
-    checkbox.addEventListener('change', (e) => {
-        const locationId = e.target.dataset.locationId;
-        if (e.target.checked) {
+    const label = div.querySelector('.location-checkbox-label');
+    
+    // Handle both checkbox change and label click
+    const handleToggle = (e) => {
+        e.stopPropagation();
+        const locationId = checkbox.dataset.locationId;
+        const wasChecked = enabledLocations.has(locationId);
+        
+        if (checkbox.checked && !wasChecked) {
             enabledLocations.add(locationId);
-        } else {
+        } else if (!checkbox.checked && wasChecked) {
             enabledLocations.delete(locationId);
         }
+        
+        // Force update the visual state
+        const isNowEnabled = enabledLocations.has(locationId);
+        checkbox.checked = isNowEnabled;
+        
+        // Save immediately
         updateEnabledLocationSets();
+    };
+    
+    checkbox.addEventListener('change', handleToggle);
+    label.addEventListener('click', (e) => {
+        // Prevent double-triggering
+        if (e.target === checkbox) return;
+        handleToggle(e);
     });
     
     if (isCustom) {
@@ -1403,7 +1427,7 @@ async function saveLocationSettings(enabledSets, customLocations) {
     if (!gameState.gameCode || !gameState.playerId) return;
     
     try {
-        // Convert enabledLocations Set to array
+        // Convert enabledLocations Set to array - use current state of the Set
         const enabledLocationsList = Array.from(enabledLocations);
         
         const response = await fetch(`${API_BASE}/update-game-settings`, {
@@ -1418,19 +1442,37 @@ async function saveLocationSettings(enabledSets, customLocations) {
                     timerMinutes: gameState.game?.settings?.timerMinutes || 8,
                     customLocations: customLocations,
                     enabledLocationSets: enabledSets.length > 0 ? enabledSets : ['spyfall1'],
-                    enabledLocationsList: enabledLocationsList // Store individual location selection
+                    enabledLocationsList: enabledLocationsList.length > 0 ? enabledLocationsList : null // Store individual location selection
                 }
             })
         });
         
         const data = await response.json();
         if (!data.error) {
-            // Settings saved successfully - update game state
-            pollGameState();
+            // Settings saved successfully - update game state to reflect changes
+            await pollGameState();
+            // Update the enabledLocations Set from the refreshed game state
+            const game = gameState.game;
+            if (game?.settings?.enabledLocationsList) {
+                enabledLocations.clear();
+                game.settings.enabledLocationsList.forEach(locationId => {
+                    enabledLocations.add(locationId);
+                });
+                // Refresh checkboxes to match saved state
+                refreshLocationCheckboxes();
+            }
         }
     } catch (error) {
         console.error('Error saving location settings:', error);
     }
+}
+
+// Refresh all checkbox visual states to match enabledLocations Set
+function refreshLocationCheckboxes() {
+    document.querySelectorAll('.location-checkbox').forEach(checkbox => {
+        const locationId = checkbox.dataset.locationId;
+        checkbox.checked = enabledLocations.has(locationId);
+    });
 }
 
 function addCustomLocation() {
