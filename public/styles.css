@@ -1817,9 +1817,10 @@ h3 {
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
-    z-index: 1001;
+    z-index: 10001;
     padding: 0;
     font-family: var(--font-sans);
+    pointer-events: auto !important;
 }
 
 .modal-close:hover {
