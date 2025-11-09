@@ -85,8 +85,9 @@ exports.handler = async (event, context) => {
             };
         }
 
-        // Allow starting new round even if previous round ended
-        if (game.status === 'playing' && game.currentRound) {
+        // Allow starting new round if previous round ended or if no round exists
+        // Only block if game is actively playing
+        if (game.status === 'playing' && game.currentRound && Date.now() < game.currentRound.endTime) {
             return {
                 statusCode: 400,
                 headers: {

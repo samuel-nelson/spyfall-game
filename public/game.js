@@ -4,7 +4,8 @@ let gameState = {
     playerId: null,
     playerName: null,
     game: null,
-    pollInterval: null
+    pollInterval: null,
+    timerInterval: null
 };
 
 // API base URL - will work with Netlify Functions
@@ -44,15 +45,16 @@ function setupEventListeners() {
 
     // Game actions
     document.getElementById('ask-question-btn').addEventListener('click', showQuestionModal);
-    document.getElementById('accuse-spy-btn').addEventListener('click', showAccusationModal);
+    document.getElementById('vote-spy-action-btn').addEventListener('click', showVoteModal);
+    document.getElementById('vote-spy-btn').addEventListener('click', showVoteModal);
     document.getElementById('submit-question-btn').addEventListener('click', submitQuestion);
     document.getElementById('cancel-question-btn').addEventListener('click', () => {
         document.getElementById('question-modal').style.display = 'none';
     });
     document.getElementById('submit-answer-btn').addEventListener('click', submitAnswer);
-    document.getElementById('submit-accusation-btn').addEventListener('click', submitAccusation);
-    document.getElementById('cancel-accusation-btn').addEventListener('click', () => {
-        document.getElementById('accusation-modal').style.display = 'none';
+    document.getElementById('submit-vote-btn').addEventListener('click', submitVote);
+    document.getElementById('cancel-vote-btn').addEventListener('click', () => {
+        document.getElementById('vote-modal').style.display = 'none';
     });
     document.getElementById('guess-location-btn').addEventListener('click', showGuessLocationModal);
     document.getElementById('submit-guess-btn').addEventListener('click', submitLocationGuess);
@@ -205,6 +207,28 @@ function stopPolling() {
         clearInterval(gameState.pollInterval);
         gameState.pollInterval = null;
     }
+    stopTimer();
+}
+
+function startTimer(endTime) {
+    stopTimer(); // Clear any existing timer
+    
+    if (!endTime) return;
+    
+    // Update immediately
+    updateTimer(endTime);
+    
+    // Then update every second
+    gameState.timerInterval = setInterval(() => {
+        updateTimer(endTime);
+    }, 1000);
+}
+
+function stopTimer() {
+    if (gameState.timerInterval) {
+        clearInterval(gameState.timerInterval);
+        gameState.timerInterval = null;
+    }
 }
 
 async function pollGameState() {
@@ -283,8 +307,11 @@ function updateGameScreen(game) {
         showScreen('game-screen');
         updatePlayingState(game);
     } else if (game.status === 'roundEnd') {
+        stopTimer(); // Stop timer when round ends
         showScreen('game-screen');
         showRoundResult(game);
+    } else if (game.status === 'lobby') {
+        stopTimer(); // Stop timer when back in lobby
     }
 }
 
@@ -294,9 +321,11 @@ function updatePlayingState(game) {
 
     document.getElementById('round-number').textContent = currentRound.roundNumber || 1;
 
-    // Update timer
+    // Start/update timer with real-time updates
     if (currentRound.endTime) {
-        updateTimer(currentRound.endTime);
+        startTimer(currentRound.endTime);
+    } else {
+        stopTimer();
     }
 
     // Find current player
@@ -836,7 +865,16 @@ function showRoundResult(game) {
 
 async function nextRound() {
     document.getElementById('game-result-modal').style.display = 'none';
-    await startRound();
+    stopTimer(); // Stop timer before starting new round
+    
+    try {
+        await startRound();
+        // Poll immediately to get updated state
+        setTimeout(() => pollGameState(), 500);
+    } catch (error) {
+        console.error('Error starting next round:', error);
+        showNotification('Failed to start next round. Please try again.', 'error');
+    }
 }
 
 function escapeHtml(text) {
