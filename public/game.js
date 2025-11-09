@@ -17,13 +17,15 @@ const API_BASE = '/.netlify/functions';
 
 // Global button handlers for inline onclick attributes (fallback)
 window.handleNextRound = function() {
-    console.log('🔵 handleNextRound called');
+    console.log('🔵 🔵 🔵 handleNextRound called!');
+    console.trace('handleNextRound call stack');
     nextRound();
     return false;
 };
 
 window.handleBackToLobby = async function() {
-    console.log('🔵 handleBackToLobby called');
+    console.log('🔵 🔵 🔵 handleBackToLobby called!');
+    console.trace('handleBackToLobby call stack');
     const currentGame = gameState.game;
     const currentIsHost = currentGame && currentGame.players && currentGame.players.length > 0 && currentGame.players[0].id === gameState.playerId;
     
@@ -1439,6 +1441,7 @@ function showRoundResult(game) {
         // Add test click handler for debugging
         nextRoundBtn.addEventListener('click', function(e) {
             console.log('🟢 CLICK EVENT DETECTED on next-round-btn!', e);
+            console.log('🟢 Event phase:', e.eventPhase, 'Target:', e.target.id, 'CurrentTarget:', e.currentTarget.id);
         }, { capture: true });
     } else {
         console.error('🔴 showRoundResult: Next round button not found!');
@@ -1464,6 +1467,7 @@ function showRoundResult(game) {
         // Add test click handler for debugging
         backToLobbyBtn.addEventListener('click', function(e) {
             console.log('🟢 CLICK EVENT DETECTED on back-to-lobby-btn!', e);
+            console.log('🟢 Event phase:', e.eventPhase, 'Target:', e.target.id, 'CurrentTarget:', e.currentTarget.id);
         }, { capture: true });
     } else {
         console.error('🔴 showRoundResult: Back to lobby button not found!');
