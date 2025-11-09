@@ -424,16 +424,16 @@ let hasScrolledToTopOnGameStart = false;
 
 function updateGameScreen(game) {
     if (game.status === 'playing') {
-        const wasInLobby = lastGameStatus === 'lobby';
+        const wasInLobby = lastGameStatus === 'lobby' || lastGameStatus === null;
         showScreen('game-screen');
-        // Only scroll to top once when transitioning from lobby to playing
-        if (wasInLobby && !hasScrolledToTopOnGameStart) {
+        // Always scroll to top when transitioning from lobby to playing
+        if (wasInLobby) {
             setTimeout(() => {
                 window.scrollTo({ top: 0, behavior: 'instant' });
                 document.documentElement.scrollTop = 0;
                 document.body.scrollTop = 0;
                 hasScrolledToTopOnGameStart = true;
-            }, 0);
+            }, 100);
         }
         updatePlayingState(game);
     } else if (game.status === 'roundEnd') {
@@ -817,8 +817,12 @@ async function submitAnswer() {
 }
 
 function showVoteModal() {
+    console.log('showVoteModal called');
     const game = gameState.game;
-    if (!game || !game.currentRound) return;
+    if (!game || !game.currentRound) {
+        console.error('No game or currentRound');
+        return;
+    }
     
     const round = game.currentRound;
 
@@ -851,9 +855,19 @@ function showVoteModal() {
         return;
     }
     
+    console.log('Showing vote modal');
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     modal.scrollTop = 0;
+    
+    // Force modal to be visible and centered
+    setTimeout(() => {
+        modal.style.display = 'flex';
+        const modalContent = modal.querySelector('.modal-content');
+        if (modalContent) {
+            modalContent.style.margin = 'auto';
+        }
+    }, 0);
 }
 
 async function submitVote() {
