@@ -880,7 +880,7 @@ async function submitVote() {
     }
 
     try {
-        const response = await fetch(`${API_BASE}/vote-mole`, {
+        const response = await fetch(`${API_BASE}/vote-spy`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
