@@ -5,9 +5,7 @@ let gameState = {
     playerName: null,
     game: null,
     pollInterval: null,
-    timerInterval: null,
-    queueInterval: null,
-    inQueue: false
+    timerInterval: null
 };
 
 // API base URL - will work with Netlify Functions
@@ -29,14 +27,6 @@ function setupEventListeners() {
         showScreen('join-game');
     });
     
-    document.getElementById('find-public-game-btn').addEventListener('click', () => {
-        showScreen('queue-screen');
-        joinPublicQueue();
-    });
-    
-    document.getElementById('leave-queue-btn').addEventListener('click', leavePublicQueue);
-    
-    document.getElementById('theme-toggle-btn-queue').addEventListener('click', toggleTheme);
 
     // Create game
     document.getElementById('start-game-btn').addEventListener('click', createGame);
@@ -874,20 +864,12 @@ function showModal(modalId) {
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     
-    // Ensure modal is properly centered and scrolled to top
+    // Scroll modal content to top
     setTimeout(() => {
         modal.scrollTop = 0;
         const modalContent = modal.querySelector('.modal-content');
         if (modalContent) {
             modalContent.scrollTop = 0;
-            // Force reflow to ensure centering
-            void modalContent.offsetHeight;
-            // Center vertically by scrolling modal to show content
-            const modalHeight = modalContent.offsetHeight;
-            const viewportHeight = window.innerHeight;
-            if (modalHeight < viewportHeight) {
-                modal.scrollTop = (modal.scrollHeight - modalHeight) / 2;
-            }
         }
     }, 10);
 }
@@ -1437,130 +1419,5 @@ function toggleTheme() {
     }
 }
 
-// Queue management functions
-async function joinPublicQueue() {
-    const playerName = prompt('Enter your codename:');
-    
-    if (!playerName || playerName.trim().length === 0) {
-        showScreen('main-menu');
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE}/join-queue`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ playerName: playerName.trim() })
-        });
-
-        const data = await response.json();
-        
-        if (data.error) {
-            showNotification(data.error, 'error');
-            showScreen('main-menu');
-            return;
-        }
-
-        gameState.playerId = data.playerId;
-        gameState.playerName = playerName.trim();
-        gameState.inQueue = true;
-
-        // If matched, join the game
-        if (data.matched && data.gameCode) {
-            gameState.gameCode = data.gameCode;
-            gameState.inQueue = false;
-            stopQueuePolling();
-            document.getElementById('display-game-code').textContent = data.gameCode;
-            showScreen('lobby');
-            startPolling();
-        } else {
-            // Start polling queue status
-            startQueuePolling();
-        }
-    } catch (error) {
-        console.error('Error joining queue:', error);
-        showNotification('Failed to join queue. Please try again.', 'error');
-        showScreen('main-menu');
-    }
-}
-
-async function leavePublicQueue() {
-    if (!gameState.playerId || !gameState.inQueue) {
-        stopQueuePolling();
-        gameState.inQueue = false;
-        showScreen('main-menu');
-        return;
-    }
-
-    try {
-        await fetch(`${API_BASE}/leave-queue`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ playerId: gameState.playerId })
-        });
-    } catch (error) {
-        console.error('Error leaving queue:', error);
-    }
-
-    stopQueuePolling();
-    gameState.inQueue = false;
-    gameState.playerId = null;
-    gameState.playerName = null;
-    showScreen('main-menu');
-}
-
-function startQueuePolling() {
-    if (gameState.queueInterval) {
-        clearInterval(gameState.queueInterval);
-    }
-
-    // Poll immediately
-    pollQueueStatus();
-
-    // Then poll every 2 seconds
-    gameState.queueInterval = setInterval(pollQueueStatus, 2000);
-}
-
-function stopQueuePolling() {
-    if (gameState.queueInterval) {
-        clearInterval(gameState.queueInterval);
-        gameState.queueInterval = null;
-    }
-}
-
-async function pollQueueStatus() {
-    if (!gameState.playerId || !gameState.inQueue) {
-        stopQueuePolling();
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE}/queue-status?playerId=${gameState.playerId}`);
-        const data = await response.json();
-
-        if (data.error) {
-            console.error('Error fetching queue status:', data.error);
-            return;
-        }
-
-        // Check if matched to a game
-        if (data.matched && data.gameCode) {
-            gameState.gameCode = data.gameCode;
-            gameState.inQueue = false;
-            stopQueuePolling();
-            document.getElementById('display-game-code').textContent = data.gameCode;
-            showScreen('lobby');
-            startPolling();
-            return;
-        }
-
-        // Update UI
-        document.getElementById('queue-size').textContent = data.queueSize || 0;
-        document.getElementById('queue-position').textContent = data.queuePosition || '-';
-        document.getElementById('players-needed').textContent = data.playersNeeded || 3;
-    } catch (error) {
-        console.error('Error polling queue status:', error);
-    }
-}
 
 

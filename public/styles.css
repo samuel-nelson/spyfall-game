@@ -932,9 +932,8 @@ h3 {
 .modal[style*="display:flex"] {
     display: flex !important;
     justify-content: center;
-    align-items: flex-start;
+    align-items: center;
     padding: 20px;
-    padding-top: 80px;
 }
 
 /* When modal is shown with block */
@@ -942,7 +941,6 @@ h3 {
 .modal[style*="display: block"] {
     display: block !important;
     padding: 20px;
-    padding-top: 80px;
 }
 
 .modal-content {
@@ -952,7 +950,7 @@ h3 {
     padding-top: 70px;
     width: 90%;
     max-width: 600px;
-    max-height: calc(100vh - 100px);
+    max-height: 90vh;
     overflow-y: auto;
     overflow-x: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
@@ -960,9 +958,7 @@ h3 {
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
     z-index: 1001;
-    /* Perfect centering */
-    margin: 0 auto;
-    display: block;
+    margin: auto;
 }
 
 .modal-content .form-group {
@@ -1850,14 +1846,12 @@ h3 {
     .modal[style*="display: flex"],
     .modal[style*="display:flex"] {
         padding: 10px;
-        padding-top: 60px;
-        align-items: flex-start;
+        align-items: center;
     }
     
     .modal[style*="display:block"],
     .modal[style*="display: block"] {
         padding: 10px;
-        padding-top: 60px;
     }
     
     .modal-content {
@@ -1866,8 +1860,8 @@ h3 {
         padding-bottom: 40px;
         width: calc(100% - 20px);
         max-width: none;
-        max-height: calc(100vh - 80px);
-        margin: 0 auto;
+        max-height: 85vh;
+        margin: auto;
     }
     
     .modal-content .form-group {
