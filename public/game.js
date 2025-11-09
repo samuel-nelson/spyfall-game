@@ -184,11 +184,16 @@ async function joinGame() {
 }
 
 async function startRound() {
-    // Save settings before starting round if host
+    // Save settings before starting round if host (but don't block on errors)
     const game = gameState.game;
     const isHost = game && game.players[0] && game.players[0].id === gameState.playerId;
     if (isHost && game.status === 'lobby') {
-        await saveGameSettings();
+        try {
+            await saveGameSettings();
+        } catch (error) {
+            console.error('Error saving settings before start:', error);
+            // Don't block starting the round if settings save fails
+        }
     }
     
     try {
