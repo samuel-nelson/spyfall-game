@@ -267,7 +267,7 @@
 
                 <div id="question-modal" class="modal" style="display: none;">
                     <div class="modal-content">
-                        <button class="modal-close" onclick="document.getElementById('question-modal').style.display='none'">×</button>
+                        <button class="modal-close" onclick="closeModal('question-modal')">×</button>
                         <h3>INTERROGATION</h3>
                         <div class="form-group">
                             <label for="question-target">TARGET AGENT</label>
@@ -286,7 +286,7 @@
 
                 <div id="answer-modal" class="modal" style="display: none;">
                     <div class="modal-content">
-                        <button class="modal-close" onclick="document.getElementById('answer-modal').style.display='none'">×</button>
+                        <button class="modal-close" onclick="closeModal('answer-modal')">×</button>
                         <h3>RESPOND</h3>
                         <p id="question-to-answer" class="question-prompt"></p>
                         <div class="form-group">
@@ -301,7 +301,7 @@
 
                 <div id="vote-modal" class="modal" style="display: none;">
                     <div class="modal-content">
-                        <button class="modal-close" onclick="document.getElementById('vote-modal').style.display='none'">×</button>
+                        <button class="modal-close" onclick="closeModal('vote-modal')">×</button>
                         <h3>CAST YOUR VOTE</h3>
                         <p class="vote-instruction">Select the agent you believe is the mole:</p>
                         <div class="form-group">
@@ -317,7 +317,7 @@
 
                 <div id="guess-location-modal" class="modal" style="display: none;">
                     <div class="modal-content">
-                        <button class="modal-close" onclick="document.getElementById('guess-location-modal').style.display='none'">×</button>
+                        <button class="modal-close" onclick="closeModal('guess-location-modal')">×</button>
                         <h3>IDENTIFY LOCATION</h3>
                         <p class="guess-instruction">What location do you believe the operation is taking place?</p>
                         <div class="form-group">
@@ -333,7 +333,7 @@
 
                 <div id="game-result-modal" class="modal" style="display: none;">
                     <div class="modal-content result-content">
-                        <button class="modal-close" onclick="document.getElementById('game-result-modal').style.display='none'">×</button>
+                        <button class="modal-close" onclick="closeModal('game-result-modal')">×</button>
                         <h3 id="result-title"></h3>
                         <div id="result-content"></div>
                         <div class="modal-buttons">

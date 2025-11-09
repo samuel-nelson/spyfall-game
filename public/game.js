@@ -70,21 +70,21 @@ function setupEventListeners() {
     document.getElementById('vote-mole-btn').addEventListener('click', showVoteModal);
     document.getElementById('submit-question-btn').addEventListener('click', submitQuestion);
     document.getElementById('cancel-question-btn').addEventListener('click', () => {
-        document.getElementById('question-modal').style.display = 'none';
+        closeModal('question-modal');
     });
     document.getElementById('submit-answer-btn').addEventListener('click', submitAnswer);
     document.getElementById('submit-vote-btn').addEventListener('click', submitVote);
     document.getElementById('cancel-vote-btn').addEventListener('click', () => {
-        document.getElementById('vote-modal').style.display = 'none';
+        closeModal('vote-modal');
     });
     document.getElementById('guess-location-btn').addEventListener('click', showGuessLocationModal);
     document.getElementById('submit-guess-btn').addEventListener('click', submitLocationGuess);
     document.getElementById('cancel-guess-btn').addEventListener('click', () => {
-        document.getElementById('guess-location-modal').style.display = 'none';
+        closeModal('guess-location-modal');
     });
     document.getElementById('next-round-btn').addEventListener('click', nextRound);
     document.getElementById('back-to-lobby-btn').addEventListener('click', () => {
-        document.getElementById('game-result-modal').style.display = 'none';
+        closeModal('game-result-modal');
         // Clear game state but keep gameCode and playerName for potential rejoin
         const gameCode = gameState.gameCode;
         const playerName = gameState.playerName;
@@ -770,7 +770,10 @@ function showQuestionModal() {
     });
 
     document.getElementById('question-text').value = '';
-    document.getElementById('question-modal').style.display = 'flex';
+    const modal = document.getElementById('question-modal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    modal.scrollTop = 0;
 }
 
 async function submitQuestion() {
@@ -801,7 +804,7 @@ async function submitQuestion() {
             return;
         }
 
-        document.getElementById('question-modal').style.display = 'none';
+        closeModal('question-modal');
         // State will update via polling
     } catch (error) {
         console.error('Error asking question:', error);
@@ -835,7 +838,7 @@ async function submitAnswer() {
             return;
         }
 
-        document.getElementById('answer-modal').style.display = 'none';
+        closeModal('answer-modal');
         // State will update via polling
     } catch (error) {
         console.error('Error answering question:', error);
@@ -867,7 +870,10 @@ function showVoteModal() {
         select.value = round.votes[gameState.playerId];
     }
 
-    document.getElementById('vote-modal').style.display = 'flex';
+    const modal = document.getElementById('vote-modal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    modal.scrollTop = 0;
 }
 
 async function submitVote() {
@@ -896,7 +902,7 @@ async function submitVote() {
             return;
         }
 
-        document.getElementById('vote-modal').style.display = 'none';
+        closeModal('vote-modal');
         
         if (data.majorityReached) {
             showNotification(data.wasCorrect ? 'Mole identified! Round ending...' : 'Incorrect vote. Mole wins!', data.wasCorrect ? 'success' : 'error');
@@ -981,7 +987,10 @@ function showGuessLocationModal() {
         grid.appendChild(item);
     });
 
-    document.getElementById('guess-location-modal').style.display = 'flex';
+    const modal = document.getElementById('guess-location-modal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    modal.scrollTop = 0;
 }
 
 async function submitLocationGuess() {
@@ -1010,7 +1019,7 @@ async function submitLocationGuess() {
             return;
         }
 
-        document.getElementById('guess-location-modal').style.display = 'none';
+        closeModal('guess-location-modal');
         
         if (data.isCorrect) {
             showNotification('Location identified! Operation successful.', 'success');
@@ -1035,6 +1044,9 @@ function showRoundResult(game) {
     const nextRoundBtn = document.getElementById('next-round-btn');
     const backToLobbyBtn = document.getElementById('back-to-lobby-btn');
 
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden';
+
     let resultText = '';
     // Check if player is mole (support both single and multiple moles, and legacy spy references)
     const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
@@ -1051,20 +1063,38 @@ function showRoundResult(game) {
         if (isCorrect) {
             title.textContent = 'OPERATION COMPROMISED';
             title.style.color = 'var(--color-danger)';
-            resultText = `
-                <p>The mole successfully identified the location.</p>
-                <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName)}</p>
-                <p><strong>Mole's guess:</strong> ${escapeHtml(guessedName)}</p>
-            `;
+            if (isMole) {
+                resultText = `
+                    <p><strong>You successfully identified the location!</strong></p>
+                    <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName)}</p>
+                    <p><strong>Your guess:</strong> ${escapeHtml(guessedName)}</p>
+                    <p style="margin-top: 15px; color: var(--color-danger);"><strong>Mole wins!</strong></p>
+                `;
+            } else {
+                resultText = `
+                    <p>The mole successfully identified the location.</p>
+                    <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName)}</p>
+                    <p><strong>Mole's guess:</strong> ${escapeHtml(guessedName)}</p>
+                `;
+            }
         } else {
             title.textContent = 'INCORRECT GUESS';
             title.style.color = 'var(--color-success)';
-            resultText = `
-                <p>The mole incorrectly identified the location.</p>
-                <p style="margin-top: 20px;"><strong>Actual Location:</strong> ${escapeHtml(locationName)}</p>
-                <p><strong>Mole's guess:</strong> ${escapeHtml(guessedName)}</p>
-                <p style="margin-top: 15px; color: var(--color-success);"><strong>Non-moles win!</strong></p>
-            `;
+            if (isMole) {
+                resultText = `
+                    <p><strong>You incorrectly identified the location.</strong></p>
+                    <p style="margin-top: 20px;"><strong>Actual Location:</strong> ${escapeHtml(locationName)}</p>
+                    <p><strong>Your guess:</strong> ${escapeHtml(guessedName)}</p>
+                    <p style="margin-top: 15px; color: var(--color-success);"><strong>Non-moles win!</strong></p>
+                `;
+            } else {
+                resultText = `
+                    <p>The mole incorrectly identified the location.</p>
+                    <p style="margin-top: 20px;"><strong>Actual Location:</strong> ${escapeHtml(locationName)}</p>
+                    <p><strong>Mole's guess:</strong> ${escapeHtml(guessedName)}</p>
+                    <p style="margin-top: 15px; color: var(--color-success);"><strong>Non-moles win!</strong></p>
+                `;
+            }
         }
     } else if (round.accusation) {
         const accusedPlayer = game.players.find(p => p.id === round.accusation.accusedId);
@@ -1159,10 +1189,22 @@ function showRoundResult(game) {
 
     content.innerHTML = resultText;
     modal.style.display = 'flex';
+    
+    // Scroll modal to top when opened
+    modal.scrollTop = 0;
+}
+
+// Function to close modal and restore body scroll
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
 }
 
 async function nextRound() {
-    document.getElementById('game-result-modal').style.display = 'none';
+    closeModal('game-result-modal');
     stopTimer(); // Stop timer before starting new round
     
     try {
@@ -1207,7 +1249,10 @@ function showAnswerModal(question) {
         <span style="font-size: 1.2rem; margin-top: 10px; display: block;">"${escapeHtml(question.text)}"</span>
     `;
     document.getElementById('answer-text').value = '';
-    document.getElementById('answer-modal').style.display = 'flex';
+    const modal = document.getElementById('answer-modal');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    modal.scrollTop = 0;
 }
 
 // Update the updateUI function to check for pending actions

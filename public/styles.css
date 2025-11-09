@@ -821,7 +821,7 @@ h3 {
     background: rgba(0, 0, 0, 0.85);
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     z-index: 1000;
     backdrop-filter: blur(5px);
     overflow-y: auto;
@@ -842,7 +842,7 @@ h3 {
     position: relative;
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
-    margin: auto;
+    margin: 20px auto;
 }
 
 .modal-content::before,
@@ -1029,19 +1029,19 @@ h3 {
 
 .light-mode .player-item,
 .light-mode .player-status-card {
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.85);
     border-color: var(--color-border);
 }
 
 .light-mode .player-item:hover,
 .light-mode .player-status-card:hover {
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.95);
     border-color: var(--color-primary);
 }
 
 .light-mode .question-area,
 .light-mode .voting-area {
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.85);
     border-color: var(--color-border);
 }
 
@@ -1059,7 +1059,7 @@ h3 {
 }
 
 .light-mode .game-settings {
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.85);
     border-color: var(--color-border);
 }
 
@@ -1165,7 +1165,7 @@ h3 {
 }
 
 .light-mode .location-item {
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.85);
     border-color: var(--color-border);
 }
 
@@ -1175,7 +1175,7 @@ h3 {
 }
 
 .light-mode .location-item:hover {
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.95);
 }
 
 .location-item-header {
@@ -1287,7 +1287,7 @@ h3 {
 }
 
 .light-mode .possible-locations {
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.85);
     border-color: var(--color-border);
 }
 
@@ -1458,7 +1458,7 @@ h3 {
 }
 
 .light-mode .pack-option {
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.85);
     border-color: var(--color-border);
 }
 
@@ -1468,7 +1468,7 @@ h3 {
 }
 
 .light-mode .pack-option:hover {
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.95);
 }
 
 .pack-option input[type="checkbox"] {
@@ -1494,7 +1494,7 @@ h3 {
 }
 
 .light-mode .how-to-play {
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.85);
     border-color: var(--color-border);
 }
 
