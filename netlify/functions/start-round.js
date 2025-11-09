@@ -87,7 +87,11 @@ exports.handler = async (event, context) => {
         // Get game settings (defaults if not set)
         const settings = game.settings || {};
         const moleCount = Math.max(1, Math.min(2, parseInt(settings.moleCount || settings.spyCount) || 1));
-        const timerMinutes = Math.max(1, Math.min(60, parseInt(settings.timerMinutes) || 8));
+        // Parse timer minutes - if it's a valid number, use it; otherwise default to 8
+        const timerMinutesValue = settings.timerMinutes;
+        const timerMinutes = (timerMinutesValue !== undefined && timerMinutesValue !== null && !isNaN(parseInt(timerMinutesValue))) 
+            ? Math.max(1, Math.min(60, parseInt(timerMinutesValue))) 
+            : 8;
         const enabledPacks = settings.enabledPacks || ['pack1'];
 
         // Select random moles (1 or 2)

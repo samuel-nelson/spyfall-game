@@ -264,7 +264,10 @@
                 </div>
 
                 <div id="game-actions" class="game-actions">
-                    <button id="ask-question-btn" class="btn btn-primary" style="display: none;">ASK QUESTION</button>
+                    <div id="current-turn-indicator" class="current-turn-indicator" style="display: none;">
+                        <span class="turn-label">CURRENT TURN:</span>
+                        <span id="current-turn-player" class="turn-player"></span>
+                    </div>
                     <button id="vote-mole-action-btn" class="btn btn-secondary" style="display: none;">VOTE FOR MOLE</button>
                     <button id="guess-location-btn" class="btn btn-primary" style="display: none;">IDENTIFY LOCATION</button>
                 </div>

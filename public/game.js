@@ -62,7 +62,6 @@ function setupEventListeners() {
     
 
     // Game actions
-    document.getElementById('ask-question-btn').addEventListener('click', showQuestionModal);
     document.getElementById('vote-mole-action-btn').addEventListener('click', showVoteModal);
     document.getElementById('vote-mole-btn').addEventListener('click', showVoteModal);
     document.getElementById('submit-question-btn').addEventListener('click', submitQuestion);
@@ -668,7 +667,8 @@ function updateQuestionArea(round) {
 }
 
 function updateGameActions(game, round, currentPlayer) {
-    const askBtn = document.getElementById('ask-question-btn');
+    const turnIndicator = document.getElementById('current-turn-indicator');
+    const turnPlayer = document.getElementById('current-turn-player');
     const voteBtn = document.getElementById('vote-mole-action-btn');
     const guessBtn = document.getElementById('guess-location-btn');
     const votingArea = document.getElementById('voting-area');
@@ -680,9 +680,35 @@ function updateGameActions(game, round, currentPlayer) {
     const isMyTurn = round.currentTurn === gameState.playerId;
     const hasPendingQuestion = round.waitingForAnswer;
 
-    // Can ask question if it's your turn and no question is pending (and you're not the mole)
-    const canAsk = isMyTurn && !hasPendingQuestion && !isMole;
-    askBtn.style.display = canAsk ? 'block' : 'none';
+    // Show current turn indicator
+    if (round.currentTurn) {
+        const currentTurnPlayer = game.players.find(p => p.id === round.currentTurn);
+        if (currentTurnPlayer) {
+            turnPlayer.textContent = currentTurnPlayer.name;
+            turnIndicator.style.display = 'block';
+            
+            // Highlight if it's your turn
+            if (isMyTurn && !hasPendingQuestion && !isMole) {
+                turnIndicator.classList.add('your-turn');
+                // Automatically show question modal for the current player (only if no modal is open)
+                if (!round.currentQuestion) {
+                    // Check if any modal is currently open
+                    const anyModalOpen = Array.from(document.querySelectorAll('.modal')).some(modal => 
+                        modal.style.display === 'flex' || window.getComputedStyle(modal).display === 'flex'
+                    );
+                    if (!anyModalOpen) {
+                        setTimeout(() => {
+                            showQuestionModal();
+                        }, 500);
+                    }
+                }
+            } else {
+                turnIndicator.classList.remove('your-turn');
+            }
+        }
+    } else {
+        turnIndicator.style.display = 'none';
+    }
 
     // All players (including moles) can vote at any time
     const canVote = true;
@@ -1200,7 +1226,13 @@ function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'none';
-        document.body.style.overflow = '';
+        // Only restore body scroll if no other modals are open
+        const anyModalOpen = Array.from(document.querySelectorAll('.modal')).some(m => 
+            m.id !== modalId && (m.style.display === 'flex' || window.getComputedStyle(m).display === 'flex')
+        );
+        if (!anyModalOpen) {
+            document.body.style.overflow = '';
+        }
     }
 }
 
@@ -1272,7 +1304,11 @@ async function autoSaveSettings() {
 async function saveGameSettingsSilent() {
     const moleCount = parseInt(document.getElementById('mole-count').value) || 1;
     const showMoleCount = document.getElementById('show-mole-count').value === 'true';
-    const timerMinutes = parseInt(document.getElementById('timer-minutes').value) || 8;
+    // Parse timer minutes - ensure we get the actual value, not default to 8 if empty
+    const timerMinutesInput = document.getElementById('timer-minutes').value;
+    const timerMinutes = (timerMinutesInput && !isNaN(parseInt(timerMinutesInput))) 
+        ? Math.max(1, Math.min(60, parseInt(timerMinutesInput))) 
+        : 8;
     
     // Get enabled packs from checkboxes
     const enabledPacks = [];

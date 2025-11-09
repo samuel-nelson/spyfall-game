@@ -809,6 +809,59 @@ h3 {
     justify-content: center;
     margin: 40px 0;
     flex-wrap: wrap;
+    align-items: center;
+}
+
+.current-turn-indicator {
+    padding: 15px 30px;
+    background: rgba(10, 10, 10, 0.4);
+    border: 2px solid var(--color-border);
+    border-radius: 4px;
+    font-family: var(--font-elegant);
+    font-size: 1.2rem;
+    color: var(--color-text);
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.light-mode .current-turn-indicator {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: var(--color-border);
+}
+
+.current-turn-indicator.your-turn {
+    border-color: var(--color-primary);
+    background: rgba(201, 169, 97, 0.2);
+    box-shadow: 0 0 20px rgba(201, 169, 97, 0.4);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.light-mode .current-turn-indicator.your-turn {
+    background: rgba(184, 134, 11, 0.2);
+    box-shadow: 0 0 20px rgba(184, 134, 11, 0.4);
+}
+
+.turn-label {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-right: 10px;
+}
+
+.turn-player {
+    color: var(--color-primary);
+    font-weight: 600;
+    font-size: 1.3rem;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(201, 169, 97, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(201, 169, 97, 0.6);
+    }
 }
 
 /* Modals */
