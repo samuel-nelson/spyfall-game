@@ -467,6 +467,7 @@ function updateGameScreen(game) {
         // Close result modal if transitioning from roundEnd to playing
         if (wasRoundEnd) {
             window.closeModal('game-result-modal');
+            gameState.showingResultModal = false; // Reset flag when closing modal
         }
         
         showScreen('game-screen');
@@ -485,23 +486,29 @@ function updateGameScreen(game) {
         // Always show result modal for ALL players including moles - NO EXCEPTIONS
         showScreen('game-screen');
         
-        // Prevent multiple calls - use a flag
-        if (!gameState.showingResultModal) {
+        // Check if modal is already showing - if so, don't rebuild it
+        const modal = document.getElementById('game-result-modal');
+        const isModalShowing = modal && modal.classList.contains('show');
+        
+        // Only show modal if it's not already showing
+        if (!isModalShowing && !gameState.showingResultModal) {
             gameState.showingResultModal = true;
+            console.log('updateGameScreen: Showing result modal for first time');
             // Show modal once - use requestAnimationFrame to ensure DOM is ready
             requestAnimationFrame(() => {
                 showRoundResult(game);
-                // Reset flag after a delay to allow re-showing if needed
-                setTimeout(() => {
-                    gameState.showingResultModal = false;
-                }, 1000);
+                // Don't reset the flag - keep it true so we never call showRoundResult again
+                // The flag will only be reset when the modal is closed or game transitions to another state
             });
+        } else {
+            console.log('updateGameScreen: Modal already showing, skipping showRoundResult call');
         }
     } else if (game.status === 'lobby') {
         stopTimer(); // Stop timer when back in lobby
         hasScrolledToTopOnGameStart = false; // Reset flag when back in lobby
         // Close result modal if returning to lobby
         window.closeModal('game-result-modal');
+        gameState.showingResultModal = false; // Reset flag when closing modal
     }
     
     lastGameStatus = game.status;
