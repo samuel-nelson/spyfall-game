@@ -859,15 +859,6 @@ function showVoteModal() {
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     modal.scrollTop = 0;
-    
-    // Force modal to be visible and centered
-    setTimeout(() => {
-        modal.style.display = 'flex';
-        const modalContent = modal.querySelector('.modal-content');
-        if (modalContent) {
-            modalContent.style.margin = 'auto';
-        }
-    }, 0);
 }
 
 async function submitVote() {
