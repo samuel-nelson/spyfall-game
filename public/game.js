@@ -832,7 +832,7 @@ async function submitVote() {
     }
 
     try {
-        const response = await fetch(`${API_BASE}/vote-mole`, {
+        const response = await fetch(`${API_BASE}/vote-spy`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1099,8 +1099,6 @@ function showRoundResult(game) {
         `;
     }
 
-    content.innerHTML = resultText;
-
     // Show next round button if host (regardless of whether they're mole or not), otherwise show waiting message
     const isHost = game.players[0] && game.players[0].id === gameState.playerId;
     if (isHost) {
@@ -1109,10 +1107,10 @@ function showRoundResult(game) {
     } else {
         nextRoundBtn.style.display = 'none';
         backToLobbyBtn.style.display = 'block';
-        resultText += '<p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-style: italic;">Waiting for host to start the next round...</p>';
-        content.innerHTML = resultText;
+        resultText += '<p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-style: italic; font-size: 1.2rem;">Waiting for host to start the next round...</p>';
     }
 
+    content.innerHTML = resultText;
     modal.style.display = 'flex';
 }
 
