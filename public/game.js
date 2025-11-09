@@ -460,7 +460,9 @@ function updatePlayingState(game) {
     const showMoleCount = game.settings?.showMoleCount !== false && game.settings?.showSpyCount !== false; // Default to true, support legacy
     const moleCountElement = document.getElementById('mole-count-display');
     if (moleCountElement) {
-        if (showMoleCount) {
+        // Check if explicitly set to false
+        const explicitlyHidden = game.settings?.showMoleCount === false || game.settings?.showSpyCount === false;
+        if (!explicitlyHidden && showMoleCount) {
             const moleIds = Array.isArray(currentRound.moleIds) ? currentRound.moleIds : (Array.isArray(currentRound.spyIds) ? currentRound.spyIds : [currentRound.spyId || currentRound.moleId]);
             const moleCount = moleIds.filter(id => id).length;
             moleCountElement.textContent = `${moleCount} MOLE${moleCount > 1 ? 'S' : ''}`;
@@ -702,6 +704,17 @@ function updateGameActions(game, round, currentPlayer) {
                 const firstTurnBanner = document.getElementById('first-turn-banner');
                 if (firstTurnBanner) {
                     firstTurnBanner.style.display = 'block';
+                    // Fade away after 15 seconds
+                    clearTimeout(gameState.bannerFadeTimeout);
+                    gameState.bannerFadeTimeout = setTimeout(() => {
+                        firstTurnBanner.style.transition = 'opacity 1s ease-out';
+                        firstTurnBanner.style.opacity = '0';
+                        setTimeout(() => {
+                            firstTurnBanner.style.display = 'none';
+                            firstTurnBanner.style.opacity = '1';
+                            firstTurnBanner.style.transition = '';
+                        }, 1000);
+                    }, 15000);
                 }
             } else {
                 turnIndicator.style.display = 'none';
