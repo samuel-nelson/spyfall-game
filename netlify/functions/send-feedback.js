@@ -43,26 +43,80 @@ exports.handler = async (event, context) => {
         // Get email from environment variable
         const recipientEmail = process.env.FEEDBACK_EMAIL || 'your-email@example.com';
         
-        // For now, we'll use a simple approach with Formspree or similar
-        // You can replace this with SendGrid, Mailgun, or any email service
         // Option 1: Use Formspree (free tier available)
+        // Set FORMSPREE_ENDPOINT in Netlify environment variables
+        // Example: https://formspree.io/f/YOUR_FORM_ID
         const formspreeEndpoint = process.env.FORMSPREE_ENDPOINT;
         
         if (formspreeEndpoint) {
-            // Use Formspree
-            const response = await fetch(formspreeEndpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    title: title,
-                    message: comment,
-                    _replyto: recipientEmail
-                })
-            });
+            // Use Formspree - requires node-fetch or use https module
+            const https = require('https');
+            const url = require('url');
+            
+            return new Promise((resolve) => {
+                const formData = `title=${encodeURIComponent(title)}&message=${encodeURIComponent(comment)}&_replyto=${encodeURIComponent(recipientEmail)}`;
+                const parsedUrl = url.parse(formspreeEndpoint);
+                
+                const options = {
+                    hostname: parsedUrl.hostname,
+                    path: parsedUrl.path,
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Content-Length': Buffer.byteLength(formData)
+                    }
+                };
 
-            if (response.ok) {
+                const req = https.request(options, (res) => {
+                    let data = '';
+                    res.on('data', (chunk) => { data += chunk; });
+                    res.on('end', () => {
+                        resolve({
+                            statusCode: 200,
+                            headers: {
+                                'Access-Control-Allow-Origin': '*',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ success: true, message: 'Feedback submitted successfully' })
+                        });
+                    });
+                });
+
+                req.on('error', (error) => {
+                    console.error('Formspree error:', error);
+                    resolve({
+                        statusCode: 500,
+                        headers: {
+                            'Access-Control-Allow-Origin': '*',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ error: 'Failed to send feedback' })
+                    });
+                });
+
+                req.write(formData);
+                req.end();
+            });
+        }
+
+        // Option 2: Use SendGrid (if configured)
+        // Set SENDGRID_API_KEY and SENDGRID_FROM_EMAIL in Netlify environment variables
+        const sendgridApiKey = process.env.SENDGRID_API_KEY;
+        if (sendgridApiKey) {
+            try {
+                const sgMail = require('@sendgrid/mail');
+                sgMail.setApiKey(sendgridApiKey);
+                
+                const msg = {
+                    to: recipientEmail,
+                    from: process.env.SENDGRID_FROM_EMAIL || 'noreply@spyfall-game.netlify.app',
+                    subject: `Feedback: ${title}`,
+                    text: comment,
+                    html: `<h2>${title}</h2><p>${comment.replace(/\n/g, '<br>')}</p>`
+                };
+
+                await sgMail.send(msg);
+
                 return {
                     statusCode: 200,
                     headers: {
@@ -71,45 +125,22 @@ exports.handler = async (event, context) => {
                     },
                     body: JSON.stringify({ success: true, message: 'Feedback submitted successfully' })
                 };
+            } catch (sgError) {
+                console.error('SendGrid error:', sgError);
             }
         }
 
-        // Option 2: Use SendGrid (if configured)
-        const sendgridApiKey = process.env.SENDGRID_API_KEY;
-        if (sendgridApiKey) {
-            const sgMail = require('@sendgrid/mail');
-            sgMail.setApiKey(sendgridApiKey);
-            
-            const msg = {
-                to: recipientEmail,
-                from: process.env.SENDGRID_FROM_EMAIL || 'noreply@spyfall-game.netlify.app',
-                subject: `Feedback: ${title}`,
-                text: comment,
-                html: `<h2>${title}</h2><p>${comment.replace(/\n/g, '<br>')}</p>`
-            };
-
-            await sgMail.send(msg);
-
-            return {
-                statusCode: 200,
-                headers: {
-                    'Access-Control-Allow-Origin': '*',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ success: true, message: 'Feedback submitted successfully' })
-            };
-        }
-
-        // Option 3: Simple console log for development (replace with actual email service)
-        console.log('Feedback received:');
+        // Option 3: Log for development (configure email service for production)
+        console.log('=== FEEDBACK RECEIVED ===');
         console.log('Title:', title);
         console.log('Comment:', comment);
-        console.log('Would send to:', recipientEmail);
+        console.log('Recipient Email:', recipientEmail);
+        console.log('========================');
 
-        // For production, you should configure one of the email services above
-        // For now, return success but log a warning
-        if (process.env.NODE_ENV === 'production' && !formspreeEndpoint && !sendgridApiKey) {
-            console.warn('WARNING: No email service configured. Feedback not sent.');
+        // For production, configure FORMSPREE_ENDPOINT or SENDGRID_API_KEY
+        // For now, return success but log feedback
+        if (!formspreeEndpoint && !sendgridApiKey) {
+            console.warn('WARNING: No email service configured. Set FORMSPREE_ENDPOINT or SENDGRID_API_KEY in Netlify environment variables.');
         }
 
         return {
