@@ -1431,7 +1431,7 @@ function showRoundResult(game) {
         console.error('showRoundResult: Back to lobby button not found!');
     }
     
-    // FORCE SHOW MODAL - Multiple redundant checks to ensure it shows for moles
+    // FORCE SHOW MODAL - Simple and clean
     // Re-get modal reference
     modal = document.getElementById('game-result-modal');
     if (!modal) {
@@ -1439,41 +1439,16 @@ function showRoundResult(game) {
         return;
     }
     
-    // Force show using ALL methods simultaneously
-    modal.classList.add('show');
-    modal.style.display = 'flex';
-    modal.style.visibility = 'visible';
-    modal.style.opacity = '1';
-    modal.style.zIndex = '10000';
-    document.body.style.overflow = 'hidden';
-    
-    // Also call showModal helper
+    // Force show using showModal helper
     showModal('game-result-modal');
     
-    // Continuous checks to ensure modal stays visible
-    const forceShowModal = () => {
-        const checkModal = document.getElementById('game-result-modal');
-        if (checkModal) {
-            if (!checkModal.classList.contains('show') || checkModal.style.display !== 'flex') {
-                console.log('showRoundResult: Modal not visible, forcing show');
-                checkModal.classList.add('show');
-                checkModal.style.display = 'flex';
-                checkModal.style.visibility = 'visible';
-                checkModal.style.opacity = '1';
-                checkModal.style.zIndex = '10000';
-                document.body.style.overflow = 'hidden';
-            }
-        }
-    };
+    // Ensure pointer events work on all modal elements
+    modal.style.pointerEvents = 'auto';
+    if (content) content.style.pointerEvents = 'auto';
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) modalContent.style.pointerEvents = 'auto';
     
-    // Check multiple times to ensure it stays visible
-    setTimeout(forceShowModal, 50);
-    setTimeout(forceShowModal, 100);
-    setTimeout(forceShowModal, 200);
-    setTimeout(forceShowModal, 500);
-    setTimeout(forceShowModal, 1000);
-    
-    console.log('showRoundResult: Modal forced to show. isMole:', isMole);
+    console.log('showRoundResult: Modal shown. isMole:', isMole);
 }
 
 // Function to close modal and restore body scroll

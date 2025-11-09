@@ -932,6 +932,9 @@ h3 {
     padding: 0;
     box-sizing: border-box;
     overflow: hidden;
+    
+    /* Ensure modal background doesn't block clicks to modal content */
+    pointer-events: auto;
 }
 
 /* When modal is shown */
