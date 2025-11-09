@@ -933,8 +933,8 @@ h3 {
     box-sizing: border-box;
     overflow: hidden;
     
-    /* Ensure modal background doesn't block clicks to modal content */
-    pointer-events: auto;
+    /* CRITICAL: Modal overlay must NOT capture clicks - let them pass through to modal-content */
+    pointer-events: none;
 }
 
 /* When modal is shown */
