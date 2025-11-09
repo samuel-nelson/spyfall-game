@@ -908,12 +908,15 @@ h3 {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    width: 100dvw; /* Dynamic viewport width for mobile */
     height: 100vh;
     height: 100dvh; /* Dynamic viewport height for mobile */
     background: rgba(0, 0, 0, 0.85);
     display: none;
-    z-index: 1000;
+    z-index: 10000; /* Very high z-index to ensure it's on top */
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
     box-sizing: border-box;
@@ -921,6 +924,9 @@ h3 {
     overflow: hidden;
     margin: 0;
     padding: 0;
+    /* Ensure modal is always relative to viewport, not parent */
+    transform: none !important;
+    will-change: auto;
 }
 
 /* When modal is shown with flex - perfect viewport centering */
@@ -928,18 +934,21 @@ h3 {
 .modal[style*="display:flex"],
 .modal.modal-active {
     display: flex !important;
-    justify-content: center;
-    align-items: center;
-    padding: 0;
-    margin: 0;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
     /* Explicit viewport dimensions for perfect centering */
-    height: 100vh !important;
-    height: 100dvh !important; /* Dynamic viewport height for mobile */
-    width: 100vw !important;
-    width: 100dvw !important; /* Dynamic viewport width for mobile */
     top: 0 !important;
     left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    width: 100dvw !important; /* Dynamic viewport width for mobile */
+    height: 100vh !important;
+    height: 100dvh !important; /* Dynamic viewport height for mobile */
     position: fixed !important;
+    transform: none !important;
 }
 
 /* When modal is shown with block */
@@ -969,12 +978,14 @@ h3 {
     position: relative;
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
-    z-index: 1001;
+    z-index: 10001;
     /* Perfect centering - margin auto works with flex parent */
-    margin: 0 auto;
+    margin: 0;
     flex-shrink: 0;
     /* Ensure content doesn't get cut off */
     transform: translateZ(0); /* Force hardware acceleration */
+    /* Ensure it's visible and properly positioned */
+    display: block;
 }
 
 .modal-content .form-group {
@@ -1860,15 +1871,22 @@ h3 {
     }
     
     .modal[style*="display: flex"],
-    .modal[style*="display:flex"] {
-        padding: 0;
-        margin: 0;
-        align-items: center;
-        justify-content: center;
+    .modal[style*="display:flex"],
+    .modal.modal-active {
+        padding: 0 !important;
+        margin: 0 !important;
+        align-items: center !important;
+        justify-content: center !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
         height: 100vh !important;
         height: 100dvh !important;
-        width: 100vw;
-        width: 100dvw;
+        width: 100vw !important;
+        width: 100dvw !important;
+        position: fixed !important;
+        transform: none !important;
     }
     
     .modal[style*="display:block"],
