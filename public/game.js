@@ -1344,19 +1344,44 @@ function showRoundResult(game) {
         resultText += '<p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-style: italic; font-size: 1.2rem;">Waiting for host to start the next round...</p>';
     }
 
-    content.innerHTML = resultText;
-    
-    // Re-get button references after content update to ensure they're still accessible
-    const nextRoundBtnRef = document.getElementById('next-round-btn');
-    const backToLobbyBtnRef = document.getElementById('back-to-lobby-btn');
-    
-    // Ensure buttons are clickable - reattach event listeners if needed
-    if (nextRoundBtnRef && !nextRoundBtnRef.hasAttribute('data-listener-attached')) {
-        nextRoundBtnRef.addEventListener('click', nextRound);
-        nextRoundBtnRef.setAttribute('data-listener-attached', 'true');
+    // Set content - ensure it's always set
+    if (content) {
+        content.innerHTML = resultText;
+        console.log('showRoundResult: Content set. resultText length:', resultText.length, 'isMole:', isMole);
+    } else {
+        console.error('showRoundResult: Content element not found!');
     }
-    if (backToLobbyBtnRef && !backToLobbyBtnRef.hasAttribute('data-listener-attached')) {
-        backToLobbyBtnRef.addEventListener('click', async () => {
+    
+    // ALWAYS ensure buttons work - remove old listeners and reattach
+    // Re-get button references to ensure they're current
+    const nextRoundBtnCurrent = document.getElementById('next-round-btn');
+    const backToLobbyBtnCurrent = document.getElementById('back-to-lobby-btn');
+    
+    // Remove any existing listeners by cloning and replacing
+    if (nextRoundBtnCurrent) {
+        const newNextBtn = nextRoundBtnCurrent.cloneNode(true);
+        nextRoundBtnCurrent.parentNode.replaceChild(newNextBtn, nextRoundBtnCurrent);
+        newNextBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Next round button clicked');
+            nextRound();
+        });
+        // Update the reference
+        if (isHost) {
+            newNextBtn.style.display = 'block';
+        } else {
+            newNextBtn.style.display = 'none';
+        }
+    }
+    
+    if (backToLobbyBtnCurrent) {
+        const newBackBtn = backToLobbyBtnCurrent.cloneNode(true);
+        backToLobbyBtnCurrent.parentNode.replaceChild(newBackBtn, backToLobbyBtnCurrent);
+        newBackBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Back to lobby button clicked');
             const game = gameState.game;
             const isHost = game && game.players && game.players.length > 0 && game.players[0].id === gameState.playerId;
             
@@ -1396,7 +1421,7 @@ function showRoundResult(game) {
             }
             showScreen('main-menu');
         });
-        backToLobbyBtnRef.setAttribute('data-listener-attached', 'true');
+        newBackBtn.style.display = 'block';
     }
     
     // FORCE SHOW MODAL - Multiple redundant checks to ensure it shows for moles
