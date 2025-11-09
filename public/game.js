@@ -17,15 +17,13 @@ const API_BASE = '/.netlify/functions';
 
 // Global button handlers for inline onclick attributes (fallback)
 window.handleNextRound = function() {
-    console.log('🔵 handleNextRound called from inline onclick');
-    alert('Next Round button clicked!'); // Visual confirmation
+    console.log('🔵 handleNextRound called');
     nextRound();
     return false;
 };
 
 window.handleBackToLobby = async function() {
-    console.log('🔵 handleBackToLobby called from inline onclick');
-    alert('Back to Lobby button clicked!'); // Visual confirmation
+    console.log('🔵 handleBackToLobby called');
     const currentGame = gameState.game;
     const currentIsHost = currentGame && currentGame.players && currentGame.players.length > 0 && currentGame.players[0].id === gameState.playerId;
     
@@ -1441,7 +1439,6 @@ function showRoundResult(game) {
         // Add test click handler for debugging
         nextRoundBtn.addEventListener('click', function(e) {
             console.log('🟢 CLICK EVENT DETECTED on next-round-btn!', e);
-            alert('Click event fired on Next Round button!');
         }, { capture: true });
     } else {
         console.error('🔴 showRoundResult: Next round button not found!');
@@ -1467,7 +1464,6 @@ function showRoundResult(game) {
         // Add test click handler for debugging
         backToLobbyBtn.addEventListener('click', function(e) {
             console.log('🟢 CLICK EVENT DETECTED on back-to-lobby-btn!', e);
-            alert('Click event fired on Back to Lobby button!');
         }, { capture: true });
     } else {
         console.error('🔴 showRoundResult: Back to lobby button not found!');
@@ -1513,7 +1509,6 @@ function showRoundResult(game) {
 // Function to close modal - completely rewritten from scratch
 window.closeModal = function(modalId) {
     console.log('🔴 closeModal called for:', modalId);
-    alert('Close modal called for: ' + modalId); // Visual confirmation
     const modal = document.getElementById(modalId);
     if (modal) {
         // Simply remove the 'show' class - CSS handles everything
