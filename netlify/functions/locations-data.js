@@ -156,10 +156,34 @@ function getLocationWithRoles(locationName, enabledPacks = ['pack1']) {
     return allLocations.find(loc => loc.name === locationName) || null;
 }
 
+// Get all enabled location names
+function getAllEnabledLocationNames(enabledPacks = ['pack1']) {
+    let allLocations = [];
+    
+    if (enabledPacks.includes('pack1')) {
+        allLocations = allLocations.concat(PACK1_LOCATION_NAMES);
+    }
+    
+    if (enabledPacks.includes('pack2')) {
+        allLocations = allLocations.concat(PACK2_LOCATION_NAMES);
+    }
+    
+    if (enabledPacks.includes('countries')) {
+        allLocations = allLocations.concat(COUNTRIES_PACK_NAMES);
+    }
+    
+    if (allLocations.length === 0) {
+        allLocations = PACK1_LOCATION_NAMES; // Fallback
+    }
+    
+    return allLocations;
+}
+
 module.exports = {
     PACK1_LOCATION_NAMES,
     PACK2_LOCATION_NAMES,
     COUNTRIES_PACK_NAMES,
     getRandomLocation,
-    getLocationWithRoles
+    getLocationWithRoles,
+    getAllEnabledLocationNames
 };

@@ -1,5 +1,5 @@
 // Import database functions
-const { getGameByCode } = require('./game-store');
+const { getGameByCode, saveGameState } = require('./game-store');
 
 // Get random location (simplified - in production, load from locations.js)
 const LOCATIONS = [

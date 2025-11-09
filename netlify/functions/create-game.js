@@ -16,6 +16,10 @@ function generatePlayerId() {
     return 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
+// Export for use in other functions
+module.exports.generateGameCode = generateGameCode;
+module.exports.generatePlayerId = generatePlayerId;
+
 exports.handler = async (event, context) => {
     // Handle CORS
     if (event.httpMethod === 'OPTIONS') {

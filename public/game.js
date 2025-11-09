@@ -5,7 +5,9 @@ let gameState = {
     playerName: null,
     game: null,
     pollInterval: null,
-    timerInterval: null
+    timerInterval: null,
+    queueInterval: null,
+    inQueue: false
 };
 
 // API base URL - will work with Netlify Functions
@@ -26,6 +28,15 @@ function setupEventListeners() {
     document.getElementById('join-game-btn').addEventListener('click', () => {
         showScreen('join-game');
     });
+    
+    document.getElementById('find-public-game-btn').addEventListener('click', () => {
+        showScreen('queue-screen');
+        joinPublicQueue();
+    });
+    
+    document.getElementById('leave-queue-btn').addEventListener('click', leavePublicQueue);
+    
+    document.getElementById('theme-toggle-btn-queue').addEventListener('click', toggleTheme);
 
     // Create game
     document.getElementById('start-game-btn').addEventListener('click', createGame);
@@ -67,16 +78,16 @@ function setupEventListeners() {
     document.getElementById('submit-answer-btn').addEventListener('click', submitAnswer);
     document.getElementById('submit-vote-btn').addEventListener('click', submitVote);
     document.getElementById('cancel-vote-btn').addEventListener('click', () => {
-        closeModal('vote-modal');
+        window.closeModal('vote-modal');
     });
     document.getElementById('guess-location-btn').addEventListener('click', showGuessLocationModal);
     document.getElementById('submit-guess-btn').addEventListener('click', submitLocationGuess);
     document.getElementById('cancel-guess-btn').addEventListener('click', () => {
-        closeModal('guess-location-modal');
+        window.closeModal('guess-location-modal');
     });
     document.getElementById('next-round-btn').addEventListener('click', nextRound);
     document.getElementById('back-to-lobby-btn').addEventListener('click', () => {
-        closeModal('game-result-modal');
+        window.closeModal('game-result-modal');
         // Clear game state but keep gameCode and playerName for potential rejoin
         const gameCode = gameState.gameCode;
         const playerName = gameState.playerName;
@@ -425,6 +436,13 @@ let hasScrolledToTopOnGameStart = false;
 function updateGameScreen(game) {
     if (game.status === 'playing') {
         const wasInLobby = lastGameStatus === 'lobby' || lastGameStatus === null;
+        const wasRoundEnd = lastGameStatus === 'roundEnd';
+        
+        // Close result modal if transitioning from roundEnd to playing
+        if (wasRoundEnd) {
+            window.closeModal('game-result-modal');
+        }
+        
         showScreen('game-screen');
         // Always scroll to top when transitioning from lobby to playing
         if (wasInLobby) {
@@ -445,6 +463,8 @@ function updateGameScreen(game) {
     } else if (game.status === 'lobby') {
         stopTimer(); // Stop timer when back in lobby
         hasScrolledToTopOnGameStart = false; // Reset flag when back in lobby
+        // Close result modal if returning to lobby
+        window.closeModal('game-result-modal');
     }
     
     lastGameStatus = game.status;
@@ -679,8 +699,6 @@ function updateQuestionArea(round) {
 }
 
 function updateGameActions(game, round, currentPlayer) {
-    const turnIndicator = document.getElementById('current-turn-indicator');
-    const turnPlayer = document.getElementById('current-turn-player');
     const voteBtn = document.getElementById('vote-mole-action-btn');
     const guessBtn = document.getElementById('guess-location-btn');
     const votingArea = document.getElementById('voting-area');
@@ -692,45 +710,58 @@ function updateGameActions(game, round, currentPlayer) {
     const isMyTurn = round.currentTurn === gameState.playerId;
     const hasPendingQuestion = round.waitingForAnswer;
 
-    // Show current turn indicator only for first player (when there's no current question)
+    // Handle "Your move" banner
     const firstTurnBanner = document.getElementById('first-turn-banner');
-    if (round.currentTurn && !round.currentQuestion) {
-        const currentTurnPlayer = game.players.find(p => p.id === round.currentTurn);
-        if (currentTurnPlayer) {
-            turnPlayer.textContent = currentTurnPlayer.name;
-            // Only show if it's the first player's turn (no question has been asked yet)
-            if (isMyTurn && !hasPendingQuestion && !isMole) {
-                turnIndicator.style.display = 'block';
-                turnIndicator.classList.add('your-turn');
-                // Show cryptic banner for first player
+    
+    // Check if banner should be shown
+    const shouldShowBanner = round.currentTurn && 
+                             !round.currentQuestion && 
+                             isMyTurn && 
+                             !hasPendingQuestion;
+    
+    if (shouldShowBanner && firstTurnBanner) {
+        // Check if banner is currently hidden
+        const isCurrentlyHidden = firstTurnBanner.style.display === 'none' || 
+                                  window.getComputedStyle(firstTurnBanner).display === 'none';
+        
+        if (isCurrentlyHidden) {
+            // Show the banner
+            firstTurnBanner.style.display = 'block';
+            firstTurnBanner.style.opacity = '1';
+            firstTurnBanner.style.transition = '';
+            firstTurnBanner.style.visibility = 'visible';
+            
+            // Clear any existing timeout
+            if (gameState.bannerFadeTimeout) {
+                clearTimeout(gameState.bannerFadeTimeout);
+            }
+            
+            // Set new timeout to fade away after 15 seconds
+            gameState.bannerFadeTimeout = setTimeout(() => {
                 if (firstTurnBanner) {
-                    firstTurnBanner.style.display = 'block';
-                    firstTurnBanner.style.opacity = '1';
-                    // Fade away after 15 seconds
-                    clearTimeout(gameState.bannerFadeTimeout);
-                    gameState.bannerFadeTimeout = setTimeout(() => {
-                        firstTurnBanner.style.transition = 'opacity 1s ease-out';
-                        firstTurnBanner.style.opacity = '0';
-                        setTimeout(() => {
+                    firstTurnBanner.style.transition = 'opacity 1s ease-out';
+                    firstTurnBanner.style.opacity = '0';
+                    setTimeout(() => {
+                        if (firstTurnBanner) {
                             firstTurnBanner.style.display = 'none';
                             firstTurnBanner.style.opacity = '1';
                             firstTurnBanner.style.transition = '';
-                        }, 1000);
-                    }, 15000);
+                        }
+                    }, 1000);
                 }
-            } else {
-                turnIndicator.style.display = 'none';
-                turnIndicator.classList.remove('your-turn');
-                if (firstTurnBanner) {
-                    firstTurnBanner.style.display = 'none';
-                }
-            }
+            }, 15000);
         }
     } else {
-        turnIndicator.style.display = 'none';
-        turnIndicator.classList.remove('your-turn');
+        // Hide banner if it's not the player's turn or question has been asked
         if (firstTurnBanner) {
+            if (gameState.bannerFadeTimeout) {
+                clearTimeout(gameState.bannerFadeTimeout);
+                gameState.bannerFadeTimeout = null;
+            }
             firstTurnBanner.style.display = 'none';
+            firstTurnBanner.style.visibility = 'hidden';
+            firstTurnBanner.style.opacity = '1';
+            firstTurnBanner.style.transition = '';
         }
     }
 
@@ -824,7 +855,7 @@ async function submitAnswer() {
             return;
         }
 
-        closeModal('answer-modal');
+        window.closeModal('answer-modal');
         // State will update via polling
     } catch (error) {
         console.error('Error answering question:', error);
@@ -832,8 +863,30 @@ async function submitAnswer() {
     }
 }
 
+// Helper function to show and center modal
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error(`Modal ${modalId} not found`);
+        return;
+    }
+    
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Ensure modal is properly centered
+    setTimeout(() => {
+        modal.scrollTop = 0;
+        const modalContent = modal.querySelector('.modal-content');
+        if (modalContent) {
+            modalContent.scrollTop = 0;
+            // Force reflow to ensure centering
+            void modalContent.offsetHeight;
+        }
+    }, 10);
+}
+
 function showVoteModal() {
-    console.log('showVoteModal called');
     const game = gameState.game;
     if (!game || !game.currentRound) {
         console.error('No game or currentRound');
@@ -865,16 +918,7 @@ function showVoteModal() {
         select.value = round.votes[gameState.playerId];
     }
 
-    const modal = document.getElementById('vote-modal');
-    if (!modal) {
-        console.error('Vote modal element not found');
-        return;
-    }
-    
-    console.log('Showing vote modal');
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    modal.scrollTop = 0;
+    showModal('vote-modal');
 }
 
 async function submitVote() {
@@ -903,7 +947,7 @@ async function submitVote() {
             return;
         }
 
-        closeModal('vote-modal');
+        window.closeModal('vote-modal');
         
         if (data.majorityReached) {
             showNotification(data.wasCorrect ? 'Mole identified! Round ending...' : 'Incorrect vote. Mole wins!', data.wasCorrect ? 'success' : 'error');
@@ -952,6 +996,11 @@ let selectedLocationForGuess = null;
 function showGuessLocationModal() {
     // Populate clickable grid with all available locations
     const grid = document.getElementById('location-select-grid');
+    if (!grid) {
+        console.error('Location select grid not found');
+        return;
+    }
+    
     grid.innerHTML = '';
     selectedLocationForGuess = null;
     
@@ -988,15 +1037,7 @@ function showGuessLocationModal() {
         grid.appendChild(item);
     });
 
-    const modal = document.getElementById('guess-location-modal');
-    if (!modal) {
-        console.error('Guess location modal element not found');
-        return;
-    }
-    
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    modal.scrollTop = 0;
+    showModal('guess-location-modal');
 }
 
 async function submitLocationGuess() {
@@ -1025,7 +1066,7 @@ async function submitLocationGuess() {
             return;
         }
 
-        closeModal('guess-location-modal');
+        window.closeModal('guess-location-modal');
         
         if (data.isCorrect) {
             showNotification('Location identified! Operation successful.', 'success');
@@ -1200,13 +1241,12 @@ function showRoundResult(game) {
     }
 
     content.innerHTML = resultText;
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    modal.scrollTop = 0;
+    showModal('game-result-modal');
 }
 
 // Function to close modal and restore body scroll
-function closeModal(modalId) {
+// Make it globally accessible for onclick handlers
+window.closeModal = function(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'none';
@@ -1217,17 +1257,25 @@ function closeModal(modalId) {
         if (!anyModalOpen) {
             document.body.style.overflow = '';
         }
+        // Clear any selected location
+        if (modalId === 'guess-location-modal') {
+            selectedLocationForGuess = null;
+        }
     }
-}
+};
 
 async function nextRound() {
-    closeModal('game-result-modal');
+    window.closeModal('game-result-modal');
     stopTimer(); // Stop timer before starting new round
     
     try {
         await startRound();
-        // Poll immediately to get updated state
+        // Poll immediately and more frequently to get updated state
+        pollGameState();
+        // Also poll after short delays to catch the state change
         setTimeout(() => pollGameState(), 500);
+        setTimeout(() => pollGameState(), 1500);
+        setTimeout(() => pollGameState(), 3000);
     } catch (error) {
         console.error('Error starting next round:', error);
         showNotification('Failed to start next round. Please try again.', 'error');
@@ -1261,15 +1309,22 @@ function checkForPendingActions(game) {
 
 function showAnswerModal(question) {
     const questionPrompt = document.getElementById('question-to-answer');
+    if (!questionPrompt) {
+        console.error('Question prompt element not found');
+        return;
+    }
+    
     questionPrompt.innerHTML = `
         <span style="color: var(--color-primary); font-weight: 500;">${escapeHtml(question.askerName)}</span> asks:<br>
         <span style="font-size: 1.2rem; margin-top: 10px; display: block;">"${escapeHtml(question.text)}"</span>
     `;
-    document.getElementById('answer-text').value = '';
-    const modal = document.getElementById('answer-modal');
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    modal.scrollTop = 0;
+    
+    const answerText = document.getElementById('answer-text');
+    if (answerText) {
+        answerText.value = '';
+    }
+    
+    showModal('answer-modal');
 }
 
 // Update the updateUI function to check for pending actions
@@ -1369,6 +1424,132 @@ function toggleTheme() {
     } else {
         html.classList.add('light-mode');
         localStorage.setItem('theme', 'light');
+    }
+}
+
+// Queue management functions
+async function joinPublicQueue() {
+    const playerName = prompt('Enter your codename:');
+    
+    if (!playerName || playerName.trim().length === 0) {
+        showScreen('main-menu');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/join-queue`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerName: playerName.trim() })
+        });
+
+        const data = await response.json();
+        
+        if (data.error) {
+            showNotification(data.error, 'error');
+            showScreen('main-menu');
+            return;
+        }
+
+        gameState.playerId = data.playerId;
+        gameState.playerName = playerName.trim();
+        gameState.inQueue = true;
+
+        // If matched, join the game
+        if (data.matched && data.gameCode) {
+            gameState.gameCode = data.gameCode;
+            gameState.inQueue = false;
+            stopQueuePolling();
+            document.getElementById('display-game-code').textContent = data.gameCode;
+            showScreen('lobby');
+            startPolling();
+        } else {
+            // Start polling queue status
+            startQueuePolling();
+        }
+    } catch (error) {
+        console.error('Error joining queue:', error);
+        showNotification('Failed to join queue. Please try again.', 'error');
+        showScreen('main-menu');
+    }
+}
+
+async function leavePublicQueue() {
+    if (!gameState.playerId || !gameState.inQueue) {
+        stopQueuePolling();
+        gameState.inQueue = false;
+        showScreen('main-menu');
+        return;
+    }
+
+    try {
+        await fetch(`${API_BASE}/leave-queue`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerId: gameState.playerId })
+        });
+    } catch (error) {
+        console.error('Error leaving queue:', error);
+    }
+
+    stopQueuePolling();
+    gameState.inQueue = false;
+    gameState.playerId = null;
+    gameState.playerName = null;
+    showScreen('main-menu');
+}
+
+function startQueuePolling() {
+    if (gameState.queueInterval) {
+        clearInterval(gameState.queueInterval);
+    }
+
+    // Poll immediately
+    pollQueueStatus();
+
+    // Then poll every 2 seconds
+    gameState.queueInterval = setInterval(pollQueueStatus, 2000);
+}
+
+function stopQueuePolling() {
+    if (gameState.queueInterval) {
+        clearInterval(gameState.queueInterval);
+        gameState.queueInterval = null;
+    }
+}
+
+async function pollQueueStatus() {
+    if (!gameState.playerId || !gameState.inQueue) {
+        stopQueuePolling();
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/queue-status?playerId=${gameState.playerId}`);
+        const data = await response.json();
+
+        if (data.error) {
+            console.error('Error fetching queue status:', data.error);
+            return;
+        }
+
+        // Check if matched to a game
+        if (data.matched && data.gameCode) {
+            gameState.gameCode = data.gameCode;
+            gameState.inQueue = false;
+            stopQueuePolling();
+            document.getElementById('display-game-code').textContent = data.gameCode;
+            showScreen('lobby');
+            startPolling();
+            return;
+        }
+
+        // Update UI
+        document.getElementById('queue-size').textContent = data.queueSize || 0;
+        document.getElementById('queue-position').textContent = data.queuePosition || '-';
+        document.getElementById('players-needed').textContent = data.playersNeeded || 3;
+    } catch (error) {
+        console.error('Error polling queue status:', error);
     }
 }
 

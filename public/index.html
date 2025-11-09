@@ -62,6 +62,7 @@
                 <div class="menu-buttons">
                     <button id="create-game-btn" class="btn btn-primary">CREATE OPERATION</button>
                     <button id="join-game-btn" class="btn btn-secondary">JOIN OPERATION</button>
+                    <button id="find-public-game-btn" class="btn btn-secondary">FIND PUBLIC GAME</button>
                 </div>
                 <div id="how-to-play" class="how-to-play">
                     <h3>HOW TO PLAY</h3>
@@ -94,6 +95,37 @@
                 <div class="form-actions">
                     <button id="start-game-btn" class="btn btn-primary">INITIATE</button>
                     <button id="back-to-menu-btn" class="btn btn-secondary">ABORT</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Queue Waiting Screen -->
+        <div id="queue-screen" class="screen">
+            <button id="theme-toggle-btn-queue" class="theme-toggle-icon" title="Toggle Theme">
+                <span class="theme-icon-dark">◐</span>
+                <span class="theme-icon-light">◑</span>
+            </button>
+            <div class="menu-content">
+                <h2>FINDING PLAYERS</h2>
+                <div class="game-info">
+                    <div class="info-item">
+                        <span class="info-label">PLAYERS IN QUEUE</span>
+                        <span class="info-value" id="queue-size">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">YOUR POSITION</span>
+                        <span class="info-value" id="queue-position">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">PLAYERS NEEDED</span>
+                        <span class="info-value" id="players-needed">3</span>
+                    </div>
+                </div>
+                <p class="waiting-text" style="margin-top: 40px; text-align: center;">
+                    Waiting for more players to join the queue...
+                </p>
+                <div class="form-actions" style="margin-top: 40px;">
+                    <button id="leave-queue-btn" class="btn btn-secondary">LEAVE QUEUE</button>
                 </div>
             </div>
         </div>
@@ -269,10 +301,6 @@
                 </div>
 
                 <div id="game-actions" class="game-actions">
-                    <div id="current-turn-indicator" class="current-turn-indicator" style="display: none;">
-                        <span class="turn-label">CURRENT TURN:</span>
-                        <span id="current-turn-player" class="turn-player"></span>
-                    </div>
                     <button id="vote-mole-action-btn" class="btn btn-secondary" style="display: none;">VOTE FOR MOLE</button>
                     <button id="guess-location-btn" class="btn btn-primary" style="display: none;">IDENTIFY LOCATION</button>
                 </div>
