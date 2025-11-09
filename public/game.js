@@ -44,6 +44,12 @@ function setupEventListeners() {
     document.getElementById('leave-game-btn').addEventListener('click', leaveGame);
     document.getElementById('save-settings-btn').addEventListener('click', saveGameSettings);
     document.getElementById('manage-locations-btn').addEventListener('click', showLocationManagement);
+    
+    // Auto-save settings on change
+    document.getElementById('spy-count').addEventListener('change', autoSaveSettings);
+    document.getElementById('show-spy-count').addEventListener('change', autoSaveSettings);
+    document.getElementById('timer-minutes').addEventListener('change', autoSaveSettings);
+    document.getElementById('timer-minutes').addEventListener('input', debounce(autoSaveSettings, 1000));
     document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
     
     // Theme toggle on all screens
@@ -93,6 +99,7 @@ function setupEventListeners() {
     });
     document.getElementById('next-round-btn').addEventListener('click', nextRound);
     document.getElementById('back-to-lobby-btn').addEventListener('click', () => {
+        document.getElementById('game-result-modal').style.display = 'none';
         showScreen('lobby');
         stopPolling();
         startPolling();
@@ -189,7 +196,7 @@ async function startRound() {
     const isHost = game && game.players[0] && game.players[0].id === gameState.playerId;
     if (isHost && game.status === 'lobby') {
         try {
-            await saveGameSettings();
+            await saveGameSettingsSilent();
         } catch (error) {
             console.error('Error saving settings before start:', error);
             // Don't block starting the round if settings save fails
@@ -213,6 +220,9 @@ async function startRound() {
             return;
         }
 
+        // Show elegant intro transition for all players
+        showGameIntro();
+        
         // Game state will be updated via polling
     } catch (error) {
         console.error('Error starting round:', error);
@@ -392,17 +402,35 @@ function updateLobby(game) {
     }
 }
 
+let lastGameStatus = null;
+let introShown = false;
+
 function updateGameScreen(game) {
-    if (game.status === 'playing') {
-        showScreen('game-screen');
-        updatePlayingState(game);
+    // Check if game just started (transitioned from lobby to playing)
+    if (game.status === 'playing' && lastGameStatus === 'lobby' && !introShown) {
+        introShown = true;
+        showGameIntro();
+        // Intro will transition to game screen after animation
+        setTimeout(() => {
+            showScreen('game-screen');
+            updatePlayingState(game);
+        }, 3500); // Match intro duration
+    } else if (game.status === 'playing') {
+        if (introShown) {
+            showScreen('game-screen');
+            updatePlayingState(game);
+        }
     } else if (game.status === 'roundEnd') {
         stopTimer(); // Stop timer when round ends
         showScreen('game-screen');
         showRoundResult(game);
+        introShown = false; // Reset for next round
     } else if (game.status === 'lobby') {
         stopTimer(); // Stop timer when back in lobby
+        introShown = false; // Reset intro flag
     }
+    
+    lastGameStatus = game.status;
 }
 
 function updatePlayingState(game) {
@@ -1065,11 +1093,12 @@ function showRoundResult(game) {
 
     // Show next round button if host, otherwise show waiting message
     const isHost = game.players[0] && game.players[0].id === gameState.playerId;
-    nextRoundBtn.style.display = isHost ? 'block' : 'none';
-    backToLobbyBtn.style.display = isHost ? 'none' : 'block';
-    
-    // Add waiting message for non-host players
-    if (!isHost) {
+    if (isHost) {
+        nextRoundBtn.style.display = 'block';
+        backToLobbyBtn.style.display = 'none';
+    } else {
+        nextRoundBtn.style.display = 'none';
+        backToLobbyBtn.style.display = 'block';
         resultText += '<p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-style: italic;">Waiting for host to start the next round...</p>';
         content.innerHTML = resultText;
     }
@@ -1133,14 +1162,18 @@ updateUI = function() {
     checkForPendingActions(gameState.game);
 };
 
-// Game settings functions
-async function saveGameSettings() {
+// Auto-save settings (silent, no notification)
+async function autoSaveSettings() {
+    await saveGameSettingsSilent();
+}
+
+// Save settings silently (no notification)
+async function saveGameSettingsSilent() {
     const spyCount = parseInt(document.getElementById('spy-count').value) || 1;
     const showSpyCount = document.getElementById('show-spy-count').value === 'true';
     const timerMinutes = parseInt(document.getElementById('timer-minutes').value) || 8;
     
     if (!gameState.gameCode || !gameState.playerId) {
-        showNotification('Not in a game', 'error');
         return;
     }
     
@@ -1156,25 +1189,68 @@ async function saveGameSettings() {
                     showSpyCount,
                     timerMinutes,
                     customLocations: CUSTOM_LOCATIONS,
-                    enabledLocationSets: getEnabledLocationSets()
+                    enabledLocationSets: getEnabledLocationSets(),
+                    enabledLocationsList: Array.from(enabledLocations)
                 }
             })
         });
         
         const data = await response.json();
         
-        if (data.error) {
-            showNotification(data.error, 'error');
-            return;
+        if (!data.error) {
+            // Refresh game state silently
+            pollGameState();
         }
-        
-        showNotification('Settings saved', 'success');
-        // Refresh game state
-        pollGameState();
     } catch (error) {
         console.error('Error saving settings:', error);
-        showNotification('Failed to save settings', 'error');
     }
+}
+
+// Game settings functions (with notification for manual save)
+async function saveGameSettings() {
+    await saveGameSettingsSilent();
+    showNotification('Settings saved', 'success');
+}
+
+// Debounce function for input fields
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Show elegant game intro transition
+function showGameIntro() {
+    const introOverlay = document.getElementById('game-intro-overlay');
+    if (!introOverlay) {
+        // Create intro overlay if it doesn't exist
+        const overlay = document.createElement('div');
+        overlay.id = 'game-intro-overlay';
+        overlay.className = 'game-intro-overlay';
+        overlay.innerHTML = `
+            <div class="game-intro-content">
+                <div class="intro-title">OPERATION INITIATED</div>
+                <div class="intro-subtitle">The mission begins...</div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    } else {
+        introOverlay.style.display = 'flex';
+    }
+    
+    // Hide after animation
+    setTimeout(() => {
+        const overlay = document.getElementById('game-intro-overlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+    }, 3500);
 }
 
 // Theme toggle
@@ -1357,7 +1433,8 @@ async function saveLocationSettings(enabledSets, customLocations) {
         
         const data = await response.json();
         if (!data.error) {
-            // Settings saved successfully
+            // Settings saved successfully - update game state
+            pollGameState();
         }
     } catch (error) {
         console.error('Error saving location settings:', error);
