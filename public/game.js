@@ -62,21 +62,6 @@ function setupEventListeners() {
     document.getElementById('theme-toggle-btn-join').addEventListener('click', toggleTheme);
     document.getElementById('theme-toggle-btn-game').addEventListener('click', toggleTheme);
     
-    // Feedback
-    const feedbackBtn = document.getElementById('feedback-btn');
-    if (feedbackBtn) {
-        feedbackBtn.addEventListener('click', () => {
-            showModal('feedback-modal');
-        });
-    }
-    document.getElementById('submit-feedback-btn').addEventListener('click', submitFeedback);
-    document.getElementById('cancel-feedback-btn').addEventListener('click', () => {
-        window.closeModal('feedback-modal');
-        // Clear form
-        document.getElementById('feedback-title').value = '';
-        document.getElementById('feedback-comment').value = '';
-    });
-
     // Game actions
     document.getElementById('vote-mole-action-btn').addEventListener('click', showVoteModal);
     document.getElementById('vote-mole-btn').addEventListener('click', showVoteModal);
@@ -1337,61 +1322,6 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-}
-
-async function submitFeedback() {
-    const title = document.getElementById('feedback-title').value.trim();
-    const comment = document.getElementById('feedback-comment').value.trim();
-
-    if (!title || !comment) {
-        showNotification('Please fill in both title and details', 'error');
-        return;
-    }
-
-    // Use Formspree - completely free, no backend needed
-    // To set up: 
-    // 1. Go to https://formspree.io and create a free account
-    // 2. Create a new form
-    // 3. Replace 'YOUR_FORM_ID' below with your Formspree form ID
-    // Example: https://formspree.io/f/xpzgkqyz
-    const formspreeEndpoint = 'https://formspree.io/f/YOUR_FORM_ID'; // TODO: Replace with your Formspree form ID
-    
-    try {
-        // Use Formspree directly - completely free, no backend needed
-        const formData = new FormData();
-        formData.append('title', title);
-        formData.append('message', comment);
-        formData.append('_subject', `Feedback: ${title}`);
-        
-        const response = await fetch(formspreeEndpoint, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-
-        if (response.ok) {
-            showNotification('Thank you for your feedback!', 'success');
-            window.closeModal('feedback-modal');
-            // Clear form
-            document.getElementById('feedback-title').value = '';
-            document.getElementById('feedback-comment').value = '';
-        } else {
-            const data = await response.json();
-            if (data.error) {
-                showNotification('Failed to submit feedback. Please try again.', 'error');
-            } else {
-                showNotification('Thank you for your feedback!', 'success');
-                window.closeModal('feedback-modal');
-                document.getElementById('feedback-title').value = '';
-                document.getElementById('feedback-comment').value = '';
-            }
-        }
-    } catch (error) {
-        console.error('Error submitting feedback:', error);
-        showNotification('Failed to submit feedback. Please try again.', 'error');
-    }
 }
 
 // Check for pending questions/answers when game state updates
