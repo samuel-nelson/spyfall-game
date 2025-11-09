@@ -1164,7 +1164,12 @@ function showRoundResult(game) {
     const moleWon = round.moleWon || round.spyWon;
 
     const moleGuessedLocation = round.moleGuessedLocation || round.spyGuessedLocation;
+    
+    // Ensure we always have content - add default message if nothing matches
+    let hasContent = false;
+    
     if (moleGuessedLocation) {
+        hasContent = true;
         // Mole guessed the location - check if correct
         const locationName = typeof round.location === 'string' ? round.location : round.location?.name;
         const guessedName = moleGuessedLocation.trim();
@@ -1207,6 +1212,7 @@ function showRoundResult(game) {
             }
         }
     } else if (round.accusation) {
+        hasContent = true;
         const accusedPlayer = game.players.find(p => p.id === round.accusation.accusedId);
         const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
         const wasCorrect = moleIds.includes(round.accusation.accusedId);
@@ -1273,6 +1279,7 @@ function showRoundResult(game) {
             }
         }
     } else if (round.moleWon || round.spyWon) {
+        hasContent = true;
         title.textContent = 'TIME EXPIRED';
         title.style.color = 'var(--color-danger)';
         const locationName = typeof round.location === 'string' ? round.location : round.location?.name;
@@ -1290,15 +1297,38 @@ function showRoundResult(game) {
             `;
         }
     } else {
+        hasContent = true;
         title.textContent = 'ROUND CONCLUDED';
         title.style.color = 'var(--color-primary)';
         const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
         const locationName = typeof round.location === 'string' ? round.location : round.location?.name;
         resultText = `
             <p>The operation has concluded.</p>
-            <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName)}</p>
-            <p><strong>Mole${moleIds.length > 1 ? 's' : ''}:</strong> ${escapeHtml(moleIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean).join(', '))}</p>
+            <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName || 'Unknown')}</p>
+            <p><strong>Mole${moleIds.length > 1 ? 's' : ''}:</strong> ${escapeHtml(moleIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean).join(', ') || 'Unknown')}</p>
         `;
+    }
+    
+    // Fallback: If somehow no content was set, show a default message
+    if (!hasContent || !resultText.trim()) {
+        console.warn('showRoundResult: No content was set, using fallback message');
+        title.textContent = 'ROUND ENDED';
+        title.style.color = 'var(--color-primary)';
+        const locationName = typeof round.location === 'string' ? round.location : round.location?.name;
+        const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
+        if (isMole) {
+            resultText = `
+                <p><strong>The round has ended.</strong></p>
+                <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName || 'Unknown')}</p>
+                <p>You were the mole.</p>
+            `;
+        } else {
+            resultText = `
+                <p>The round has ended.</p>
+                <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName || 'Unknown')}</p>
+                <p><strong>Mole${moleIds.length > 1 ? 's' : ''}:</strong> ${escapeHtml(moleIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean).join(', ') || 'Unknown')}</p>
+            `;
+        }
     }
 
     // Show next round button if host (regardless of whether they're mole or not), otherwise show waiting message
@@ -1315,6 +1345,59 @@ function showRoundResult(game) {
     }
 
     content.innerHTML = resultText;
+    
+    // Re-get button references after content update to ensure they're still accessible
+    const nextRoundBtnRef = document.getElementById('next-round-btn');
+    const backToLobbyBtnRef = document.getElementById('back-to-lobby-btn');
+    
+    // Ensure buttons are clickable - reattach event listeners if needed
+    if (nextRoundBtnRef && !nextRoundBtnRef.hasAttribute('data-listener-attached')) {
+        nextRoundBtnRef.addEventListener('click', nextRound);
+        nextRoundBtnRef.setAttribute('data-listener-attached', 'true');
+    }
+    if (backToLobbyBtnRef && !backToLobbyBtnRef.hasAttribute('data-listener-attached')) {
+        backToLobbyBtnRef.addEventListener('click', async () => {
+            const game = gameState.game;
+            const isHost = game && game.players && game.players.length > 0 && game.players[0].id === gameState.playerId;
+            
+            // If host, end the game (kicks everyone out)
+            if (isHost) {
+                try {
+                    const response = await fetch(`${API_BASE}/end-game`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            gameCode: gameState.gameCode,
+                            playerId: gameState.playerId
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        showNotification('Game ended. All players have been disconnected.', 'info');
+                    }
+                } catch (error) {
+                    console.error('Error ending game:', error);
+                }
+            }
+            
+            window.closeModal('game-result-modal');
+            // Clear game state but keep gameCode and playerName for potential rejoin
+            const gameCode = gameState.gameCode;
+            const playerName = gameState.playerName;
+            gameState.gameCode = null;
+            gameState.playerId = null;
+            gameState.game = null;
+            stopPolling();
+            stopTimer();
+            // Store for potential rejoin
+            if (gameCode && playerName) {
+                sessionStorage.setItem('lastGameCode', gameCode);
+                sessionStorage.setItem('lastPlayerName', playerName);
+            }
+            showScreen('main-menu');
+        });
+        backToLobbyBtnRef.setAttribute('data-listener-attached', 'true');
+    }
     
     // FORCE SHOW MODAL - Multiple redundant checks to ensure it shows for moles
     // Re-get modal reference
