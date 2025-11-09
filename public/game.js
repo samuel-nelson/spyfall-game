@@ -471,9 +471,13 @@ function updateGameScreen(game) {
         stopTimer(); // Stop timer when round ends
         // Always show result modal for all players including moles who guessed wrong
         // Ensure modal is shown even if it was previously closed
-        showRoundResult(game);
-        // Keep game screen visible behind modal
         showScreen('game-screen');
+        // Force show the modal - do this after screen is shown
+        setTimeout(() => {
+            showRoundResult(game);
+        }, 50);
+        // Also show immediately
+        showRoundResult(game);
     } else if (game.status === 'lobby') {
         stopTimer(); // Stop timer when back in lobby
         hasScrolledToTopOnGameStart = false; // Reset flag when back in lobby
@@ -1092,9 +1096,12 @@ async function submitLocationGuess() {
         }
         
         // Poll immediately and aggressively for updated game state to see the result modal
+        // This is critical for moles to see the result
         pollGameState();
-        setTimeout(() => pollGameState(), 500);
-        setTimeout(() => pollGameState(), 1500);
+        setTimeout(() => pollGameState(), 300);
+        setTimeout(() => pollGameState(), 600);
+        setTimeout(() => pollGameState(), 1000);
+        setTimeout(() => pollGameState(), 2000);
     } catch (error) {
         console.error('Error guessing location:', error);
         showNotification('Failed to submit guess. Please try again.', 'error');
@@ -1284,18 +1291,47 @@ function showRoundResult(game) {
 
     content.innerHTML = resultText;
     
-    // Force show the modal - ensure it's visible
-    showModal('game-result-modal');
-    
-    // Double-check modal is shown after a brief delay
-    setTimeout(() => {
-        const modalCheck = document.getElementById('game-result-modal');
-        if (modalCheck && !modalCheck.classList.contains('show')) {
-            console.log('showRoundResult: Modal not shown, forcing show');
-            modalCheck.classList.add('show');
-            document.body.style.overflow = 'hidden';
-        }
-    }, 100);
+    // Force show the modal - ensure it's visible for ALL players including moles
+    const modal = document.getElementById('game-result-modal');
+    if (modal) {
+        // Force show using multiple methods
+        modal.classList.add('show');
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        
+        // Also call showModal for consistency
+        showModal('game-result-modal');
+        
+        // Triple-check modal is shown after delays
+        setTimeout(() => {
+            if (modal && !modal.classList.contains('show')) {
+                console.log('showRoundResult: Modal not shown after 50ms, forcing show');
+                modal.classList.add('show');
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }, 50);
+        
+        setTimeout(() => {
+            if (modal && !modal.classList.contains('show')) {
+                console.log('showRoundResult: Modal not shown after 200ms, forcing show');
+                modal.classList.add('show');
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }, 200);
+        
+        setTimeout(() => {
+            if (modal && !modal.classList.contains('show')) {
+                console.log('showRoundResult: Modal not shown after 500ms, forcing show');
+                modal.classList.add('show');
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        }, 500);
+    } else {
+        console.error('showRoundResult: Modal element not found!');
+    }
 }
 
 // Function to close modal and restore body scroll
