@@ -479,21 +479,27 @@ function updatePossibleLocations(game, round) {
     
     const grid = locationsDiv.querySelector('.locations-grid');
     
+    // Get current location name (handle both string and object)
+    const currentLocationName = typeof round.location === 'string' ? round.location : round.location?.name;
+    const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
+    const isSpy = spyIds.includes(gameState.playerId);
+    
     allLocations.forEach(location => {
         const locationName = typeof location === 'string' ? location : location.name;
         const locationCard = document.createElement('div');
         locationCard.className = 'location-card-small';
         
-        // Highlight if it's the current location (for non-spies)
-        const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
-        const isSpy = spyIds.includes(gameState.playerId);
-        if (!isSpy && locationName === round.location) {
+        // Highlight if it's the current location (for non-spies only)
+        if (!isSpy && locationName === currentLocationName) {
             locationCard.classList.add('current-location');
         }
         
         locationCard.textContent = locationName;
         grid.appendChild(locationCard);
     });
+    
+    // Show the locations display
+    locationsDiv.style.display = 'block';
 }
 
 function updatePlayersStatus(players, round) {
