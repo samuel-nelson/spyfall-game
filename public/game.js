@@ -1153,15 +1153,14 @@ function showRoundResult(game) {
     modal.classList.add('show');
     modal.style.display = 'flex';
     
-    // Log for debugging
-    const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
-    const isMole = moleIds.includes(gameState.playerId);
-    console.log('showRoundResult: Showing modal for round end. isMole:', isMole, 'playerId:', gameState.playerId);
-
-    let resultText = '';
     // Check if player is mole (support both single and multiple moles, and legacy spy references)
     const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
     const isMole = moleIds.includes(gameState.playerId);
+    
+    // Log for debugging
+    console.log('showRoundResult: Showing modal for round end. isMole:', isMole, 'playerId:', gameState.playerId);
+
+    let resultText = '';
     const moleWon = round.moleWon || round.spyWon;
 
     const moleGuessedLocation = round.moleGuessedLocation || round.spyGuessedLocation;
