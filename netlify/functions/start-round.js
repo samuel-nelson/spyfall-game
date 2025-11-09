@@ -86,18 +86,18 @@ exports.handler = async (event, context) => {
 
         // Get game settings (defaults if not set)
         const settings = game.settings || {};
-        const spyCount = Math.max(1, Math.min(2, parseInt(settings.spyCount) || 1));
+        const moleCount = Math.max(1, Math.min(2, parseInt(settings.moleCount || settings.spyCount) || 1));
         const timerMinutes = Math.max(1, Math.min(60, parseInt(settings.timerMinutes) || 8));
         const enabledPacks = settings.enabledPacks || ['pack1'];
 
-        // Select random spies (1 or 2)
-        const spyIds = [];
+        // Select random moles (1 or 2)
+        const moleIds = [];
         const availablePlayers = [...game.players];
         
-        for (let i = 0; i < spyCount && availablePlayers.length > 0; i++) {
-            const spyIndex = Math.floor(Math.random() * availablePlayers.length);
-            spyIds.push(availablePlayers[spyIndex].id);
-            availablePlayers.splice(spyIndex, 1);
+        for (let i = 0; i < moleCount && availablePlayers.length > 0; i++) {
+            const moleIndex = Math.floor(Math.random() * availablePlayers.length);
+            moleIds.push(availablePlayers[moleIndex].id);
+            availablePlayers.splice(moleIndex, 1);
         }
 
         // Select random location from enabled packs
@@ -119,17 +119,22 @@ exports.handler = async (event, context) => {
         game.currentRound = {
             roundNumber,
             location,
-            spyId: spyIds.length === 1 ? spyIds[0] : null, // Backward compatibility
-            spyIds: spyIds.length > 1 ? spyIds : null, // Multiple spies
+            moleId: moleIds.length === 1 ? moleIds[0] : null, // New naming
+            moleIds: moleIds.length > 1 ? moleIds : (moleIds.length === 1 ? moleIds : null), // New naming
+            spyId: moleIds.length === 1 ? moleIds[0] : null, // Legacy support
+            spyIds: moleIds.length > 1 ? moleIds : null, // Legacy support
             currentTurn,
             currentQuestion: null,
             waitingForAnswer: null,
             endTime,
-            spyWon: false,
+            moleWon: false,
+            spyWon: false, // Legacy support
             accusation: null,
-            spyGuessedLocation: null,
+            moleGuessedLocation: null,
+            spyGuessedLocation: null, // Legacy support
             votes: null,
-            showSpyCount: settings.showSpyCount !== false // Default to true
+            showMoleCount: (settings.showMoleCount !== false && settings.showSpyCount !== false), // Default to true
+            showSpyCount: (settings.showMoleCount !== false && settings.showSpyCount !== false) // Legacy support
         };
 
         game.status = 'playing';

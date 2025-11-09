@@ -72,23 +72,24 @@ exports.handler = async (event, context) => {
 
         const round = game.currentRound;
 
-        // Check if player is a spy (support both single spy and multiple spies)
-        const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
-        const isSpy = spyIds.includes(playerId);
+        // Check if player is a mole (support both single and multiple moles, and legacy spy references)
+        const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
+        const isMole = moleIds.includes(playerId);
         
-        // Only spy can guess location
-        if (!isSpy) {
+        // Only mole can guess location
+        if (!isMole) {
             return {
                 statusCode: 403,
                 headers: {
                     'Access-Control-Allow-Origin': '*'
                 },
-                body: JSON.stringify({ error: 'Only the spy can guess the location' })
+                body: JSON.stringify({ error: 'Only the mole can guess the location' })
             };
         }
 
-        // Check if spy has already guessed (only one chance)
-        if (round.spyGuessedLocation !== null && round.spyGuessedLocation !== undefined) {
+        // Check if mole has already guessed (only one chance)
+        const hasGuessed = (round.moleGuessedLocation || round.spyGuessedLocation) !== null && (round.moleGuessedLocation || round.spyGuessedLocation) !== undefined;
+        if (hasGuessed) {
             return {
                 statusCode: 400,
                 headers: {
@@ -105,16 +106,19 @@ exports.handler = async (event, context) => {
         const isCorrect = guessedName.toLowerCase() === locationName.toLowerCase();
         
         // Record the guess (whether correct or not)
-        round.spyGuessedLocation = guessedLocation.trim();
+        round.moleGuessedLocation = guessedLocation.trim();
+        round.spyGuessedLocation = guessedLocation.trim(); // Legacy support
         
         if (isCorrect) {
-            // Spy wins!
+            // Mole wins!
             game.status = 'roundEnd';
-            round.spyWon = true;
+            round.moleWon = true;
+            round.spyWon = true; // Legacy support
         } else {
-            // Spy loses - wrong guess ends the round
+            // Mole loses - wrong guess ends the round
             game.status = 'roundEnd';
-            round.spyWon = false;
+            round.moleWon = false;
+            round.spyWon = false; // Legacy support
         }
         
         // Save updated game

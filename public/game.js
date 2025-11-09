@@ -44,8 +44,8 @@ function setupEventListeners() {
     document.getElementById('leave-game-btn').addEventListener('click', leaveGame);
     
     // Auto-save settings on change
-    document.getElementById('spy-count').addEventListener('change', autoSaveSettings);
-    document.getElementById('show-spy-count').addEventListener('change', autoSaveSettings);
+    document.getElementById('mole-count').addEventListener('change', autoSaveSettings);
+    document.getElementById('show-mole-count').addEventListener('change', autoSaveSettings);
     document.getElementById('timer-minutes').addEventListener('change', autoSaveSettings);
     document.getElementById('timer-minutes').addEventListener('input', debounce(autoSaveSettings, 1000));
     
@@ -66,8 +66,8 @@ function setupEventListeners() {
 
     // Game actions
     document.getElementById('ask-question-btn').addEventListener('click', showQuestionModal);
-    document.getElementById('vote-spy-action-btn').addEventListener('click', showVoteModal);
-    document.getElementById('vote-spy-btn').addEventListener('click', showVoteModal);
+    document.getElementById('vote-mole-action-btn').addEventListener('click', showVoteModal);
+    document.getElementById('vote-mole-btn').addEventListener('click', showVoteModal);
     document.getElementById('submit-question-btn').addEventListener('click', submitQuestion);
     document.getElementById('cancel-question-btn').addEventListener('click', () => {
         document.getElementById('question-modal').style.display = 'none';
@@ -397,8 +397,8 @@ function updateLobby(game) {
             
             // Load current settings
             if (game.settings) {
-                document.getElementById('spy-count').value = game.settings.spyCount || 1;
-                document.getElementById('show-spy-count').value = game.settings.showSpyCount !== false ? 'true' : 'false';
+                document.getElementById('mole-count').value = game.settings.moleCount || game.settings.spyCount || 1; // Support legacy spyCount
+                document.getElementById('show-mole-count').value = (game.settings.showMoleCount !== false && game.settings.showSpyCount !== false) ? 'true' : 'false'; // Support legacy
                 document.getElementById('timer-minutes').value = game.settings.timerMinutes || 8;
                 
                 // Load pack selections
@@ -451,17 +451,17 @@ function updatePlayingState(game) {
 
     document.getElementById('round-number').textContent = currentRound.roundNumber || 1;
 
-    // Show spy count if enabled
-    const showSpyCount = game.settings?.showSpyCount !== false; // Default to true
-    const spyCountElement = document.getElementById('spy-count-display');
-    if (spyCountElement) {
-        if (showSpyCount) {
-            const spyIds = Array.isArray(currentRound.spyIds) ? currentRound.spyIds : [currentRound.spyId];
-            const spyCount = spyIds.filter(id => id).length;
-            spyCountElement.textContent = `${spyCount} SPY${spyCount > 1 ? 'IES' : ''}`;
-            spyCountElement.style.display = 'block';
+    // Show mole count if enabled
+    const showMoleCount = game.settings?.showMoleCount !== false && game.settings?.showSpyCount !== false; // Default to true, support legacy
+    const moleCountElement = document.getElementById('mole-count-display');
+    if (moleCountElement) {
+        if (showMoleCount) {
+            const moleIds = Array.isArray(currentRound.moleIds) ? currentRound.moleIds : (Array.isArray(currentRound.spyIds) ? currentRound.spyIds : [currentRound.spyId || currentRound.moleId]);
+            const moleCount = moleIds.filter(id => id).length;
+            moleCountElement.textContent = `${moleCount} MOLE${moleCount > 1 ? 'S' : ''}`;
+            moleCountElement.style.display = 'block';
         } else {
-            spyCountElement.style.display = 'none';
+            moleCountElement.style.display = 'none';
         }
     }
 
@@ -476,19 +476,19 @@ function updatePlayingState(game) {
     const currentPlayer = game.players.find(p => p.id === gameState.playerId);
     if (!currentPlayer) return;
 
-    // Check if player is spy (support both single and multiple spies)
-    const spyIds = Array.isArray(currentRound.spyIds) ? currentRound.spyIds : [currentRound.spyId];
-    const isSpy = spyIds.includes(gameState.playerId);
+    // Check if player is mole (support both single and multiple moles, and legacy spy references)
+    const moleIds = Array.isArray(currentRound.moleIds) ? currentRound.moleIds : (Array.isArray(currentRound.spyIds) ? currentRound.spyIds : [currentRound.moleId || currentRound.spyId]);
+    const isMole = moleIds.includes(gameState.playerId);
     
     // Show appropriate view
-    const spyView = document.getElementById('spy-view');
+    const moleView = document.getElementById('mole-view');
     const locationView = document.getElementById('location-view');
     
-    if (isSpy) {
-        spyView.style.display = 'block';
+    if (isMole) {
+        moleView.style.display = 'block';
         locationView.style.display = 'none';
     } else {
-        spyView.style.display = 'none';
+        moleView.style.display = 'none';
         locationView.style.display = 'block';
         const locationName = typeof currentRound.location === 'string' ? currentRound.location : currentRound.location.name;
         document.getElementById('location-name').textContent = locationName;
@@ -535,16 +535,16 @@ function updatePossibleLocations(game, round) {
     
     // Get current location name (handle both string and object)
     const currentLocationName = typeof round.location === 'string' ? round.location : round.location?.name;
-    const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
-    const isSpy = spyIds.includes(gameState.playerId);
+    const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
+    const isMole = moleIds.includes(gameState.playerId);
     
     allLocations.forEach(location => {
         const locationName = typeof location === 'string' ? location : location.name;
         const locationCard = document.createElement('div');
         locationCard.className = 'location-card-small';
         
-        // Highlight if it's the current location (for non-spies only)
-        if (!isSpy && locationName === currentLocationName) {
+        // Highlight if it's the current location (for non-moles only)
+        if (!isMole && locationName === currentLocationName) {
             locationCard.classList.add('current-location');
         }
         
@@ -627,28 +627,28 @@ function updateQuestionArea(round) {
 
 function updateGameActions(game, round, currentPlayer) {
     const askBtn = document.getElementById('ask-question-btn');
-    const voteBtn = document.getElementById('vote-spy-action-btn');
+    const voteBtn = document.getElementById('vote-mole-action-btn');
     const guessBtn = document.getElementById('guess-location-btn');
     const votingArea = document.getElementById('voting-area');
-    const voteBtnInArea = document.getElementById('vote-spy-btn');
+    const voteBtnInArea = document.getElementById('vote-mole-btn');
 
-    // Check if player is spy (support both single and multiple spies)
-    const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
-    const isSpy = spyIds.includes(gameState.playerId);
+    // Check if player is mole (support both single and multiple moles, and legacy spy references)
+    const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
+    const isMole = moleIds.includes(gameState.playerId);
     const isMyTurn = round.currentTurn === gameState.playerId;
     const hasPendingQuestion = round.waitingForAnswer;
 
-    // Can ask question if it's your turn and no question is pending (and you're not the spy)
-    const canAsk = isMyTurn && !hasPendingQuestion && !isSpy;
+    // Can ask question if it's your turn and no question is pending (and you're not the mole)
+    const canAsk = isMyTurn && !hasPendingQuestion && !isMole;
     askBtn.style.display = canAsk ? 'block' : 'none';
 
-    // Non-spies can vote at any time (not just on their turn)
-    const canVote = !isSpy;
+    // Non-moles can vote at any time (not just on their turn)
+    const canVote = !isMole;
     voteBtn.style.display = canVote ? 'block' : 'none';
 
-    // Spy can guess location at any time, but only if they haven't guessed yet
-    const hasGuessed = round.spyGuessedLocation !== null && round.spyGuessedLocation !== undefined;
-    const canGuess = isSpy && !hasGuessed;
+    // Mole can guess location at any time, but only if they haven't guessed yet
+    const hasGuessed = (round.moleGuessedLocation || round.spyGuessedLocation) !== null && (round.moleGuessedLocation || round.spyGuessedLocation) !== undefined;
+    const canGuess = isMole && !hasGuessed;
     guessBtn.style.display = canGuess ? 'block' : 'none';
 
     // Show voting area if votes exist
@@ -670,9 +670,9 @@ function updateVotingStatus(game, round) {
 
     // Count votes
     const voteCounts = {};
-    // Get all spy IDs (support both single and multiple spies)
-    const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
-    const nonSpyPlayers = game.players.filter(p => !spyIds.includes(p.id));
+    // Get all mole IDs (support both single and multiple moles, and legacy spy references)
+    const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
+    const nonMolePlayers = game.players.filter(p => !moleIds.includes(p.id));
     
     Object.values(round.votes).forEach(votedPlayerId => {
         voteCounts[votedPlayerId] = (voteCounts[votedPlayerId] || 0) + 1;
@@ -683,7 +683,7 @@ function updateVotingStatus(game, round) {
     for (const [playerId, count] of Object.entries(voteCounts)) {
         const player = game.players.find(p => p.id === playerId);
         if (player) {
-            const majorityThreshold = Math.ceil(nonSpyPlayers.length / 2);
+            const majorityThreshold = Math.ceil(nonMolePlayers.length / 2);
             const isMajority = count > majorityThreshold;
             html += `
                 <div class="vote-item">
@@ -832,7 +832,7 @@ async function submitVote() {
     }
 
     try {
-        const response = await fetch(`${API_BASE}/vote-spy`, {
+        const response = await fetch(`${API_BASE}/vote-mole`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -852,14 +852,14 @@ async function submitVote() {
         document.getElementById('vote-modal').style.display = 'none';
         
         if (data.majorityReached) {
-            showNotification(data.wasCorrect ? 'Spy identified! Round ending...' : 'Incorrect vote. Spy wins!', data.wasCorrect ? 'success' : 'error');
+            showNotification(data.wasCorrect ? 'Mole identified! Round ending...' : 'Incorrect vote. Mole wins!', data.wasCorrect ? 'success' : 'error');
         } else {
             showNotification('Vote recorded. Waiting for majority...', 'info');
         }
         
         // State will update via polling
     } catch (error) {
-        console.error('Error voting for spy:', error);
+        console.error('Error voting for mole:', error);
         showNotification('Failed to submit vote. Please try again.', 'error');
     }
 }
@@ -989,50 +989,51 @@ function showRoundResult(game) {
     const backToLobbyBtn = document.getElementById('back-to-lobby-btn');
 
     let resultText = '';
-    // Check if player is spy (support both single and multiple spies)
-    const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
-    const isSpy = spyIds.includes(gameState.playerId);
-    const spyWon = round.spyWon;
+    // Check if player is mole (support both single and multiple moles, and legacy spy references)
+    const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
+    const isMole = moleIds.includes(gameState.playerId);
+    const moleWon = round.moleWon || round.spyWon;
 
-    if (round.spyGuessedLocation) {
-        // Spy guessed the location - check if correct
+    const moleGuessedLocation = round.moleGuessedLocation || round.spyGuessedLocation;
+    if (moleGuessedLocation) {
+        // Mole guessed the location - check if correct
         const locationName = typeof round.location === 'string' ? round.location : round.location?.name;
-        const guessedName = round.spyGuessedLocation.trim();
+        const guessedName = moleGuessedLocation.trim();
         const isCorrect = guessedName.toLowerCase() === locationName.toLowerCase();
         
         if (isCorrect) {
             title.textContent = 'OPERATION COMPROMISED';
             title.style.color = 'var(--color-danger)';
             resultText = `
-                <p>The spy successfully identified the location.</p>
+                <p>The mole successfully identified the location.</p>
                 <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName)}</p>
-                <p><strong>Spy's guess:</strong> ${escapeHtml(guessedName)}</p>
+                <p><strong>Mole's guess:</strong> ${escapeHtml(guessedName)}</p>
             `;
         } else {
             title.textContent = 'INCORRECT GUESS';
             title.style.color = 'var(--color-success)';
             resultText = `
-                <p>The spy incorrectly identified the location.</p>
+                <p>The mole incorrectly identified the location.</p>
                 <p style="margin-top: 20px;"><strong>Actual Location:</strong> ${escapeHtml(locationName)}</p>
-                <p><strong>Spy's guess:</strong> ${escapeHtml(guessedName)}</p>
-                <p style="margin-top: 15px; color: var(--color-success);"><strong>Non-spies win!</strong></p>
+                <p><strong>Mole's guess:</strong> ${escapeHtml(guessedName)}</p>
+                <p style="margin-top: 15px; color: var(--color-success);"><strong>Non-moles win!</strong></p>
             `;
         }
     } else if (round.accusation) {
         const accusedPlayer = game.players.find(p => p.id === round.accusation.accusedId);
-        const wasCorrect = round.accusation.accusedId === round.spyId;
+        const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
+        const wasCorrect = moleIds.includes(round.accusation.accusedId);
 
         if (round.accusation.type === 'vote') {
             // Voting result
-            const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
-            const wasCorrect = spyIds.includes(round.accusation.accusedId);
+            const wasCorrect = moleIds.includes(round.accusation.accusedId);
             
             if (wasCorrect) {
-                title.textContent = 'SPY IDENTIFIED';
+                title.textContent = 'MOLE IDENTIFIED';
                 title.style.color = 'var(--color-success)';
-                const spyNames = spyIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean);
+                const moleNames = moleIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean);
                 resultText = `
-                    <p>Majority vote correctly identified the spy${spyIds.length > 1 ? 's' : ''}: <strong>${escapeHtml(spyNames.join(', '))}</strong></p>
+                    <p>Majority vote correctly identified the mole${moleIds.length > 1 ? 's' : ''}: <strong>${escapeHtml(moleNames.join(', '))}</strong></p>
                     <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
                 `;
                 
@@ -1051,56 +1052,56 @@ function showRoundResult(game) {
             } else {
                 title.textContent = 'INCORRECT VOTE';
                 title.style.color = 'var(--color-danger)';
-                const spyNames = spyIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean);
+                const moleNames = moleIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean);
                 resultText = `
-                    <p>${escapeHtml(accusedPlayer.name)} was not the spy.</p>
-                    <p>The spy${spyIds.length > 1 ? 's' : ''} <strong>${escapeHtml(spyNames.join(', '))}</strong> ${spyIds.length > 1 ? 'have' : 'has'} evaded detection.</p>
+                    <p>${escapeHtml(accusedPlayer.name)} was not the mole.</p>
+                    <p>The mole${moleIds.length > 1 ? 's' : ''} <strong>${escapeHtml(moleNames.join(', '))}</strong> ${moleIds.length > 1 ? 'have' : 'has'} evaded detection.</p>
                     <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
                 `;
             }
         } else {
             // Individual accusation
-            const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
-            const wasCorrect = spyIds.includes(round.accusation.accusedId);
+            const wasCorrect = moleIds.includes(round.accusation.accusedId);
             
             if (wasCorrect) {
-                title.textContent = 'SPY CAUGHT';
+                title.textContent = 'MOLE CAUGHT';
                 title.style.color = 'var(--color-success)';
                 resultText = `
-                    <p>The spy <strong>${escapeHtml(accusedPlayer.name)}</strong> was correctly identified.</p>
+                    <p>The mole <strong>${escapeHtml(accusedPlayer.name)}</strong> was correctly identified.</p>
                     <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
                 `;
             } else {
                 title.textContent = 'INCORRECT ACCUSATION';
                 title.style.color = 'var(--color-danger)';
-                const spyNames = spyIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean);
+                const moleNames = moleIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean);
                 resultText = `
-                    <p>${escapeHtml(accusedPlayer.name)} was not the spy.</p>
-                    <p>The spy${spyIds.length > 1 ? 's' : ''} <strong>${escapeHtml(spyNames.join(', '))}</strong> ${spyIds.length > 1 ? 'win' : 'wins'}.</p>
+                    <p>${escapeHtml(accusedPlayer.name)} was not the mole.</p>
+                    <p>The mole${moleIds.length > 1 ? 's' : ''} <strong>${escapeHtml(moleNames.join(', '))}</strong> ${moleIds.length > 1 ? 'win' : 'wins'}.</p>
                     <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
                 `;
             }
         }
-    } else if (spyWon) {
+    } else if (round.moleWon || round.spyWon) {
         title.textContent = 'TIME EXPIRED';
         title.style.color = 'var(--color-danger)';
         resultText = `
-            <p>The spy survived until time ran out.</p>
+            <p>The mole survived until time ran out.</p>
             <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
         `;
     } else {
         title.textContent = 'ROUND CONCLUDED';
         title.style.color = 'var(--color-primary)';
+        const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
         resultText = `
             <p>The operation has concluded.</p>
             <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
-            <p><strong>Spy${spyIds.length > 1 ? 's' : ''}:</strong> ${escapeHtml(spyIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean).join(', '))}</p>
+            <p><strong>Mole${moleIds.length > 1 ? 's' : ''}:</strong> ${escapeHtml(moleIds.map(id => game.players.find(p => p.id === id)?.name).filter(Boolean).join(', '))}</p>
         `;
     }
 
     content.innerHTML = resultText;
 
-    // Show next round button if host (regardless of whether they're spy or not), otherwise show waiting message
+    // Show next round button if host (regardless of whether they're mole or not), otherwise show waiting message
     const isHost = game.players[0] && game.players[0].id === gameState.playerId;
     if (isHost) {
         nextRoundBtn.style.display = 'block';
@@ -1178,8 +1179,8 @@ async function autoSaveSettings() {
 
 // Save settings silently (no notification)
 async function saveGameSettingsSilent() {
-    const spyCount = parseInt(document.getElementById('spy-count').value) || 1;
-    const showSpyCount = document.getElementById('show-spy-count').value === 'true';
+    const moleCount = parseInt(document.getElementById('mole-count').value) || 1;
+    const showMoleCount = document.getElementById('show-mole-count').value === 'true';
     const timerMinutes = parseInt(document.getElementById('timer-minutes').value) || 8;
     
     // Get enabled packs from checkboxes
@@ -1206,8 +1207,10 @@ async function saveGameSettingsSilent() {
                 gameCode: gameState.gameCode,
                 playerId: gameState.playerId,
                 settings: {
-                    spyCount,
-                    showSpyCount,
+                    moleCount,
+                    spyCount: moleCount, // Legacy support
+                    showMoleCount,
+                    showSpyCount: showMoleCount, // Legacy support
                     timerMinutes,
                     enabledPacks: enabledPacks
                 }

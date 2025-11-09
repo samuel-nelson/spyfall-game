@@ -89,8 +89,9 @@ exports.handler = async (event, context) => {
             // Update name in case it changed slightly (trimmed)
             existingPlayer.name = trimmedName;
         } else {
-            // New player - check if name is taken by another player
-            if (game.players.some(p => p.name.toLowerCase() === nameLower)) {
+            // New player - check if name is taken by another player (case-insensitive)
+            const nameTaken = game.players.some(p => p.name.toLowerCase() === nameLower);
+            if (nameTaken) {
                 return {
                     statusCode: 400,
                     headers: {

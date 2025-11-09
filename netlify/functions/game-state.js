@@ -80,36 +80,38 @@ exports.handler = async (event, context) => {
             currentRound: game.currentRound ? {
                 roundNumber: game.currentRound.roundNumber,
                 location: game.currentRound.location,
-                spyId: game.currentRound.spyId, // Backward compatibility
-                spyIds: Array.isArray(game.currentRound.spyIds) ? game.currentRound.spyIds : (game.currentRound.spyId ? [game.currentRound.spyId] : null),
+                moleId: game.currentRound.moleId || game.currentRound.spyId, // New naming
+                moleIds: Array.isArray(game.currentRound.moleIds) ? game.currentRound.moleIds : (Array.isArray(game.currentRound.spyIds) ? game.currentRound.spyIds : (game.currentRound.moleId || game.currentRound.spyId ? [game.currentRound.moleId || game.currentRound.spyId] : null)),
+                spyId: game.currentRound.spyId || game.currentRound.moleId, // Legacy support
+                spyIds: Array.isArray(game.currentRound.spyIds) ? game.currentRound.spyIds : (Array.isArray(game.currentRound.moleIds) ? game.currentRound.moleIds : (game.currentRound.spyId || game.currentRound.moleId ? [game.currentRound.spyId || game.currentRound.moleId] : null)),
                 currentTurn: game.currentRound.currentTurn,
                 currentQuestion: game.currentRound.currentQuestion,
                 waitingForAnswer: game.currentRound.waitingForAnswer,
                 endTime: game.currentRound.endTime,
-                spyWon: game.currentRound.spyWon,
+                moleWon: game.currentRound.moleWon !== undefined ? game.currentRound.moleWon : game.currentRound.spyWon,
+                spyWon: game.currentRound.spyWon !== undefined ? game.currentRound.spyWon : game.currentRound.moleWon, // Legacy support
                 accusation: game.currentRound.accusation,
-                spyGuessedLocation: game.currentRound.spyGuessedLocation,
+                moleGuessedLocation: game.currentRound.moleGuessedLocation || game.currentRound.spyGuessedLocation,
+                spyGuessedLocation: game.currentRound.spyGuessedLocation || game.currentRound.moleGuessedLocation, // Legacy support
                 votes: game.currentRound.votes
-            } : null
+            } : null,
+            settings: game.settings || null
         };
 
-        // If player is spy, don't reveal location (support both single and multiple spies)
+        // If player is mole, don't reveal location (support both single and multiple moles, and legacy spy references)
         if (gameState.currentRound && playerId) {
-            const spyIds = Array.isArray(game.currentRound.spyIds) 
-                ? game.currentRound.spyIds 
-                : (game.currentRound.spyId ? [game.currentRound.spyId] : []);
-            const isSpy = spyIds.includes(playerId);
-            if (isSpy) {
+            const moleIds = Array.isArray(game.currentRound.moleIds) ? game.currentRound.moleIds : (Array.isArray(game.currentRound.spyIds) ? game.currentRound.spyIds : [game.currentRound.moleId || game.currentRound.spyId]);
+            const isMole = moleIds.includes(playerId);
+            if (isMole) {
                 gameState.currentRound.location = null;
             }
         }
         
-        // Include spyIds in response for frontend
+        // Include moleIds in response for frontend
         if (gameState.currentRound && game.currentRound) {
-            const spyIds = Array.isArray(game.currentRound.spyIds) 
-                ? game.currentRound.spyIds 
-                : (game.currentRound.spyId ? [game.currentRound.spyId] : []);
-            gameState.currentRound.spyIds = spyIds.length > 0 ? spyIds : null;
+            const moleIds = Array.isArray(game.currentRound.moleIds) ? game.currentRound.moleIds : (Array.isArray(game.currentRound.spyIds) ? game.currentRound.spyIds : (game.currentRound.moleId || game.currentRound.spyId ? [game.currentRound.moleId || game.currentRound.spyId] : []));
+            gameState.currentRound.moleIds = moleIds.length > 0 ? moleIds : null;
+            gameState.currentRound.spyIds = moleIds.length > 0 ? moleIds : null; // Legacy support
         }
 
         // Check if round time has expired
@@ -119,10 +121,12 @@ exports.handler = async (event, context) => {
                 // Time's up - end the round
                 game.status = 'roundEnd';
                 gameState.status = 'roundEnd';
-                // Spy wins if time runs out without accusation
+                // Mole wins if time runs out without accusation
                 if (!game.currentRound.accusation) {
-                    game.currentRound.spyWon = true;
-                    gameState.currentRound.spyWon = true;
+                    game.currentRound.moleWon = true;
+                    game.currentRound.spyWon = true; // Legacy support
+                    gameState.currentRound.moleWon = true;
+                    gameState.currentRound.spyWon = true; // Legacy support
                 }
                 // Save updated game state
                 const { saveGameState } = require('./game-store');

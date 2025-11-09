@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- SEO Meta Tags -->
-    <title>The Operative - Free Online Multiplayer Spy Game | Play Now</title>
-    <meta name="description" content="Play The Operative online for free! A thrilling multiplayer deduction game where players must identify the spy among them. Perfect for parties, friends, and family. No download required.">
-    <meta name="keywords" content="the operative, spy game, multiplayer game, deduction game, party game, free game, online game, spy game online, operative game, play the operative">
+    <title>The Operative - Free Online Multiplayer Mole Game | Play Now</title>
+    <meta name="description" content="Play The Operative online for free! A thrilling multiplayer deduction game where players must identify the mole among them. Perfect for parties, friends, and family. No download required.">
+    <meta name="keywords" content="the operative, mole game, multiplayer game, deduction game, party game, free game, online game, mole game online, operative game, play the operative">
     <meta name="author" content="The Operative Game">
     <meta name="robots" content="index, follow">
     <meta name="theme-color" content="#0a0a0a">
@@ -15,15 +15,15 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://spyfall-game.netlify.app/">
-    <meta property="og:title" content="The Operative - Free Online Multiplayer Spy Game">
-    <meta property="og:description" content="Play The Operative online for free! A thrilling multiplayer deduction game where players must identify the spy among them.">
+    <meta property="og:title" content="The Operative - Free Online Multiplayer Mole Game">
+    <meta property="og:description" content="Play The Operative online for free! A thrilling multiplayer deduction game where players must identify the mole among them.">
     <meta property="og:image" content="https://spyfall-game.netlify.app/og-image.jpg">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://spyfall-game.netlify.app/">
-    <meta property="twitter:title" content="The Operative - Free Online Multiplayer Spy Game">
-    <meta property="twitter:description" content="Play The Operative online for free! A thrilling multiplayer deduction game where players must identify the spy among them.">
+    <meta property="twitter:title" content="The Operative - Free Online Multiplayer Mole Game">
+    <meta property="twitter:description" content="Play The Operative online for free! A thrilling multiplayer deduction game where players must identify the mole among them.">
     <meta property="twitter:image" content="https://spyfall-game.netlify.app/og-image.jpg">
     
     <!-- Canonical URL -->
@@ -66,10 +66,10 @@
                 <div id="how-to-play" class="how-to-play">
                     <h3>HOW TO PLAY</h3>
                     <div class="how-to-content">
-                        <p><strong>OBJECTIVE:</strong> Non-spy agents must identify the spy through strategic questioning. The spy must identify the location or survive until time expires.</p>
-                        <p><strong>SETUP:</strong> Each player receives a location card—except one player, who is the spy and receives no location.</p>
-                        <p><strong>GAMEPLAY:</strong> Players take turns asking and answering questions about the location. The spy must blend in without revealing ignorance of the location.</p>
-                        <p><strong>WINNING:</strong> Non-spies win by correctly identifying the spy through majority vote. The spy wins by guessing the location or surviving until time runs out.</p>
+                        <p><strong>OBJECTIVE:</strong> Non-mole agents must identify the mole through strategic questioning. The mole must identify the location or survive until time expires.</p>
+                        <p><strong>SETUP:</strong> Each player receives a location card—except one player, who is the mole and receives no location.</p>
+                        <p><strong>GAMEPLAY:</strong> Players take turns asking and answering questions about the location. The mole must blend in without revealing ignorance of the location.</p>
+                        <p><strong>WINNING:</strong> Non-moles win by correctly identifying the mole through majority vote. The mole wins by guessing the location or surviving until time runs out.</p>
                     </div>
                 </div>
             </div>
@@ -142,15 +142,15 @@
                     <h3>GAME SETTINGS</h3>
                     <div class="settings-grid">
                         <div class="form-group">
-                            <label for="spy-count">SPY COUNT</label>
-                            <select id="spy-count">
-                                <option value="1">1 Spy</option>
-                                <option value="2">2 Spies</option>
+                            <label for="mole-count">MOLE COUNT</label>
+                            <select id="mole-count">
+                                <option value="1">1 Mole</option>
+                                <option value="2">2 Moles</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="show-spy-count">SHOW SPY COUNT</label>
-                            <select id="show-spy-count">
+                            <label for="show-mole-count">SHOW MOLE COUNT</label>
+                            <select id="show-mole-count">
                                 <option value="true">Visible</option>
                                 <option value="false">Hidden</option>
                             </select>
@@ -204,7 +204,7 @@
                         <span id="round-number" class="round-number">1</span>
                     </div>
                     <div class="header-center">
-                        <span id="spy-count-display" class="spy-count-display" style="display: none;"></span>
+                        <span id="mole-count-display" class="mole-count-display" style="display: none;"></span>
                     </div>
                     <div class="header-right">
                         <div class="timer-container">
@@ -214,10 +214,10 @@
                     </div>
                 </div>
                 
-                <div id="spy-view" class="role-view" style="display: none;">
-                    <div class="role-card spy-card">
+                <div id="mole-view" class="role-view" style="display: none;">
+                    <div class="role-card mole-card">
                         <div class="role-badge">CLASSIFIED</div>
-                        <h3>YOU ARE THE SPY</h3>
+                        <h3>YOU ARE THE MOLE</h3>
                         <div class="role-divider"></div>
                         <p class="role-mission">Your objective: Identify the location through careful observation of questions and answers without revealing your ignorance.</p>
                         <p class="role-warning">Maintain your cover at all costs.</p>
@@ -229,7 +229,7 @@
                         <div class="role-badge">LOCATION</div>
                         <div id="location-name" class="location-display"></div>
                         <div class="role-divider"></div>
-                        <p class="role-mission">Your objective: Answer questions naturally without revealing the location. Identify the spy among you.</p>
+                        <p class="role-mission">Your objective: Answer questions naturally without revealing the location. Identify the mole among you.</p>
                     </div>
                 </div>
 
@@ -249,15 +249,15 @@
                 <div id="voting-area" class="voting-area" style="display: none;">
                     <div class="voting-header">
                         <h3>COLLECTIVE VOTE</h3>
-                        <p class="voting-description">Non-spy agents may vote to identify the spy. Majority vote ends the round.</p>
+                        <p class="voting-description">Non-mole agents may vote to identify the mole. Majority vote ends the round.</p>
                     </div>
                     <div id="vote-status" class="vote-status"></div>
-                    <button id="vote-spy-btn" class="btn btn-primary" style="display: none;">CAST VOTE</button>
+                    <button id="vote-mole-btn" class="btn btn-primary" style="display: none;">CAST VOTE</button>
                 </div>
 
                 <div id="game-actions" class="game-actions">
                     <button id="ask-question-btn" class="btn btn-primary" style="display: none;">ASK QUESTION</button>
-                    <button id="vote-spy-action-btn" class="btn btn-secondary" style="display: none;">VOTE FOR SPY</button>
+                    <button id="vote-mole-action-btn" class="btn btn-secondary" style="display: none;">VOTE FOR MOLE</button>
                     <button id="guess-location-btn" class="btn btn-primary" style="display: none;">IDENTIFY LOCATION</button>
                 </div>
 
@@ -299,7 +299,7 @@
                     <div class="modal-content">
                         <button class="modal-close" onclick="document.getElementById('vote-modal').style.display='none'">×</button>
                         <h3>CAST YOUR VOTE</h3>
-                        <p class="vote-instruction">Select the agent you believe is the spy:</p>
+                        <p class="vote-instruction">Select the agent you believe is the mole:</p>
                         <div class="form-group">
                             <label for="voted-player">SUSPECT</label>
                             <select id="voted-player"></select>

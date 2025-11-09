@@ -78,12 +78,20 @@ exports.handler = async (event, context) => {
             game.settings = {};
         }
 
-        // Update settings
-        if (settings.spyCount !== undefined) {
+        // Update settings (support both mole and legacy spy naming)
+        if (settings.moleCount !== undefined) {
+            game.settings.moleCount = Math.max(1, Math.min(2, parseInt(settings.moleCount) || 1));
+            game.settings.spyCount = game.settings.moleCount; // Legacy support
+        } else if (settings.spyCount !== undefined) {
             game.settings.spyCount = Math.max(1, Math.min(2, parseInt(settings.spyCount) || 1));
+            game.settings.moleCount = game.settings.spyCount; // New naming
         }
-        if (settings.showSpyCount !== undefined) {
+        if (settings.showMoleCount !== undefined) {
+            game.settings.showMoleCount = Boolean(settings.showMoleCount);
+            game.settings.showSpyCount = game.settings.showMoleCount; // Legacy support
+        } else if (settings.showSpyCount !== undefined) {
             game.settings.showSpyCount = Boolean(settings.showSpyCount);
+            game.settings.showMoleCount = game.settings.showSpyCount; // New naming
         }
         if (settings.timerMinutes !== undefined) {
             game.settings.timerMinutes = Math.max(1, Math.min(60, parseInt(settings.timerMinutes) || 8));

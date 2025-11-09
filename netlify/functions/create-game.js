@@ -79,7 +79,7 @@ exports.handler = async (event, context) => {
 
         const playerId = generatePlayerId();
 
-        // Create new game
+        // Create new game with default settings
         const newGame = {
             code: finalGameCode,
             status: 'lobby',
@@ -88,7 +88,15 @@ exports.handler = async (event, context) => {
                 name: playerName.trim()
             }],
             createdAt: Date.now(),
-            currentRound: null
+            currentRound: null,
+            settings: {
+                moleCount: 1,
+                spyCount: 1, // Legacy support
+                showMoleCount: true,
+                showSpyCount: true, // Legacy support
+                timerMinutes: 8,
+                enabledPacks: ['pack1']
+            }
         };
 
         await saveGameState(newGame);

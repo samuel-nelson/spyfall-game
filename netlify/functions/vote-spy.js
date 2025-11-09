@@ -62,19 +62,18 @@ exports.handler = async (event, context) => {
 
         const round = game.currentRound;
         
-        // Check if player is a spy (support both single spy and multiple spies)
-        const isSpy = Array.isArray(round.spyIds) 
-            ? round.spyIds.includes(playerId)
-            : round.spyId === playerId;
+        // Check if player is a mole (support both single and multiple moles, and legacy spy references)
+        const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
+        const isMole = moleIds.includes(playerId);
 
-        // Only non-spies can vote
-        if (isSpy) {
+        // Only non-moles can vote
+        if (isMole) {
             return {
                 statusCode: 403,
                 headers: {
                     'Access-Control-Allow-Origin': '*'
                 },
-                body: JSON.stringify({ error: 'The spy cannot vote' })
+                body: JSON.stringify({ error: 'The mole cannot vote' })
             };
         }
 
@@ -88,16 +87,16 @@ exports.handler = async (event, context) => {
 
         // Count votes for each player
         const voteCounts = {};
-        // Get all spy IDs (support both single and multiple spies)
-        const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
-        const nonSpyPlayers = game.players.filter(p => !spyIds.includes(p.id));
+        // Get all mole IDs (support both single and multiple moles, and legacy spy references)
+        const moleIds = Array.isArray(round.moleIds) ? round.moleIds : (Array.isArray(round.spyIds) ? round.spyIds : [round.moleId || round.spyId]);
+        const nonMolePlayers = game.players.filter(p => !moleIds.includes(p.id));
         
         Object.values(round.votes).forEach(votedPlayerId => {
             voteCounts[votedPlayerId] = (voteCounts[votedPlayerId] || 0) + 1;
         });
 
-        // Check if majority has voted for someone (more than 50% of non-spies)
-        const majorityThreshold = Math.ceil(nonSpyPlayers.length / 2);
+        // Check if majority has voted for someone (more than 50% of non-moles)
+        const majorityThreshold = Math.ceil(nonMolePlayers.length / 2);
         let majorityAccused = null;
         
         for (const [accusedId, count] of Object.entries(voteCounts)) {
@@ -110,7 +109,7 @@ exports.handler = async (event, context) => {
         // If majority reached, end the round
         if (majorityAccused) {
             const accusedPlayer = game.players.find(p => p.id === majorityAccused);
-            const wasCorrect = spyIds.includes(majorityAccused);
+            const wasCorrect = moleIds.includes(majorityAccused);
 
             round.accusation = {
                 type: 'vote',
@@ -121,7 +120,8 @@ exports.handler = async (event, context) => {
             };
 
             game.status = 'roundEnd';
-            round.spyWon = !wasCorrect;
+            round.moleWon = !wasCorrect;
+            round.spyWon = !wasCorrect; // Legacy support
 
             await saveGameState(game);
 
@@ -157,7 +157,7 @@ exports.handler = async (event, context) => {
             })
         };
     } catch (error) {
-        console.error('Error voting for spy:', error);
+        console.error('Error voting for mole:', error);
         return {
             statusCode: 500,
             headers: {
