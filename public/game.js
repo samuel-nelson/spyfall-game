@@ -420,15 +420,21 @@ function updateLobby(game) {
 
 let lastGameStatus = null;
 
+let hasScrolledToTopOnGameStart = false;
+
 function updateGameScreen(game) {
     if (game.status === 'playing') {
+        const wasInLobby = lastGameStatus === 'lobby';
         showScreen('game-screen');
-        // Scroll to top when game screen is shown
-        setTimeout(() => {
-            window.scrollTo({ top: 0, behavior: 'instant' });
-            document.documentElement.scrollTop = 0;
-            document.body.scrollTop = 0;
-        }, 0);
+        // Only scroll to top once when transitioning from lobby to playing
+        if (wasInLobby && !hasScrolledToTopOnGameStart) {
+            setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'instant' });
+                document.documentElement.scrollTop = 0;
+                document.body.scrollTop = 0;
+                hasScrolledToTopOnGameStart = true;
+            }, 0);
+        }
         updatePlayingState(game);
     } else if (game.status === 'roundEnd') {
         stopTimer(); // Stop timer when round ends
@@ -438,6 +444,7 @@ function updateGameScreen(game) {
         showScreen('game-screen');
     } else if (game.status === 'lobby') {
         stopTimer(); // Stop timer when back in lobby
+        hasScrolledToTopOnGameStart = false; // Reset flag when back in lobby
     }
     
     lastGameStatus = game.status;
@@ -847,8 +854,6 @@ function showVoteModal() {
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     modal.scrollTop = 0;
-    // Scroll page to top when modal opens
-    window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 async function submitVote() {
@@ -971,8 +976,6 @@ function showGuessLocationModal() {
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
     modal.scrollTop = 0;
-    // Scroll page to top when modal opens
-    window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 async function submitLocationGuess() {

@@ -986,6 +986,7 @@ h3 {
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
     margin: auto;
+    align-self: center;
 }
 
 .modal-content::before,
