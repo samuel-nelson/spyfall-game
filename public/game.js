@@ -230,9 +230,6 @@ async function startRound() {
             return;
         }
 
-        // Show elegant intro transition for all players
-        showGameIntro();
-        
         // Game state will be updated via polling
     } catch (error) {
         console.error('Error starting round:', error);
@@ -413,31 +410,17 @@ function updateLobby(game) {
 }
 
 let lastGameStatus = null;
-let introShown = false;
 
 function updateGameScreen(game) {
-    // Check if game just started (transitioned from lobby to playing)
-    if (game.status === 'playing' && lastGameStatus === 'lobby' && !introShown) {
-        introShown = true;
-        showGameIntro();
-        // Intro will transition to game screen after animation
-        setTimeout(() => {
-            showScreen('game-screen');
-            updatePlayingState(game);
-        }, 3500); // Match intro duration
-    } else if (game.status === 'playing') {
-        if (introShown) {
-            showScreen('game-screen');
-            updatePlayingState(game);
-        }
+    if (game.status === 'playing') {
+        showScreen('game-screen');
+        updatePlayingState(game);
     } else if (game.status === 'roundEnd') {
         stopTimer(); // Stop timer when round ends
         showScreen('game-screen');
         showRoundResult(game);
-        introShown = false; // Reset for next round
     } else if (game.status === 'lobby') {
         stopTimer(); // Stop timer when back in lobby
-        introShown = false; // Reset intro flag
     }
     
     lastGameStatus = game.status;
