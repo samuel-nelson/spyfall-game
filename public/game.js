@@ -1103,9 +1103,17 @@ async function submitLocationGuess() {
 
 function showRoundResult(game) {
     const round = game.currentRound;
-    if (!round) return;
+    if (!round) {
+        console.error('showRoundResult: No current round');
+        return;
+    }
 
     const modal = document.getElementById('game-result-modal');
+    if (!modal) {
+        console.error('showRoundResult: Modal not found');
+        return;
+    }
+    
     const title = document.getElementById('result-title');
     const content = document.getElementById('result-content');
     const nextRoundBtn = document.getElementById('next-round-btn');
@@ -1113,6 +1121,9 @@ function showRoundResult(game) {
 
     // Prevent body scroll when modal is open
     document.body.style.overflow = 'hidden';
+    
+    // Ensure modal is visible - force show
+    console.log('showRoundResult: Showing modal for round end');
 
     let resultText = '';
     // Check if player is mole (support both single and multiple moles, and legacy spy references)
@@ -1272,7 +1283,19 @@ function showRoundResult(game) {
     }
 
     content.innerHTML = resultText;
+    
+    // Force show the modal - ensure it's visible
     showModal('game-result-modal');
+    
+    // Double-check modal is shown after a brief delay
+    setTimeout(() => {
+        const modalCheck = document.getElementById('game-result-modal');
+        if (modalCheck && !modalCheck.classList.contains('show')) {
+            console.log('showRoundResult: Modal not shown, forcing show');
+            modalCheck.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+    }, 100);
 }
 
 // Function to close modal and restore body scroll

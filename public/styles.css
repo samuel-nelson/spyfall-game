@@ -1879,7 +1879,10 @@ h3 {
 /* Responsive */
 @media (max-width: 768px) {
     .title-main {
-        font-size: 3rem;
+        font-size: 2.5rem;
+        letter-spacing: 4px;
+        word-break: break-word;
+        overflow-wrap: break-word;
     }
 
     .menu-content, .lobby-content, .game-content {
@@ -1921,19 +1924,34 @@ h3 {
     }
 
     .location-display {
-        font-size: 2.5rem;
+        font-size: 1.8rem;
+        word-break: break-word;
+        overflow-wrap: break-word;
     }
     
     .role-name {
-        font-size: 2.5rem;
+        font-size: 1.6rem;
+        word-break: break-word;
+        overflow-wrap: break-word;
     }
     
     .role-label {
-        font-size: 1rem;
+        font-size: 0.9rem;
     }
     
     .role-mission {
-        font-size: 1.4rem;
+        font-size: 1.1rem;
+        line-height: 1.6;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+    
+    .role-card h3 {
+        font-size: 1.5rem;
+    }
+    
+    .role-card {
+        padding: 30px 20px;
     }
     
     .modal.show {
