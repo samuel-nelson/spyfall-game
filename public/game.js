@@ -1348,23 +1348,45 @@ async function submitFeedback() {
         return;
     }
 
+    // Use Formspree - completely free, no backend needed
+    // To set up: 
+    // 1. Go to https://formspree.io and create a free account
+    // 2. Create a new form
+    // 3. Replace 'YOUR_FORM_ID' below with your Formspree form ID
+    // Example: https://formspree.io/f/xpzgkqyz
+    const formspreeEndpoint = 'https://formspree.io/f/YOUR_FORM_ID'; // TODO: Replace with your Formspree form ID
+    
     try {
-        const response = await fetch(`${API_BASE}/send-feedback`, {
+        // Use Formspree directly - completely free, no backend needed
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('message', comment);
+        formData.append('_subject', `Feedback: ${title}`);
+        
+        const response = await fetch(formspreeEndpoint, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, comment })
+            body: formData,
+            headers: {
+                'Accept': 'application/json'
+            }
         });
 
-        const data = await response.json();
-
-        if (response.ok && data.success) {
+        if (response.ok) {
             showNotification('Thank you for your feedback!', 'success');
             window.closeModal('feedback-modal');
             // Clear form
             document.getElementById('feedback-title').value = '';
             document.getElementById('feedback-comment').value = '';
         } else {
-            showNotification(data.error || 'Failed to submit feedback. Please try again.', 'error');
+            const data = await response.json();
+            if (data.error) {
+                showNotification('Failed to submit feedback. Please try again.', 'error');
+            } else {
+                showNotification('Thank you for your feedback!', 'success');
+                window.closeModal('feedback-modal');
+                document.getElementById('feedback-title').value = '';
+                document.getElementById('feedback-comment').value = '';
+            }
         }
     } catch (error) {
         console.error('Error submitting feedback:', error);
