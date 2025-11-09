@@ -47,8 +47,11 @@
     <div class="container">
         <!-- Main Menu -->
         <div id="main-menu" class="screen active">
+            <button id="theme-toggle-btn-main" class="theme-toggle-icon" title="Toggle Theme">
+                <span class="theme-icon-dark">◐</span>
+                <span class="theme-icon-light">◑</span>
+            </button>
             <div class="menu-content">
-                <button id="theme-toggle-btn-main" class="btn btn-secondary theme-toggle-fixed">TOGGLE THEME</button>
                 <div class="logo">
                     <h1 class="title-main">SPYFALL</h1>
                     <p class="subtitle">CLASSIFIED OPERATION</p>
@@ -57,13 +60,25 @@
                     <button id="create-game-btn" class="btn btn-primary">CREATE OPERATION</button>
                     <button id="join-game-btn" class="btn btn-secondary">JOIN OPERATION</button>
                 </div>
+                <div id="how-to-play" class="how-to-play">
+                    <h3>HOW TO PLAY</h3>
+                    <div class="how-to-content">
+                        <p><strong>OBJECTIVE:</strong> Non-spy agents must identify the spy through strategic questioning. The spy must identify the location or survive until time expires.</p>
+                        <p><strong>SETUP:</strong> Each player receives a location card—except one player, who is the spy and receives no location.</p>
+                        <p><strong>GAMEPLAY:</strong> Players take turns asking and answering questions about the location. The spy must blend in without revealing ignorance of the location.</p>
+                        <p><strong>WINNING:</strong> Non-spies win by correctly identifying the spy through majority vote. The spy wins by guessing the location or surviving until time runs out.</p>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Create Game Screen -->
         <div id="create-game" class="screen">
+            <button id="theme-toggle-btn-create" class="theme-toggle-icon" title="Toggle Theme">
+                <span class="theme-icon-dark">◐</span>
+                <span class="theme-icon-light">◑</span>
+            </button>
             <div class="menu-content">
-                <button id="theme-toggle-btn-create" class="btn btn-secondary theme-toggle-fixed">TOGGLE THEME</button>
                 <h2>CREATE OPERATION</h2>
                 <div class="form-group">
                     <label for="player-name-create">AGENT NAME</label>
@@ -82,8 +97,11 @@
 
         <!-- Join Game Screen -->
         <div id="join-game" class="screen">
+            <button id="theme-toggle-btn-join" class="theme-toggle-icon" title="Toggle Theme">
+                <span class="theme-icon-dark">◐</span>
+                <span class="theme-icon-light">◑</span>
+            </button>
             <div class="menu-content">
-                <button id="theme-toggle-btn-join" class="btn btn-secondary theme-toggle-fixed">TOGGLE THEME</button>
                 <h2>JOIN OPERATION</h2>
                 <div class="form-group">
                     <label for="player-name-join">AGENT NAME</label>
@@ -150,9 +168,14 @@
                     <p class="waiting-text">Awaiting additional agents... (Minimum 3 required)</p>
                 </div>
                 <div class="lobby-footer">
-                    <button id="theme-toggle-btn" class="btn btn-secondary" style="display: inline-block; margin-right: 10px;">TOGGLE THEME</button>
                     <button id="leave-game-btn" class="btn btn-secondary">EXFILTRATE</button>
                 </div>
+            </div>
+            <button id="theme-toggle-btn" class="theme-toggle-icon" title="Toggle Theme">
+                <span class="theme-icon-dark">◐</span>
+                <span class="theme-icon-light">◑</span>
+            </button>
+        </div>
             </div>
         </div>
 
@@ -191,7 +214,8 @@
                     </div>
                 </div>
 
-                <div id="players-status" class="players-status"></div>
+                <div id="possible-locations" class="possible-locations"></div>
+                <div id="players-status" class="players-status" style="display: none;"></div>
                 
                 <div id="question-area" class="question-area" style="display: none;">
                     <div class="current-question">
@@ -275,9 +299,7 @@
                         <p class="guess-instruction">What location do you believe the operation is taking place?</p>
                         <div class="form-group">
                             <label for="guessed-location">LOCATION</label>
-                            <select id="guessed-location">
-                                <option value="">-- Select Location --</option>
-                            </select>
+                            <div id="location-select-grid" class="location-select-grid"></div>
                         </div>
                         <div class="modal-buttons">
                             <button id="submit-guess-btn" class="btn btn-primary">SUBMIT</button>

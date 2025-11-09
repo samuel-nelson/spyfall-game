@@ -440,8 +440,8 @@ function updatePlayingState(game) {
         document.getElementById('location-name').textContent = locationName;
     }
 
-    // Update players status
-    updatePlayersStatus(game.players, currentRound);
+    // Update possible locations display (front and center during gameplay)
+    updatePossibleLocations(game, currentRound);
 
     // Update question area
     updateQuestionArea(currentRound);
@@ -464,8 +464,41 @@ function updateTimer(endTime) {
     }
 }
 
+function updatePossibleLocations(game, round) {
+    const locationsDiv = document.getElementById('possible-locations');
+    if (!locationsDiv) return;
+    
+    // Get enabled locations from game settings
+    const enabledSets = game?.settings?.enabledLocationSets || ['spyfall1'];
+    const customLocations = game?.settings?.customLocations || [];
+    
+    const allLocations = getAllEnabledLocations(enabledSets, customLocations);
+    
+    locationsDiv.innerHTML = '<h3 class="locations-title">POSSIBLE LOCATIONS</h3>';
+    locationsDiv.innerHTML += '<div class="locations-grid"></div>';
+    
+    const grid = locationsDiv.querySelector('.locations-grid');
+    
+    allLocations.forEach(location => {
+        const locationName = typeof location === 'string' ? location : location.name;
+        const locationCard = document.createElement('div');
+        locationCard.className = 'location-card-small';
+        
+        // Highlight if it's the current location (for non-spies)
+        const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
+        const isSpy = spyIds.includes(gameState.playerId);
+        if (!isSpy && locationName === round.location) {
+            locationCard.classList.add('current-location');
+        }
+        
+        locationCard.textContent = locationName;
+        grid.appendChild(locationCard);
+    });
+}
+
 function updatePlayersStatus(players, round) {
     const playersStatus = document.getElementById('players-status');
+    if (!playersStatus) return;
     playersStatus.innerHTML = '';
 
     players.forEach(player => {
@@ -800,10 +833,13 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+let selectedLocationForGuess = null;
+
 function showGuessLocationModal() {
-    // Populate select dropdown with all available locations
-    const select = document.getElementById('guessed-location');
-    select.innerHTML = '<option value="">-- Select Location --</option>';
+    // Populate clickable grid with all available locations
+    const grid = document.getElementById('location-select-grid');
+    grid.innerHTML = '';
+    selectedLocationForGuess = null;
     
     // Get enabled locations from game settings
     const game = gameState.game;
@@ -814,21 +850,39 @@ function showGuessLocationModal() {
     
     allLocations.forEach(location => {
         const locationName = typeof location === 'string' ? location : location.name;
-        const option = document.createElement('option');
-        option.value = locationName;
-        option.textContent = locationName;
-        select.appendChild(option);
+        const item = document.createElement('div');
+        item.className = 'location-select-item';
+        item.textContent = locationName;
+        item.dataset.location = locationName;
+        
+        item.addEventListener('click', () => {
+            // Toggle selection
+            if (selectedLocationForGuess === locationName) {
+                // Deselect
+                selectedLocationForGuess = null;
+                item.classList.remove('selected');
+            } else {
+                // Deselect previous
+                grid.querySelectorAll('.location-select-item').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                // Select this one
+                selectedLocationForGuess = locationName;
+                item.classList.add('selected');
+            }
+        });
+        
+        grid.appendChild(item);
     });
 
-    select.value = '';
     document.getElementById('guess-location-modal').style.display = 'flex';
 }
 
 async function submitLocationGuess() {
-    const guessedLocation = document.getElementById('guessed-location').value.trim();
+    const guessedLocation = selectedLocationForGuess;
 
     if (!guessedLocation) {
-        showNotification('Please enter a location', 'error');
+        showNotification('Please select a location', 'error');
         return;
     }
 
