@@ -88,15 +88,11 @@ exports.handler = async (event, context) => {
         if (settings.timerMinutes !== undefined) {
             game.settings.timerMinutes = Math.max(1, Math.min(60, parseInt(settings.timerMinutes) || 8));
         }
-        if (settings.customLocations !== undefined) {
-            game.settings.customLocations = Array.isArray(settings.customLocations) ? settings.customLocations : [];
-        }
-        if (settings.enabledLocationSets !== undefined) {
-            game.settings.enabledLocationSets = Array.isArray(settings.enabledLocationSets) ? settings.enabledLocationSets : ['spyfall1'];
-        }
-        if (settings.enabledLocationsList !== undefined) {
-            // Always store as array, never null - empty array means no individual selections
-            game.settings.enabledLocationsList = Array.isArray(settings.enabledLocationsList) ? settings.enabledLocationsList : [];
+        if (settings.enabledPacks !== undefined) {
+            // Store enabled packs (pack1, pack2, countries)
+            game.settings.enabledPacks = Array.isArray(settings.enabledPacks) && settings.enabledPacks.length > 0 
+                ? settings.enabledPacks 
+                : ['pack1'];
         }
 
         // Save updated game

@@ -88,9 +88,7 @@ exports.handler = async (event, context) => {
         const settings = game.settings || {};
         const spyCount = Math.max(1, Math.min(2, parseInt(settings.spyCount) || 1));
         const timerMinutes = Math.max(1, Math.min(60, parseInt(settings.timerMinutes) || 8));
-        const enabledLocationSets = settings.enabledLocationSets || ['spyfall1'];
-        const customLocations = settings.customLocations || [];
-        const enabledLocationsList = settings.enabledLocationsList || null;
+        const enabledPacks = settings.enabledPacks || ['pack1'];
 
         // Select random spies (1 or 2)
         const spyIds = [];
@@ -102,8 +100,8 @@ exports.handler = async (event, context) => {
             availablePlayers.splice(spyIndex, 1);
         }
 
-        // Select random location from enabled sets or individual locations
-        const location = getRandomLocation(enabledLocationSets, customLocations, enabledLocationsList);
+        // Select random location from enabled packs
+        const location = getRandomLocation(enabledPacks);
 
         // Determine starting player (random)
         const startingPlayerIndex = Math.floor(Math.random() * game.players.length);

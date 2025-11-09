@@ -42,13 +42,17 @@ function setupEventListeners() {
     // Lobby
     document.getElementById('start-round-btn').addEventListener('click', startRound);
     document.getElementById('leave-game-btn').addEventListener('click', leaveGame);
-    document.getElementById('manage-locations-btn').addEventListener('click', showLocationManagement);
     
     // Auto-save settings on change
     document.getElementById('spy-count').addEventListener('change', autoSaveSettings);
     document.getElementById('show-spy-count').addEventListener('change', autoSaveSettings);
     document.getElementById('timer-minutes').addEventListener('change', autoSaveSettings);
     document.getElementById('timer-minutes').addEventListener('input', debounce(autoSaveSettings, 1000));
+    
+    // Pack selection checkboxes
+    document.getElementById('pack1-checkbox').addEventListener('change', autoSaveSettings);
+    document.getElementById('pack2-checkbox').addEventListener('change', autoSaveSettings);
+    document.getElementById('countries-checkbox').addEventListener('change', autoSaveSettings);
     document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
     
     // Theme toggle on all screens
@@ -59,35 +63,6 @@ function setupEventListeners() {
     if (themeToggleCreate) themeToggleCreate.addEventListener('click', toggleTheme);
     if (themeToggleJoin) themeToggleJoin.addEventListener('click', toggleTheme);
     
-    // Location management
-    document.getElementById('close-location-management-btn').addEventListener('click', () => {
-        // Save any pending location changes before closing
-        saveLocationChangesOnClose();
-        document.getElementById('location-management-modal').style.display = 'none';
-    });
-    
-    // Also save when closing via X button
-    const locationModalCloseX = document.getElementById('location-modal-close-x');
-    if (locationModalCloseX) {
-        locationModalCloseX.addEventListener('click', () => {
-            saveLocationChangesOnClose();
-            document.getElementById('location-management-modal').style.display = 'none';
-        });
-    }
-    document.getElementById('add-custom-location-btn').addEventListener('click', addCustomLocation);
-    document.getElementById('export-locations-btn').addEventListener('click', () => exportLocations());
-    document.getElementById('import-locations-btn').addEventListener('click', () => {
-        document.getElementById('import-locations-file').click();
-    });
-    document.getElementById('import-locations-file').addEventListener('change', handleLocationImport);
-    
-    // Location tabs
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const tab = e.target.dataset.tab;
-            switchLocationTab(tab);
-        });
-    });
 
     // Game actions
     document.getElementById('ask-question-btn').addEventListener('click', showQuestionModal);
@@ -425,6 +400,17 @@ function updateLobby(game) {
                 document.getElementById('spy-count').value = game.settings.spyCount || 1;
                 document.getElementById('show-spy-count').value = game.settings.showSpyCount !== false ? 'true' : 'false';
                 document.getElementById('timer-minutes').value = game.settings.timerMinutes || 8;
+                
+                // Load pack selections
+                const enabledPacks = game.settings.enabledPacks || ['pack1'];
+                document.getElementById('pack1-checkbox').checked = enabledPacks.includes('pack1');
+                document.getElementById('pack2-checkbox').checked = enabledPacks.includes('pack2');
+                document.getElementById('countries-checkbox').checked = enabledPacks.includes('countries');
+            } else {
+                // Default: Pack 1 only
+                document.getElementById('pack1-checkbox').checked = true;
+                document.getElementById('pack2-checkbox').checked = false;
+                document.getElementById('countries-checkbox').checked = false;
             }
         } else {
             startBtn.style.display = 'none';
@@ -536,13 +522,11 @@ function updatePossibleLocations(game, round) {
     const locationsDiv = document.getElementById('possible-locations');
     if (!locationsDiv) return;
     
-    // Get enabled locations from game settings - use individual location selection if available
-    const enabledSets = game?.settings?.enabledLocationSets || ['spyfall1'];
-    const customLocations = game?.settings?.customLocations || [];
-    const enabledLocationsList = game?.settings?.enabledLocationsList || null;
+    // Get enabled packs from game settings
+    const enabledPacks = game?.settings?.enabledPacks || ['pack1'];
     
-    // Use individual location selection if available, otherwise fall back to set-based
-    const allLocations = getAllEnabledLocations(enabledSets, customLocations, enabledLocationsList);
+    // Get all locations from enabled packs
+    const allLocations = getAllEnabledLocations(enabledPacks);
     
     locationsDiv.innerHTML = '<h3 class="locations-title">POSSIBLE LOCATIONS</h3>';
     locationsDiv.innerHTML += '<div class="locations-grid"></div>';
@@ -919,10 +903,9 @@ function showGuessLocationModal() {
     
     // Get enabled locations from game settings
     const game = gameState.game;
-    const enabledSets = game?.settings?.enabledLocationSets || ['spyfall1'];
-    const customLocations = game?.settings?.customLocations || [];
+    const enabledPacks = game?.settings?.enabledPacks || ['pack1'];
     
-    const allLocations = getAllEnabledLocations(enabledSets, customLocations);
+    const allLocations = getAllEnabledLocations(enabledPacks);
     
     allLocations.forEach(location => {
         const locationName = typeof location === 'string' ? location : location.name;
@@ -1199,6 +1182,18 @@ async function saveGameSettingsSilent() {
     const showSpyCount = document.getElementById('show-spy-count').value === 'true';
     const timerMinutes = parseInt(document.getElementById('timer-minutes').value) || 8;
     
+    // Get enabled packs from checkboxes
+    const enabledPacks = [];
+    if (document.getElementById('pack1-checkbox').checked) enabledPacks.push('pack1');
+    if (document.getElementById('pack2-checkbox').checked) enabledPacks.push('pack2');
+    if (document.getElementById('countries-checkbox').checked) enabledPacks.push('countries');
+    
+    // Ensure at least one pack is selected
+    if (enabledPacks.length === 0) {
+        enabledPacks.push('pack1');
+        document.getElementById('pack1-checkbox').checked = true;
+    }
+    
     if (!gameState.gameCode || !gameState.playerId) {
         return;
     }
@@ -1214,9 +1209,7 @@ async function saveGameSettingsSilent() {
                     spyCount,
                     showSpyCount,
                     timerMinutes,
-                    customLocations: CUSTOM_LOCATIONS,
-                    enabledLocationSets: getEnabledLocationSets(),
-                    enabledLocationsList: Array.from(enabledLocations)
+                    enabledPacks: enabledPacks
                 }
             })
         });
@@ -1265,375 +1258,4 @@ function toggleTheme() {
     }
 }
 
-// Location management functions
-function showLocationManagement() {
-    // Refresh game state first to ensure we have latest settings
-    pollGameState().then(() => {
-        document.getElementById('location-management-modal').style.display = 'flex';
-        
-        // Load enabled locations from game settings
-        const game = gameState.game;
-        enabledLocations.clear();
-        
-        if (game?.settings) {
-            // ALWAYS prioritize enabledLocationsList if it exists (even if empty array)
-            if (game.settings.enabledLocationsList !== undefined && Array.isArray(game.settings.enabledLocationsList)) {
-                // Use individual location selection
-                game.settings.enabledLocationsList.forEach(locationId => {
-                    enabledLocations.add(locationId);
-                });
-            } else {
-                // Fallback to set-based selection
-                const enabledSets = game.settings.enabledLocationSets || ['spyfall1'];
-                const customLocations = game.settings.customLocations || [];
-                
-                // Add all locations from enabled sets
-                if (enabledSets.includes('spyfall1')) {
-                    SPYFALL1_LOCATIONS.forEach(loc => {
-                        enabledLocations.add(`spyfall1-${loc.name}`);
-                    });
-                }
-                if (enabledSets.includes('spyfall2')) {
-                    SPYFALL2_LOCATIONS.forEach(loc => {
-                        enabledLocations.add(`spyfall2-${loc.name}`);
-                    });
-                }
-                if (enabledSets.includes('custom')) {
-                    customLocations.forEach(loc => {
-                        enabledLocations.add(`custom-${loc.name}`);
-                    });
-                }
-            }
-        } else {
-            // Default: enable all Spyfall 1 locations
-            SPYFALL1_LOCATIONS.forEach(loc => {
-                enabledLocations.add(`spyfall1-${loc.name}`);
-            });
-        }
-        
-        loadLocationTabs();
-    });
-}
-
-function loadLocationTabs() {
-    // Load Spyfall 1 locations
-    const spyfall1Div = document.getElementById('spyfall1-locations');
-    spyfall1Div.innerHTML = '';
-    SPYFALL1_LOCATIONS.forEach(loc => {
-        const item = createLocationItem(loc, 'spyfall1');
-        spyfall1Div.appendChild(item);
-    });
-    
-    // Load Spyfall 2 locations
-    const spyfall2Div = document.getElementById('spyfall2-locations');
-    spyfall2Div.innerHTML = '';
-    SPYFALL2_LOCATIONS.forEach(loc => {
-        const item = createLocationItem(loc, 'spyfall2');
-        spyfall2Div.appendChild(item);
-    });
-    
-    // Load custom locations
-    loadCustomLocations(); // Refresh from localStorage
-    const customDiv = document.getElementById('custom-locations');
-    customDiv.innerHTML = '';
-    CUSTOM_LOCATIONS.forEach(loc => {
-        const item = createLocationItem(loc, 'custom', true);
-        customDiv.appendChild(item);
-    });
-}
-
-// Track enabled locations
-let enabledLocations = new Set();
-
-function createLocationItem(location, set, isCustom = false) {
-    const div = document.createElement('div');
-    div.className = 'location-item';
-    
-    const locationId = `${set}-${location.name}`;
-    const isEnabled = enabledLocations.has(locationId);
-    
-    div.innerHTML = `
-        <div class="location-item-header">
-            <label class="location-checkbox-label">
-                <input type="checkbox" class="location-checkbox" data-location-id="${locationId}" data-location-set="${set}" ${isEnabled ? 'checked' : ''}>
-                <span class="location-checkbox-custom"></span>
-                <strong>${escapeHtml(location.name)}</strong>
-            </label>
-            ${isCustom ? '<button class="btn-remove-location" data-location-name="' + escapeHtml(location.name) + '">REMOVE</button>' : ''}
-        </div>
-        <div class="location-item-roles">${location.roles.map(r => escapeHtml(r)).join(', ')}</div>
-    `;
-    
-    // Add checkbox event listener - handle change event only to avoid double-triggering
-    const checkbox = div.querySelector('.location-checkbox');
-    const label = div.querySelector('.location-checkbox-label');
-    
-    // Handle checkbox change - this fires when checkbox state changes (either by click or programmatically)
-    checkbox.addEventListener('change', (e) => {
-        e.stopPropagation();
-        const locationId = checkbox.dataset.locationId;
-        
-        // Update Set based on checkbox state
-        if (checkbox.checked) {
-            enabledLocations.add(locationId);
-        } else {
-            enabledLocations.delete(locationId);
-        }
-        
-        // Save immediately
-        updateEnabledLocationSets();
-    });
-    
-    // Also handle label click to ensure it works even if checkbox is hidden
-    label.addEventListener('click', (e) => {
-        // Only handle if clicking the label itself, not the checkbox (which already has its own handler)
-        if (e.target === label || e.target.tagName === 'STRONG' || e.target.classList.contains('location-checkbox-custom')) {
-            e.preventDefault();
-            e.stopPropagation();
-            // Toggle checkbox programmatically - this will trigger the change event
-            checkbox.checked = !checkbox.checked;
-            // Manually trigger change event to ensure handler runs
-            checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-    });
-    
-    if (isCustom) {
-        const removeBtn = div.querySelector('.btn-remove-location');
-        removeBtn.addEventListener('click', () => removeCustomLocation(location.name));
-    }
-    
-    return div;
-}
-
-function updateEnabledLocationSets() {
-    // Convert enabled locations to sets format
-    const sets = new Set();
-    const customLocations = [];
-    
-    enabledLocations.forEach(locationId => {
-        const [set, ...nameParts] = locationId.split('-');
-        const name = nameParts.join('-');
-        
-        if (set === 'custom') {
-            const loc = CUSTOM_LOCATIONS.find(l => l.name === name);
-            if (loc) customLocations.push(loc);
-        } else {
-            sets.add(set);
-        }
-    });
-    
-    // Update game settings immediately
-    const game = gameState.game;
-    if (game && game.players[0] && game.players[0].id === gameState.playerId) {
-        // Save to game settings immediately
-        saveLocationSettings(Array.from(sets), customLocations);
-    }
-}
-
-// Save location changes when closing modal (ensures nothing is lost)
-function saveLocationChangesOnClose() {
-    const game = gameState.game;
-    if (!game || !game.players[0] || game.players[0].id !== gameState.playerId) {
-        return; // Not host, can't save
-    }
-    
-    // Get current enabled locations
-    const sets = new Set();
-    const customLocations = [];
-    
-    enabledLocations.forEach(locationId => {
-        const [set, ...nameParts] = locationId.split('-');
-        const name = nameParts.join('-');
-        
-        if (set === 'custom') {
-            const loc = CUSTOM_LOCATIONS.find(l => l.name === name);
-            if (loc) customLocations.push(loc);
-        } else {
-            sets.add(set);
-        }
-    });
-    
-    // Save final state
-    saveLocationSettings(Array.from(sets), customLocations);
-}
-
-async function saveLocationSettings(enabledSets, customLocations) {
-    if (!gameState.gameCode || !gameState.playerId) return;
-    
-    try {
-        // Convert enabledLocations Set to array - ALWAYS use current state of the Set
-        const enabledLocationsList = Array.from(enabledLocations);
-        
-        // Ensure we're sending the actual current state, not stale data
-        const currentSettings = {
-            spyCount: gameState.game?.settings?.spyCount || 1,
-            showSpyCount: gameState.game?.settings?.showSpyCount !== false,
-            timerMinutes: gameState.game?.settings?.timerMinutes || 8,
-            customLocations: customLocations,
-            enabledLocationSets: enabledSets.length > 0 ? enabledSets : ['spyfall1'],
-            enabledLocationsList: enabledLocationsList // Always send the array, even if empty
-        };
-        
-        const response = await fetch(`${API_BASE}/update-game-settings`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                gameCode: gameState.gameCode,
-                playerId: gameState.playerId,
-                settings: currentSettings
-            })
-        });
-        
-        const data = await response.json();
-        if (!data.error && data.settings) {
-            // Settings saved successfully - immediately update local state
-            if (!gameState.game) gameState.game = {};
-            if (!gameState.game.settings) gameState.game.settings = {};
-            gameState.game.settings.enabledLocationsList = data.settings.enabledLocationsList || [];
-            
-            // Update the enabledLocations Set from the saved settings
-            enabledLocations.clear();
-            if (data.settings.enabledLocationsList && Array.isArray(data.settings.enabledLocationsList)) {
-                data.settings.enabledLocationsList.forEach(locationId => {
-                    enabledLocations.add(locationId);
-                });
-            }
-            
-            // Refresh checkboxes to match saved state
-            refreshLocationCheckboxes();
-        } else if (data.error) {
-            console.error('Error saving location settings:', data.error);
-            showNotification('Failed to save location settings', 'error');
-        }
-    } catch (error) {
-        console.error('Error saving location settings:', error);
-        showNotification('Failed to save location settings', 'error');
-    }
-}
-
-// Refresh all checkbox visual states to match enabledLocations Set
-function refreshLocationCheckboxes() {
-    document.querySelectorAll('.location-checkbox').forEach(checkbox => {
-        const locationId = checkbox.dataset.locationId;
-        checkbox.checked = enabledLocations.has(locationId);
-    });
-}
-
-function addCustomLocation() {
-    const name = document.getElementById('new-location-name').value.trim();
-    const rolesStr = document.getElementById('new-location-roles').value.trim();
-    
-    if (!name) {
-        showNotification('Please enter a location name', 'error');
-        return;
-    }
-    
-    if (!rolesStr) {
-        showNotification('Please enter roles', 'error');
-        return;
-    }
-    
-    const roles = rolesStr.split(',').map(r => r.trim()).filter(r => r.length > 0);
-    
-    if (roles.length === 0) {
-        showNotification('Please enter at least one role', 'error');
-        return;
-    }
-    
-    // Check if location already exists
-    if (CUSTOM_LOCATIONS.some(loc => loc.name.toLowerCase() === name.toLowerCase())) {
-        showNotification('Location already exists', 'error');
-        return;
-    }
-    
-    const newLocation = { name, roles };
-    CUSTOM_LOCATIONS.push(newLocation);
-    saveCustomLocations();
-    
-    // Automatically enable the new custom location
-    const locationId = `custom-${name}`;
-    enabledLocations.add(locationId);
-    
-    // Save the updated settings
-    updateEnabledLocationSets();
-    
-    // Refresh custom locations tab
-    const customDiv = document.getElementById('custom-locations');
-    const item = createLocationItem(newLocation, 'custom', true);
-    customDiv.appendChild(item);
-    
-    // Clear inputs
-    document.getElementById('new-location-name').value = '';
-    document.getElementById('new-location-roles').value = '';
-    
-    showNotification('Location added and enabled', 'success');
-}
-
-function removeCustomLocation(name) {
-    CUSTOM_LOCATIONS = CUSTOM_LOCATIONS.filter(loc => loc.name !== name);
-    saveCustomLocations();
-    
-    // Remove from enabled locations if it was enabled
-    const locationId = `custom-${name}`;
-    enabledLocations.delete(locationId);
-    
-    // Save the updated settings
-    updateEnabledLocationSets();
-    
-    loadLocationTabs();
-    showNotification('Location removed', 'success');
-}
-
-function switchLocationTab(tab) {
-    // Update tab buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.dataset.tab === tab) {
-            btn.classList.add('active');
-        }
-    });
-    
-    // Update tab panes
-    document.querySelectorAll('.tab-pane').forEach(pane => {
-        pane.classList.remove('active');
-    });
-    
-    document.getElementById(tab + '-tab').classList.add('active');
-}
-
-function handleLocationImport(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    importLocations(file, (success, message) => {
-        if (success) {
-            showNotification(message, 'success');
-            loadLocationTabs();
-        } else {
-            showNotification(message, 'error');
-        }
-        // Reset file input
-        e.target.value = '';
-    });
-}
-
-function getEnabledLocationSets() {
-    const sets = new Set();
-    enabledLocations.forEach(locationId => {
-        const [set] = locationId.split('-');
-        if (set !== 'custom') {
-            sets.add(set);
-        }
-    });
-    
-    // Always include custom if there are custom locations enabled
-    enabledLocations.forEach(locationId => {
-        const [set] = locationId.split('-');
-        if (set === 'custom') {
-            sets.add('custom');
-        }
-    });
-    
-    return sets.size > 0 ? Array.from(sets) : ['spyfall1'];
-}
 

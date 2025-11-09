@@ -1,6 +1,6 @@
-// Spyfall game locations - organized by set
-// Spyfall 1 locations (original set)
-const SPYFALL1_LOCATIONS = [
+// The Operative game locations - organized by pack
+// Pack 1 locations (original set)
+const PACK1_LOCATIONS = [
     {
         name: "Airplane",
         roles: ["Pilot", "Passenger", "Flight Attendant", "Mechanic", "Air Marshal"]
@@ -115,8 +115,8 @@ const SPYFALL1_LOCATIONS = [
     }
 ];
 
-// Spyfall 2 locations (second set)
-const SPYFALL2_LOCATIONS = [
+// Pack 2 locations (second set)
+const PACK2_LOCATIONS = [
     {
         name: "Airport",
         roles: ["Pilot", "Passenger", "Security", "Customs Officer", "Mechanic"]
@@ -138,251 +138,226 @@ const SPYFALL2_LOCATIONS = [
         roles: ["Actor", "Audience Member", "Director", "Stagehand", "Critic"]
     },
     {
-        name: "Casino",
-        roles: ["Dealer", "Gambler", "Security", "Bartender", "Manager"]
+        name: "Cemetery",
+        roles: ["Mourner", "Priest", "Funeral Director", "Gravedigger", "Tourist"]
     },
     {
-        name: "Cathedral",
-        roles: ["Priest", "Worshipper", "Tourist", "Choir Member", "Janitor"]
+        name: "Construction Site",
+        roles: ["Engineer", "Construction Worker", "Architect", "Foreman", "Inspector"]
     },
     {
-        name: "Circus Tent",
-        roles: ["Clown", "Acrobat", "Juggler", "Ringmaster", "Spectator"]
+        name: "Cruise Ship",
+        roles: ["Captain", "Passenger", "Bartender", "Entertainer", "Mechanic"]
     },
     {
-        name: "Corporate Party",
-        roles: ["Manager", "Employee", "Intern", "CEO", "Entertainer"]
+        name: "Desert Island",
+        roles: ["Castaway", "Explorer", "Pirate", "Native", "Archaeologist"]
     },
     {
-        name: "Crusader Army",
-        roles: ["Knight", "Archer", "Monk", "Servant", "Spy"]
+        name: "Gas Station",
+        roles: ["Cashier", "Customer", "Mechanic", "Truck Driver", "Manager"]
     },
     {
-        name: "Day Spa",
-        roles: ["Client", "Masseuse", "Receptionist", "Stylist", "Masseur"]
+        name: "Jail",
+        roles: ["Prisoner", "Guard", "Lawyer", "Warden", "Visitor"]
     },
     {
-        name: "Embassy",
-        roles: ["Ambassador", "Diplomat", "Security", "Government Official", "Refugee"]
+        name: "Library",
+        roles: ["Librarian", "Student", "Researcher", "Author", "Visitor"]
     },
     {
-        name: "Hospital",
-        roles: ["Doctor", "Nurse", "Patient", "Surgeon", "Visitor"]
+        name: "Mall",
+        roles: ["Shopper", "Security Guard", "Sales Clerk", "Food Court Worker", "Manager"]
     },
     {
-        name: "Hotel",
-        roles: ["Guest", "Receptionist", "Bellhop", "Maid", "Manager"]
+        name: "Night Club",
+        roles: ["DJ", "Bouncer", "Bartender", "Dancer", "Patron"]
     },
     {
-        name: "Military Base",
-        roles: ["Soldier", "Officer", "Medic", "Engineer", "Spy"]
+        name: "Park",
+        roles: ["Jogger", "Dog Walker", "Picnicker", "Park Ranger", "Photographer"]
     },
     {
-        name: "Movie Studio",
-        roles: ["Director", "Actor", "Cameraman", "Stuntman", "Costume Designer"]
+        name: "Prison",
+        roles: ["Inmate", "Guard", "Warden", "Lawyer", "Visitor"]
     },
     {
-        name: "Ocean Liner",
-        roles: ["Captain", "Passenger", "Bartender", "Mechanic", "Rich Passenger"]
+        name: "Race Track",
+        roles: ["Driver", "Mechanic", "Spectator", "Commentator", "Security"]
     },
     {
-        name: "Passenger Train",
-        roles: ["Mechanic", "Passenger", "Conductor", "Restaurant Chef", "Border Patrol"]
+        name: "Retirement Home",
+        roles: ["Resident", "Nurse", "Visitor", "Doctor", "Activity Director"]
     },
     {
-        name: "Pirate Ship",
-        roles: ["Captain", "Sailor", "Cook", "Slave", "Cannoneer"]
+        name: "Rock Concert",
+        roles: ["Singer", "Guitarist", "Drummer", "Fan", "Security"]
     },
     {
-        name: "Polar Station",
-        roles: ["Scientist", "Explorer", "Medic", "Geologist", "Meteorologist"]
+        name: "Ski Resort",
+        roles: ["Skier", "Instructor", "Lift Operator", "Hotel Guest", "Ski Patroller"]
     },
     {
-        name: "Police Station",
-        roles: ["Criminal", "Detective", "Journalist", "Lawyer", "Police Officer"]
+        name: "Subway",
+        roles: ["Passenger", "Conductor", "Ticket Inspector", "Street Musician", "Homeless Person"]
     },
     {
-        name: "Restaurant",
-        roles: ["Waiter", "Customer", "Chef", "Critic", "Owner"]
+        name: "Temple",
+        roles: ["Monk", "Worshipper", "Tourist", "Guide", "Novice"]
     },
     {
-        name: "School",
-        roles: ["Teacher", "Student", "Principal", "Janitor", "Parent"]
+        name: "UFO",
+        roles: ["Alien", "Scientist", "Military Officer", "Abductee", "Engineer"]
     },
     {
-        name: "Service Station",
-        roles: ["Manager", "Tire Specialist", "Biker", "Car Owner", "Mechanic"]
+        name: "Vineyard",
+        roles: ["Winemaker", "Tourist", "Sommelier", "Farmer", "Guest"]
     },
     {
-        name: "Space Station",
-        roles: ["Engineer", "Alien", "Pilot", "Commander", "Scientist"]
+        name: "Wedding",
+        roles: ["Bride", "Groom", "Priest", "Best Man", "Photographer"]
     },
     {
-        name: "Submarine",
-        roles: ["Captain", "Sailor", "Cook", "Radioman", "Mechanic"]
-    },
-    {
-        name: "Supermarket",
-        roles: ["Customer", "Cashier", "Butcher", "Janitor", "Security Guard"]
-    },
-    {
-        name: "Theater",
-        roles: ["Actor", "Audience Member", "Coat Check Lady", "Director", "Prompter"]
-    },
-    {
-        name: "University",
-        roles: ["Graduate Student", "Professor", "Dean", "Student", "Janitor"]
-    },
-    {
-        name: "World War II Squad",
-        roles: ["Soldier", "Medic", "Radioman", "Sniper", "Officer"]
+        name: "Zoo",
+        roles: ["Zookeeper", "Visitor", "Veterinarian", "Tour Guide", "Security"]
     }
 ];
 
-// Custom locations (stored in localStorage)
-let CUSTOM_LOCATIONS = [];
-
-// Load custom locations from localStorage
-function loadCustomLocations() {
-    try {
-        const saved = localStorage.getItem('customLocations');
-        if (saved) {
-            CUSTOM_LOCATIONS = JSON.parse(saved);
-        }
-    } catch (e) {
-        console.error('Error loading custom locations:', e);
-        CUSTOM_LOCATIONS = [];
+// Countries Pack - Locations in countries known for espionage
+const COUNTRIES_PACK = [
+    {
+        name: "Russia",
+        roles: ["Diplomat", "Intelligence Officer", "Businessman", "Journalist", "Embassy Staff"]
+    },
+    {
+        name: "United States",
+        roles: ["CIA Agent", "Diplomat", "Business Executive", "Military Officer", "Embassy Staff"]
+    },
+    {
+        name: "United Kingdom",
+        roles: ["MI6 Agent", "Diplomat", "Businessman", "Journalist", "Embassy Staff"]
+    },
+    {
+        name: "China",
+        roles: ["Intelligence Officer", "Diplomat", "Business Executive", "Trade Representative", "Embassy Staff"]
+    },
+    {
+        name: "Israel",
+        roles: ["Mossad Agent", "Diplomat", "Businessman", "Military Officer", "Embassy Staff"]
+    },
+    {
+        name: "Germany",
+        roles: ["BND Agent", "Diplomat", "Business Executive", "Journalist", "Embassy Staff"]
+    },
+    {
+        name: "France",
+        roles: ["DGSE Agent", "Diplomat", "Businessman", "Cultural Attaché", "Embassy Staff"]
+    },
+    {
+        name: "Japan",
+        roles: ["Intelligence Officer", "Diplomat", "Business Executive", "Trade Representative", "Embassy Staff"]
+    },
+    {
+        name: "Iran",
+        roles: ["Intelligence Officer", "Diplomat", "Businessman", "Religious Scholar", "Embassy Staff"]
+    },
+    {
+        name: "North Korea",
+        roles: ["Intelligence Officer", "Diplomat", "Trade Representative", "Military Officer", "Embassy Staff"]
+    },
+    {
+        name: "Turkey",
+        roles: ["MIT Agent", "Diplomat", "Businessman", "Journalist", "Embassy Staff"]
+    },
+    {
+        name: "India",
+        roles: ["RAW Agent", "Diplomat", "Business Executive", "Military Officer", "Embassy Staff"]
+    },
+    {
+        name: "South Korea",
+        roles: ["Intelligence Officer", "Diplomat", "Business Executive", "Military Officer", "Embassy Staff"]
+    },
+    {
+        name: "Pakistan",
+        roles: ["ISI Agent", "Diplomat", "Businessman", "Military Officer", "Embassy Staff"]
+    },
+    {
+        name: "Saudi Arabia",
+        roles: ["Intelligence Officer", "Diplomat", "Business Executive", "Religious Scholar", "Embassy Staff"]
+    },
+    {
+        name: "Brazil",
+        roles: ["Intelligence Officer", "Diplomat", "Business Executive", "Trade Representative", "Embassy Staff"]
+    },
+    {
+        name: "Mexico",
+        roles: ["Intelligence Officer", "Diplomat", "Businessman", "Trade Representative", "Embassy Staff"]
+    },
+    {
+        name: "Canada",
+        roles: ["CSIS Agent", "Diplomat", "Business Executive", "Trade Representative", "Embassy Staff"]
+    },
+    {
+        name: "Australia",
+        roles: ["ASIS Agent", "Diplomat", "Business Executive", "Military Officer", "Embassy Staff"]
+    },
+    {
+        name: "Italy",
+        roles: ["AISE Agent", "Diplomat", "Businessman", "Cultural Attaché", "Embassy Staff"]
+    },
+    {
+        name: "Spain",
+        roles: ["CNI Agent", "Diplomat", "Business Executive", "Cultural Attaché", "Embassy Staff"]
+    },
+    {
+        name: "Netherlands",
+        roles: ["AIVD Agent", "Diplomat", "Business Executive", "Trade Representative", "Embassy Staff"]
+    },
+    {
+        name: "Poland",
+        roles: ["ABW Agent", "Diplomat", "Businessman", "Military Officer", "Embassy Staff"]
+    },
+    {
+        name: "Czech Republic",
+        roles: ["Intelligence Officer", "Diplomat", "Business Executive", "Trade Representative", "Embassy Staff"]
     }
-}
+];
 
-// Save custom locations to localStorage
-function saveCustomLocations() {
-    try {
-        localStorage.setItem('customLocations', JSON.stringify(CUSTOM_LOCATIONS));
-    } catch (e) {
-        console.error('Error saving custom locations:', e);
-    }
-}
+// Legacy support - maintain old variable names for backward compatibility
+const SPYFALL1_LOCATIONS = PACK1_LOCATIONS;
+const SPYFALL2_LOCATIONS = PACK2_LOCATIONS;
 
-// Initialize on load
-loadCustomLocations();
-
-// Get all enabled locations based on game settings
-// Now supports individual location selection via enabledLocationsList
-function getAllEnabledLocations(enabledSets = ['spyfall1'], customLocations = [], enabledLocationsList = null) {
+// Get all locations from enabled packs
+function getAllEnabledLocations(enabledPacks = ['pack1']) {
     let locations = [];
     
-    // If enabledLocationsList is provided, use individual location selection
-    if (enabledLocationsList && Array.isArray(enabledLocationsList) && enabledLocationsList.length > 0) {
-        enabledLocationsList.forEach(locationId => {
-            const [set, ...nameParts] = locationId.split('-');
-            const name = nameParts.join('-');
-            
-            if (set === 'spyfall1') {
-                const loc = SPYFALL1_LOCATIONS.find(l => l.name === name);
-                if (loc) locations.push(loc);
-            } else if (set === 'spyfall2') {
-                const loc = SPYFALL2_LOCATIONS.find(l => l.name === name);
-                if (loc) locations.push(loc);
-            } else if (set === 'custom') {
-                const loc = customLocations.find(l => l.name === name);
-                if (loc) locations.push(loc);
-            }
-        });
-        return locations;
+    if (enabledPacks.includes('pack1')) {
+        locations = locations.concat(PACK1_LOCATIONS);
     }
     
-    // Fallback to set-based selection
-    if (enabledSets.includes('spyfall1')) {
-        locations = locations.concat(SPYFALL1_LOCATIONS);
+    if (enabledPacks.includes('pack2')) {
+        locations = locations.concat(PACK2_LOCATIONS);
     }
     
-    if (enabledSets.includes('spyfall2')) {
-        locations = locations.concat(SPYFALL2_LOCATIONS);
-    }
-    
-    if (enabledSets.includes('custom') && customLocations.length > 0) {
-        locations = locations.concat(customLocations);
+    if (enabledPacks.includes('countries')) {
+        locations = locations.concat(COUNTRIES_PACK);
     }
     
     return locations;
 }
 
-// Get a random location from enabled sets
-function getRandomLocation(enabledSets = ['spyfall1'], customLocations = []) {
-    const allLocations = getAllEnabledLocations(enabledSets, customLocations);
+// Get a random location from enabled packs
+function getRandomLocation(enabledPacks = ['pack1']) {
+    const allLocations = getAllEnabledLocations(enabledPacks);
     if (allLocations.length === 0) {
-        // Fallback to Spyfall 1 if no locations enabled
-        return SPYFALL1_LOCATIONS[Math.floor(Math.random() * SPYFALL1_LOCATIONS.length)];
+        // Fallback to Pack 1 if no packs enabled
+        return PACK1_LOCATIONS[Math.floor(Math.random() * PACK1_LOCATIONS.length)];
     }
     return allLocations[Math.floor(Math.random() * allLocations.length)];
 }
 
 // Get location by name
-function getLocationByName(name, enabledSets = ['spyfall1'], customLocations = []) {
-    const allLocations = getAllEnabledLocations(enabledSets, customLocations);
+function getLocationByName(name, enabledPacks = ['pack1']) {
+    const allLocations = getAllEnabledLocations(enabledPacks);
     return allLocations.find(loc => loc.name === name);
 }
-
-// Export locations to JSON (secure - only data, no code)
-function exportLocations() {
-    const exportData = {
-        version: '1.0',
-        spyfall1: SPYFALL1_LOCATIONS,
-        spyfall2: SPYFALL2_LOCATIONS,
-        custom: CUSTOM_LOCATIONS,
-        exportDate: new Date().toISOString()
-    };
-    
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `spyfall-locations-${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
-// Import locations from JSON (secure - only parse JSON, no code execution)
-function importLocations(file, callback) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const data = JSON.parse(e.target.result);
-            
-            // Validate structure
-            if (!data || typeof data !== 'object') {
-                throw new Error('Invalid file format');
-            }
-            
-            // Only import custom locations (for security - we don't overwrite built-in sets)
-            if (data.custom && Array.isArray(data.custom)) {
-                // Validate each location has name and roles array
-                const validCustom = data.custom.filter(loc => 
-                    loc && 
-                    typeof loc.name === 'string' && 
-                    Array.isArray(loc.roles) &&
-                    loc.roles.length > 0
-                );
-                
-                CUSTOM_LOCATIONS = validCustom;
-                saveCustomLocations();
-                callback(true, `Imported ${validCustom.length} custom locations`);
-            } else {
-                callback(false, 'No custom locations found in file');
-            }
-        } catch (error) {
-            console.error('Import error:', error);
-            callback(false, 'Invalid JSON file: ' + error.message);
-        }
-    };
-    reader.onerror = function() {
-        callback(false, 'Error reading file');
-    };
-    reader.readAsText(file);
-}
-
-// Legacy support - maintain LOCATIONS array for backward compatibility
-const LOCATIONS = SPYFALL1_LOCATIONS;

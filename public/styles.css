@@ -159,38 +159,43 @@ h3 {
 
 .classified-stamp {
     position: fixed;
-    top: 20px;
-    left: 20px;
+    top: 15px;
+    left: 15px;
     transform: rotate(-12deg);
     font-family: var(--font-serif);
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 900;
     color: #8B0000;
-    opacity: 0.85;
-    letter-spacing: 8px;
+    opacity: 0.9;
+    letter-spacing: 6px;
     text-transform: uppercase;
     pointer-events: none;
-    z-index: 1000;
+    z-index: 9999;
     text-shadow: 
-        2px 2px 0px rgba(0, 0, 0, 0.3),
-        0 0 10px rgba(139, 0, 0, 0.4);
+        2px 2px 0px rgba(0, 0, 0, 0.5),
+        0 0 8px rgba(139, 0, 0, 0.5);
     user-select: none;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
     background: 
-        radial-gradient(circle at 20% 30%, rgba(139, 0, 0, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 70%, rgba(139, 0, 0, 0.1) 0%, transparent 50%);
-    padding: 8px 16px;
-    border: 3px solid #8B0000;
-    border-radius: 4px;
+        radial-gradient(circle at 20% 30%, rgba(139, 0, 0, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(139, 0, 0, 0.15) 0%, transparent 50%),
+        linear-gradient(135deg, rgba(139, 0, 0, 0.1) 0%, transparent 100%);
+    padding: 6px 12px;
+    border: 2px solid #8B0000;
+    border-radius: 3px;
     box-shadow: 
-        inset 0 0 20px rgba(139, 0, 0, 0.2),
-        0 0 15px rgba(139, 0, 0, 0.3);
+        inset 0 0 15px rgba(139, 0, 0, 0.3),
+        0 0 12px rgba(139, 0, 0, 0.4),
+        2px 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .light-mode .classified-stamp {
     color: #8B0000;
-    opacity: 0.9;
+    opacity: 0.95;
     border-color: #8B0000;
+    text-shadow: 
+        2px 2px 0px rgba(255, 255, 255, 0.8),
+        0 0 8px rgba(139, 0, 0, 0.6);
 }
 
 .menu-buttons {
@@ -1398,6 +1403,53 @@ h3 {
 .light-mode .location-select-item.selected {
     background: rgba(184, 134, 11, 0.3);
     box-shadow: 0 0 20px rgba(184, 134, 11, 0.4);
+}
+
+/* Pack Selector */
+.pack-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.pack-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 12px 18px;
+    background: rgba(10, 10, 10, 0.4);
+    border: 1px solid var(--color-border);
+    transition: all 0.3s ease;
+}
+
+.light-mode .pack-option {
+    background: rgba(255, 255, 255, 0.6);
+    border-color: var(--color-border);
+}
+
+.pack-option:hover {
+    border-color: var(--color-primary);
+    background: rgba(10, 10, 10, 0.6);
+}
+
+.light-mode .pack-option:hover {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.pack-option input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--color-primary);
+}
+
+.pack-label {
+    font-family: var(--font-elegant);
+    font-size: 1rem;
+    color: var(--color-text);
+    user-select: none;
 }
 
 /* How to Play Guide */

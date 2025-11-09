@@ -160,8 +160,22 @@
                             <input type="number" id="timer-minutes" min="1" max="60" value="8">
                         </div>
                     </div>
-                    <div class="form-actions">
-                        <button id="manage-locations-btn" class="btn btn-secondary">MANAGE LOCATIONS</button>
+                    <div class="form-group">
+                        <label>LOCATION PACKS</label>
+                        <div class="pack-selector">
+                            <label class="pack-option">
+                                <input type="checkbox" id="pack1-checkbox" checked>
+                                <span class="pack-label">Pack 1</span>
+                            </label>
+                            <label class="pack-option">
+                                <input type="checkbox" id="pack2-checkbox">
+                                <span class="pack-label">Pack 2</span>
+                            </label>
+                            <label class="pack-option">
+                                <input type="checkbox" id="countries-checkbox">
+                                <span class="pack-label">Countries</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
                 
@@ -327,46 +341,6 @@
             </div>
         </div>
         
-        <!-- Location Management Modal -->
-        <div id="location-management-modal" class="modal" style="display: none;">
-            <div class="modal-content" style="max-width: 800px;">
-                <button class="modal-close" id="location-modal-close-x">×</button>
-                <h3>MANAGE LOCATIONS</h3>
-                <div class="location-tabs">
-                    <button class="tab-btn active" data-tab="spyfall1">SPYFALL 1</button>
-                    <button class="tab-btn" data-tab="spyfall2">SPYFALL 2</button>
-                    <button class="tab-btn" data-tab="custom">CUSTOM</button>
-                </div>
-                <div id="location-tab-content" class="location-tab-content">
-                    <div id="spyfall1-tab" class="tab-pane active">
-                        <div class="location-list" id="spyfall1-locations"></div>
-                    </div>
-                    <div id="spyfall2-tab" class="tab-pane">
-                        <div class="location-list" id="spyfall2-locations"></div>
-                    </div>
-                    <div id="custom-tab" class="tab-pane">
-                        <div class="location-list" id="custom-locations"></div>
-                        <div class="form-group" style="margin-top: 20px;">
-                            <label for="new-location-name">NEW LOCATION NAME</label>
-                            <input type="text" id="new-location-name" placeholder="Enter location name">
-                        </div>
-                        <div class="form-group">
-                            <label for="new-location-roles">ROLES (comma-separated)</label>
-                            <input type="text" id="new-location-roles" placeholder="Role1, Role2, Role3, Role4, Role5">
-                        </div>
-                        <button id="add-custom-location-btn" class="btn btn-primary">ADD LOCATION</button>
-                    </div>
-                </div>
-                <div class="location-actions">
-                    <button id="export-locations-btn" class="btn btn-secondary">EXPORT LOCATIONS</button>
-                    <button id="import-locations-btn" class="btn btn-secondary">IMPORT LOCATIONS</button>
-                    <input type="file" id="import-locations-file" accept=".json" style="display: none;">
-                </div>
-                <div class="modal-buttons">
-                    <button id="close-location-management-btn" class="btn btn-primary">CLOSE</button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script src="locations.js"></script>
