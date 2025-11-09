@@ -73,17 +73,33 @@ async function getGame(gameCode) {
 async function saveGame(game) {
     await ensureSchema();
     const gameCode = game.code.toUpperCase();
+    const playersJson = JSON.stringify(game.players);
+    const currentRoundJson = game.currentRound ? JSON.stringify(game.currentRound) : null;
+    const createdAt = game.createdAt || Date.now();
     
     try {
-        await sql`
-            INSERT INTO games (code, status, players, current_round, created_at)
-            VALUES (${gameCode}, ${game.status}, ${JSON.stringify(game.players)}::jsonb, ${game.currentRound ? JSON.stringify(game.currentRound) : null}::jsonb, ${game.createdAt || Date.now()})
-            ON CONFLICT (code) 
-            DO UPDATE SET 
-                status = EXCLUDED.status,
-                players = EXCLUDED.players,
-                current_round = EXCLUDED.current_round
-        `;
+        // PostgreSQL automatically converts JSON strings to JSONB when inserting into JSONB columns
+        if (currentRoundJson) {
+            await sql`
+                INSERT INTO games (code, status, players, current_round, created_at)
+                VALUES (${gameCode}, ${game.status}, ${playersJson}::jsonb, ${currentRoundJson}::jsonb, ${createdAt})
+                ON CONFLICT (code) 
+                DO UPDATE SET 
+                    status = EXCLUDED.status,
+                    players = EXCLUDED.players,
+                    current_round = EXCLUDED.current_round
+            `;
+        } else {
+            await sql`
+                INSERT INTO games (code, status, players, current_round, created_at)
+                VALUES (${gameCode}, ${game.status}, ${playersJson}::jsonb, NULL, ${createdAt})
+                ON CONFLICT (code) 
+                DO UPDATE SET 
+                    status = EXCLUDED.status,
+                    players = EXCLUDED.players,
+                    current_round = EXCLUDED.current_round
+            `;
+        }
     } catch (error) {
         console.error('Error saving game:', error);
         throw error;
