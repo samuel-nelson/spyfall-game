@@ -154,6 +154,32 @@ h3 {
 .logo {
     text-align: center;
     margin-bottom: 60px;
+    position: relative;
+}
+
+.classified-stamp {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-15deg);
+    font-family: var(--font-serif);
+    font-size: 8rem;
+    font-weight: 900;
+    color: #DC143C;
+    opacity: 0.15;
+    letter-spacing: 20px;
+    text-transform: uppercase;
+    pointer-events: none;
+    z-index: 0;
+    text-shadow: 
+        0 0 20px rgba(220, 20, 60, 0.3),
+        0 0 40px rgba(220, 20, 60, 0.2);
+    user-select: none;
+}
+
+.light-mode .classified-stamp {
+    opacity: 0.2;
+    color: #B22222;
 }
 
 .menu-buttons {

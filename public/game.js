@@ -1086,7 +1086,7 @@ function showRoundResult(game) {
 
     content.innerHTML = resultText;
 
-    // Show next round button if host, otherwise show waiting message
+    // Show next round button if host (regardless of whether they're spy or not), otherwise show waiting message
     const isHost = game.players[0] && game.players[0].id === gameState.playerId;
     if (isHost) {
         nextRoundBtn.style.display = 'block';
@@ -1332,35 +1332,37 @@ function createLocationItem(location, set, isCustom = false) {
         <div class="location-item-roles">${location.roles.map(r => escapeHtml(r)).join(', ')}</div>
     `;
     
-    // Add checkbox event listener - use click on label for better reliability
+    // Add checkbox event listener - handle change event only to avoid double-triggering
     const checkbox = div.querySelector('.location-checkbox');
     const label = div.querySelector('.location-checkbox-label');
     
-    // Handle both checkbox change and label click
-    const handleToggle = (e) => {
+    // Handle checkbox change - this fires when checkbox state changes (either by click or programmatically)
+    checkbox.addEventListener('change', (e) => {
         e.stopPropagation();
         const locationId = checkbox.dataset.locationId;
-        const wasChecked = enabledLocations.has(locationId);
         
-        if (checkbox.checked && !wasChecked) {
+        // Update Set based on checkbox state
+        if (checkbox.checked) {
             enabledLocations.add(locationId);
-        } else if (!checkbox.checked && wasChecked) {
+        } else {
             enabledLocations.delete(locationId);
         }
         
-        // Force update the visual state
-        const isNowEnabled = enabledLocations.has(locationId);
-        checkbox.checked = isNowEnabled;
-        
         // Save immediately
         updateEnabledLocationSets();
-    };
+    });
     
-    checkbox.addEventListener('change', handleToggle);
+    // Also handle label click to ensure it works even if checkbox is hidden
     label.addEventListener('click', (e) => {
-        // Prevent double-triggering
-        if (e.target === checkbox) return;
-        handleToggle(e);
+        // Only handle if clicking the label itself, not the checkbox (which already has its own handler)
+        if (e.target === label || e.target.tagName === 'STRONG' || e.target.classList.contains('location-checkbox-custom')) {
+            e.preventDefault();
+            e.stopPropagation();
+            // Toggle checkbox programmatically - this will trigger the change event
+            checkbox.checked = !checkbox.checked;
+            // Manually trigger change event to ensure handler runs
+            checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     });
     
     if (isCustom) {
