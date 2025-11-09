@@ -61,7 +61,11 @@ exports.handler = async (event, context) => {
         }
 
         const round = game.currentRound;
-        const isSpy = round.spyId === playerId;
+        
+        // Check if player is a spy (support both single spy and multiple spies)
+        const isSpy = Array.isArray(round.spyIds) 
+            ? round.spyIds.includes(playerId)
+            : round.spyId === playerId;
 
         // Only non-spies can vote
         if (isSpy) {
@@ -79,12 +83,14 @@ exports.handler = async (event, context) => {
             round.votes = {};
         }
 
-        // Record vote
+        // Record vote (allow players to change their vote)
         round.votes[playerId] = accusedId;
 
         // Count votes for each player
         const voteCounts = {};
-        const nonSpyPlayers = game.players.filter(p => p.id !== round.spyId);
+        // Get all spy IDs (support both single and multiple spies)
+        const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
+        const nonSpyPlayers = game.players.filter(p => !spyIds.includes(p.id));
         
         Object.values(round.votes).forEach(votedPlayerId => {
             voteCounts[votedPlayerId] = (voteCounts[votedPlayerId] || 0) + 1;
@@ -104,7 +110,7 @@ exports.handler = async (event, context) => {
         // If majority reached, end the round
         if (majorityAccused) {
             const accusedPlayer = game.players.find(p => p.id === majorityAccused);
-            const wasCorrect = majorityAccused === round.spyId;
+            const wasCorrect = spyIds.includes(majorityAccused);
 
             round.accusation = {
                 type: 'vote',

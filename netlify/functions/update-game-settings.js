@@ -1,16 +1,6 @@
 // Import database functions
 const { getGameByCode, saveGameState } = require('./game-store');
 
-// Get all locations
-const LOCATIONS = [
-    "Airplane", "Bank", "Beach", "Casino", "Cathedral", "Circus Tent",
-    "Corporate Party", "Crusader Army", "Day Spa", "Embassy", "Hospital",
-    "Hotel", "Military Base", "Movie Studio", "Ocean Liner", "Passenger Train",
-    "Pirate Ship", "Polar Station", "Police Station", "Restaurant", "School",
-    "Service Station", "Space Station", "Submarine", "Supermarket", "Theater",
-    "University", "World War II Squad"
-];
-
 exports.handler = async (event, context) => {
     // Handle CORS
     if (event.httpMethod === 'OPTIONS') {
@@ -36,9 +26,9 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        const { gameCode, playerId, guessedLocation } = JSON.parse(event.body);
+        const { gameCode, playerId, settings } = JSON.parse(event.body);
 
-        if (!gameCode || !playerId || !guessedLocation) {
+        if (!gameCode || !playerId || !settings) {
             return {
                 statusCode: 400,
                 headers: {
@@ -60,56 +50,51 @@ exports.handler = async (event, context) => {
             };
         }
 
-        if (game.status !== 'playing' || !game.currentRound) {
-            return {
-                statusCode: 400,
-                headers: {
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({ error: 'Game is not in progress' })
-            };
-        }
-
-        const round = game.currentRound;
-
-        // Only spy can guess location
-        if (round.spyId !== playerId) {
+        // Only host can update settings
+        const isHost = game.players[0] && game.players[0].id === playerId;
+        if (!isHost) {
             return {
                 statusCode: 403,
                 headers: {
                     'Access-Control-Allow-Origin': '*'
                 },
-                body: JSON.stringify({ error: 'Only the spy can guess the location' })
+                body: JSON.stringify({ error: 'Only the host can update game settings' })
             };
         }
 
-        // Check if spy has already guessed (only one chance)
-        if (round.spyGuessedLocation !== null && round.spyGuessedLocation !== undefined) {
+        // Can't update settings if game is in progress
+        if (game.status === 'playing') {
             return {
                 statusCode: 400,
                 headers: {
                     'Access-Control-Allow-Origin': '*'
                 },
-                body: JSON.stringify({ error: 'You have already made your guess. Only one guess is allowed per round.' })
+                body: JSON.stringify({ error: 'Cannot update settings during an active game' })
             };
         }
 
-        // Check if guess is correct
-        const isCorrect = guessedLocation.trim().toLowerCase() === round.location.toLowerCase();
-        
-        // Record the guess (whether correct or not)
-        round.spyGuessedLocation = guessedLocation.trim();
-        
-        if (isCorrect) {
-            // Spy wins!
-            game.status = 'roundEnd';
-            round.spyWon = true;
-        } else {
-            // Spy loses - wrong guess ends the round
-            game.status = 'roundEnd';
-            round.spyWon = false;
+        // Initialize settings if not exists
+        if (!game.settings) {
+            game.settings = {};
         }
-        
+
+        // Update settings
+        if (settings.spyCount !== undefined) {
+            game.settings.spyCount = Math.max(1, Math.min(2, parseInt(settings.spyCount) || 1));
+        }
+        if (settings.showSpyCount !== undefined) {
+            game.settings.showSpyCount = Boolean(settings.showSpyCount);
+        }
+        if (settings.timerMinutes !== undefined) {
+            game.settings.timerMinutes = Math.max(1, Math.min(60, parseInt(settings.timerMinutes) || 8));
+        }
+        if (settings.customLocations !== undefined) {
+            game.settings.customLocations = Array.isArray(settings.customLocations) ? settings.customLocations : [];
+        }
+        if (settings.enabledLocationSets !== undefined) {
+            game.settings.enabledLocationSets = Array.isArray(settings.enabledLocationSets) ? settings.enabledLocationSets : ['spyfall1'];
+        }
+
         // Save updated game
         await saveGameState(game);
 
@@ -121,11 +106,11 @@ exports.handler = async (event, context) => {
             },
             body: JSON.stringify({ 
                 success: true,
-                isCorrect: isCorrect
+                settings: game.settings
             })
         };
     } catch (error) {
-        console.error('Error guessing location:', error);
+        console.error('Error updating game settings:', error);
         return {
             statusCode: 500,
             headers: {

@@ -368,8 +368,9 @@ function updatePlayingState(game) {
     const currentPlayer = game.players.find(p => p.id === gameState.playerId);
     if (!currentPlayer) return;
 
-    // Check if player is spy
-    const isSpy = currentRound.spyId === gameState.playerId;
+    // Check if player is spy (support both single and multiple spies)
+    const spyIds = Array.isArray(currentRound.spyIds) ? currentRound.spyIds : [currentRound.spyId];
+    const isSpy = spyIds.includes(gameState.playerId);
     
     // Show appropriate view
     const spyView = document.getElementById('spy-view');
@@ -483,7 +484,9 @@ function updateGameActions(game, round, currentPlayer) {
     const votingArea = document.getElementById('voting-area');
     const voteBtnInArea = document.getElementById('vote-spy-btn');
 
-    const isSpy = round.spyId === gameState.playerId;
+    // Check if player is spy (support both single and multiple spies)
+    const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
+    const isSpy = spyIds.includes(gameState.playerId);
     const isMyTurn = round.currentTurn === gameState.playerId;
     const hasPendingQuestion = round.waitingForAnswer;
 
@@ -495,8 +498,9 @@ function updateGameActions(game, round, currentPlayer) {
     const canVote = !isSpy;
     voteBtn.style.display = canVote ? 'block' : 'none';
 
-    // Spy can guess location at any time
-    const canGuess = isSpy;
+    // Spy can guess location at any time, but only if they haven't guessed yet
+    const hasGuessed = round.spyGuessedLocation !== null && round.spyGuessedLocation !== undefined;
+    const canGuess = isSpy && !hasGuessed;
     guessBtn.style.display = canGuess ? 'block' : 'none';
 
     // Show voting area if votes exist
@@ -785,7 +789,7 @@ async function submitLocationGuess() {
         if (data.isCorrect) {
             showNotification('Location identified! Operation successful.', 'success');
         } else {
-            showNotification('Incorrect location. Continue your investigation.', 'error');
+            showNotification('Incorrect location. The round has ended.', 'error');
         }
         
         // State will update via polling
@@ -806,7 +810,9 @@ function showRoundResult(game) {
     const backToLobbyBtn = document.getElementById('back-to-lobby-btn');
 
     let resultText = '';
-    const isSpy = round.spyId === gameState.playerId;
+    // Check if player is spy (support both single and multiple spies)
+    const spyIds = Array.isArray(round.spyIds) ? round.spyIds : [round.spyId];
+    const isSpy = spyIds.includes(gameState.playerId);
     const spyWon = round.spyWon;
 
     if (round.spyGuessedLocation) {
