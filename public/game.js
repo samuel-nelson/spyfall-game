@@ -1235,10 +1235,19 @@ function showRoundResult(game) {
         title.textContent = 'TIME EXPIRED';
         title.style.color = 'var(--color-danger)';
         const locationName = typeof round.location === 'string' ? round.location : round.location?.name;
-        resultText = `
-            <p>The mole survived until time ran out.</p>
-            <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName)}</p>
-        `;
+        if (isMole) {
+            resultText = `
+                <p><strong>You survived until time ran out!</strong></p>
+                <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName)}</p>
+                <p style="margin-top: 15px; color: var(--color-danger);"><strong>Mole wins!</strong></p>
+            `;
+        } else {
+            resultText = `
+                <p>The mole survived until time ran out.</p>
+                <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(locationName)}</p>
+                <p style="margin-top: 15px; color: var(--color-danger);"><strong>Mole wins!</strong></p>
+            `;
+        }
     } else {
         title.textContent = 'ROUND CONCLUDED';
         title.style.color = 'var(--color-primary)';
