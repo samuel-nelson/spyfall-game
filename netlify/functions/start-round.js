@@ -73,16 +73,24 @@ exports.handler = async (event, context) => {
         }
 
         // Allow starting new round if previous round ended or if no round exists
-        // Only block if game is actively playing
-        if (game.status === 'playing' && game.currentRound && Date.now() < game.currentRound.endTime) {
-            return {
-                statusCode: 400,
-                headers: {
-                    'Access-Control-Allow-Origin': '*'
-                },
-                body: JSON.stringify({ error: 'Game is already in progress' })
-            };
+        // Only block if game is actively playing (status is 'playing' AND round hasn't ended)
+        // Explicitly allow 'roundEnd' status and 'lobby' status
+        if (game.status === 'playing' && game.currentRound) {
+            const now = Date.now();
+            // Only block if round hasn't ended yet (endTime is in the future)
+            if (game.currentRound.endTime && now < game.currentRound.endTime) {
+                return {
+                    statusCode: 400,
+                    headers: {
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    body: JSON.stringify({ error: 'Game is already in progress' })
+                };
+            }
+            // If we get here, the round has ended (endTime has passed) but status wasn't updated
+            // This is fine - we'll start a new round
         }
+        // If status is 'roundEnd' or 'lobby', allow starting new round
 
         // Get game settings (defaults if not set)
         const settings = game.settings || {};
