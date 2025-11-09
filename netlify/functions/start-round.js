@@ -126,7 +126,8 @@ exports.handler = async (event, context) => {
             endTime,
             spyWon: false,
             accusation: null,
-            spyGuessedLocation: null
+            spyGuessedLocation: null,
+            votes: null
         };
 
         game.status = 'playing';

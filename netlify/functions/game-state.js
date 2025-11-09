@@ -87,7 +87,8 @@ exports.handler = async (event, context) => {
                 endTime: game.currentRound.endTime,
             spyWon: game.currentRound.spyWon,
             accusation: game.currentRound.accusation,
-            spyGuessedLocation: game.currentRound.spyGuessedLocation
+            spyGuessedLocation: game.currentRound.spyGuessedLocation,
+            votes: game.currentRound.votes
         } : null
         };
 

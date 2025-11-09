@@ -79,7 +79,7 @@ async function createGame() {
     const gameCode = document.getElementById('game-code-create').value.trim().toUpperCase();
 
     if (!playerName) {
-        alert('Please enter your name');
+        showNotification('Please enter your codename', 'error');
         return;
     }
 
@@ -93,7 +93,7 @@ async function createGame() {
         const data = await response.json();
         
         if (data.error) {
-            alert(data.error);
+            showNotification(data.error, 'error');
             return;
         }
 
@@ -106,7 +106,7 @@ async function createGame() {
         startPolling();
     } catch (error) {
         console.error('Error creating game:', error);
-        alert('Failed to create game. Please try again.');
+        showNotification('Failed to create operation. Please try again.', 'error');
     }
 }
 
@@ -115,12 +115,12 @@ async function joinGame() {
     const gameCode = document.getElementById('game-code-join').value.trim().toUpperCase();
 
     if (!playerName) {
-        alert('Please enter your name');
+        showNotification('Please enter your codename', 'error');
         return;
     }
 
     if (!gameCode) {
-        alert('Please enter a game code');
+        showNotification('Please enter an operation code', 'error');
         return;
     }
 
@@ -134,7 +134,7 @@ async function joinGame() {
         const data = await response.json();
         
         if (data.error) {
-            alert(data.error);
+            showNotification(data.error, 'error');
             return;
         }
 
@@ -147,7 +147,7 @@ async function joinGame() {
         startPolling();
     } catch (error) {
         console.error('Error joining game:', error);
-        alert('Failed to join game. Please check the game code and try again.');
+        showNotification('Failed to join operation. Verify the code and try again.', 'error');
     }
 }
 
@@ -165,14 +165,14 @@ async function startRound() {
         const data = await response.json();
         
         if (data.error) {
-            alert(data.error);
+            showNotification(data.error, 'error');
             return;
         }
 
         // Game state will be updated via polling
     } catch (error) {
         console.error('Error starting round:', error);
-        alert('Failed to start round. Please try again.');
+        showNotification('Failed to initiate operation. Please try again.', 'error');
     }
 }
 
@@ -352,16 +352,25 @@ function updatePlayersStatus(players, round) {
         card.className = 'player-status-card';
         
         const isCurrentTurn = round.currentTurn === player.id;
+        const isWaitingForAnswer = round.waitingForAnswer === player.id;
+        const isYou = player.id === gameState.playerId;
+        
         if (isCurrentTurn) {
             card.classList.add('active');
-        } else if (round.waitingForAnswer && round.waitingForAnswer === player.id) {
+        } else if (isWaitingForAnswer) {
             card.classList.add('waiting');
         }
 
+        let statusText = '';
+        if (isCurrentTurn) {
+            statusText = '<div class="status-badge">ACTIVE</div>';
+        } else if (isWaitingForAnswer) {
+            statusText = '<div class="status-badge waiting-badge">RESPONDING</div>';
+        }
+
         card.innerHTML = `
-            <div class="player-name">${escapeHtml(player.name)}</div>
-            ${isCurrentTurn ? '<div>Current Turn</div>' : ''}
-            ${round.waitingForAnswer === player.id ? '<div>Answering...</div>' : ''}
+            <div class="player-name">${escapeHtml(player.name)}${isYou ? ' <span class="you-indicator">(YOU)</span>' : ''}</div>
+            ${statusText}
         `;
         playersStatus.appendChild(card);
     });
@@ -382,8 +391,10 @@ function updateQuestionArea(round) {
 
 function updateGameActions(game, round, currentPlayer) {
     const askBtn = document.getElementById('ask-question-btn');
-    const accuseBtn = document.getElementById('accuse-spy-btn');
+    const voteBtn = document.getElementById('vote-spy-action-btn');
     const guessBtn = document.getElementById('guess-location-btn');
+    const votingArea = document.getElementById('voting-area');
+    const voteBtnInArea = document.getElementById('vote-spy-btn');
 
     const isSpy = round.spyId === gameState.playerId;
     const isMyTurn = round.currentTurn === gameState.playerId;
@@ -393,13 +404,64 @@ function updateGameActions(game, round, currentPlayer) {
     const canAsk = isMyTurn && !hasPendingQuestion && !isSpy;
     askBtn.style.display = canAsk ? 'block' : 'none';
 
-    // Can accuse if it's your turn and no question is pending (and you're not the spy)
-    const canAccuse = isMyTurn && !hasPendingQuestion && !isSpy;
-    accuseBtn.style.display = canAccuse ? 'block' : 'none';
+    // Non-spies can vote at any time (not just on their turn)
+    const canVote = !isSpy;
+    voteBtn.style.display = canVote ? 'block' : 'none';
 
-    // Spy can guess location at any time when it's not their turn to ask/accuse
-    const canGuess = isSpy && (!isMyTurn || hasPendingQuestion);
+    // Spy can guess location at any time
+    const canGuess = isSpy;
     guessBtn.style.display = canGuess ? 'block' : 'none';
+
+    // Show voting area if votes exist
+    if (round.votes && Object.keys(round.votes).length > 0) {
+        votingArea.style.display = 'block';
+        updateVotingStatus(game, round);
+        voteBtnInArea.style.display = canVote ? 'block' : 'none';
+    } else {
+        votingArea.style.display = 'none';
+    }
+}
+
+function updateVotingStatus(game, round) {
+    const voteStatus = document.getElementById('vote-status');
+    if (!round.votes || Object.keys(round.votes).length === 0) {
+        voteStatus.innerHTML = '<p style="color: var(--color-text-muted);">No votes cast yet.</p>';
+        return;
+    }
+
+    // Count votes
+    const voteCounts = {};
+    const nonSpyPlayers = game.players.filter(p => p.id !== round.spyId);
+    
+    Object.values(round.votes).forEach(votedPlayerId => {
+        voteCounts[votedPlayerId] = (voteCounts[votedPlayerId] || 0) + 1;
+    });
+
+    // Display vote counts
+    let html = '';
+    for (const [playerId, count] of Object.entries(voteCounts)) {
+        const player = game.players.find(p => p.id === playerId);
+        if (player) {
+            const majorityThreshold = Math.ceil(nonSpyPlayers.length / 2);
+            const isMajority = count > majorityThreshold;
+            html += `
+                <div class="vote-item">
+                    <span class="vote-player">${escapeHtml(player.name)}</span>
+                    <span class="vote-count" style="${isMajority ? 'color: var(--color-danger);' : ''}">${count} vote${count !== 1 ? 's' : ''}</span>
+                </div>
+            `;
+        }
+    }
+
+    // Show who has voted
+    const votedPlayers = Object.keys(round.votes).map(voterId => {
+        const voter = game.players.find(p => p.id === voterId);
+        return voter ? voter.name : null;
+    }).filter(Boolean);
+
+    html += `<p style="margin-top: 15px; color: var(--color-text-muted); font-size: 0.9rem;">Voted: ${votedPlayers.join(', ')}</p>`;
+    
+    voteStatus.innerHTML = html;
 }
 
 function showQuestionModal() {
@@ -428,7 +490,7 @@ async function submitQuestion() {
     const questionText = document.getElementById('question-text').value.trim();
 
     if (!questionText) {
-        alert('Please enter a question');
+        showNotification('Please enter a question', 'error');
         return;
     }
 
@@ -447,7 +509,7 @@ async function submitQuestion() {
         const data = await response.json();
         
         if (data.error) {
-            alert(data.error);
+            showNotification(data.error, 'error');
             return;
         }
 
@@ -455,7 +517,7 @@ async function submitQuestion() {
         // State will update via polling
     } catch (error) {
         console.error('Error asking question:', error);
-        alert('Failed to ask question. Please try again.');
+        showNotification('Failed to submit question. Please try again.', 'error');
     }
 }
 
@@ -463,7 +525,7 @@ async function submitAnswer() {
     const answerText = document.getElementById('answer-text').value.trim();
 
     if (!answerText) {
-        alert('Please enter an answer');
+        showNotification('Please enter a response', 'error');
         return;
     }
 
@@ -481,7 +543,7 @@ async function submitAnswer() {
         const data = await response.json();
         
         if (data.error) {
-            alert(data.error);
+            showNotification(data.error, 'error');
             return;
         }
 
@@ -489,15 +551,15 @@ async function submitAnswer() {
         // State will update via polling
     } catch (error) {
         console.error('Error answering question:', error);
-        alert('Failed to submit answer. Please try again.');
+        showNotification('Failed to submit response. Please try again.', 'error');
     }
 }
 
-function showAccusationModal() {
+function showVoteModal() {
     const game = gameState.game;
     if (!game || !game.currentRound) return;
 
-    const select = document.getElementById('accused-player');
+    const select = document.getElementById('voted-player');
     select.innerHTML = '';
 
     // Add other players as options
@@ -510,36 +572,82 @@ function showAccusationModal() {
         }
     });
 
-    document.getElementById('accusation-modal').style.display = 'flex';
+    // Show current vote if already voted
+    if (round.votes && round.votes[gameState.playerId]) {
+        select.value = round.votes[gameState.playerId];
+    }
+
+    document.getElementById('vote-modal').style.display = 'flex';
 }
 
-async function submitAccusation() {
-    const accusedId = document.getElementById('accused-player').value;
+async function submitVote() {
+    const votedId = document.getElementById('voted-player').value;
+
+    if (!votedId) {
+        showNotification('Please select a player to vote for', 'error');
+        return;
+    }
 
     try {
-        const response = await fetch(`${API_BASE}/accuse-spy`, {
+        const response = await fetch(`${API_BASE}/vote-spy`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 gameCode: gameState.gameCode,
                 playerId: gameState.playerId,
-                accusedId
+                accusedId: votedId
             })
         });
 
         const data = await response.json();
         
         if (data.error) {
-            alert(data.error);
+            showNotification(data.error, 'error');
             return;
         }
 
-        document.getElementById('accusation-modal').style.display = 'none';
+        document.getElementById('vote-modal').style.display = 'none';
+        
+        if (data.majorityReached) {
+            showNotification(data.wasCorrect ? 'Spy identified! Round ending...' : 'Incorrect vote. Spy wins!', data.wasCorrect ? 'success' : 'error');
+        } else {
+            showNotification('Vote recorded. Waiting for majority...', 'info');
+        }
+        
         // State will update via polling
     } catch (error) {
-        console.error('Error accusing spy:', error);
-        alert('Failed to submit accusation. Please try again.');
+        console.error('Error voting for spy:', error);
+        showNotification('Failed to submit vote. Please try again.', 'error');
     }
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        background: ${type === 'error' ? 'var(--color-danger)' : type === 'success' ? 'var(--color-success)' : 'var(--color-primary)'};
+        color: white;
+        border: 1px solid ${type === 'error' ? '#6B0000' : type === 'success' ? '#1F3A0F' : 'var(--color-primary-dark)'};
+        z-index: 10000;
+        font-family: var(--font-sans);
+        font-size: 0.9rem;
+        letter-spacing: 1px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
 
 function showGuessLocationModal() {
@@ -561,7 +669,7 @@ async function submitLocationGuess() {
     const guessedLocation = document.getElementById('guessed-location').value.trim();
 
     if (!guessedLocation) {
-        alert('Please enter a location');
+        showNotification('Please enter a location', 'error');
         return;
     }
 
@@ -579,22 +687,22 @@ async function submitLocationGuess() {
         const data = await response.json();
         
         if (data.error) {
-            alert(data.error);
+            showNotification(data.error, 'error');
             return;
         }
 
         document.getElementById('guess-location-modal').style.display = 'none';
         
         if (data.isCorrect) {
-            alert('Correct! You win!');
+            showNotification('Location identified! Operation successful.', 'success');
         } else {
-            alert('Wrong location. Keep trying!');
+            showNotification('Incorrect location. Continue your investigation.', 'error');
         }
         
         // State will update via polling
     } catch (error) {
         console.error('Error guessing location:', error);
-        alert('Failed to submit guess. Please try again.');
+        showNotification('Failed to submit guess. Please try again.', 'error');
     }
 }
 
@@ -614,42 +722,81 @@ function showRoundResult(game) {
 
     if (round.spyGuessedLocation) {
         // Spy guessed the location
-        title.textContent = 'Spy Wins!';
+        title.textContent = 'OPERATION COMPROMISED';
+        title.style.color = 'var(--color-danger)';
         resultText = `
-            <p>The spy correctly identified the location!</p>
-            <p><strong>Location was:</strong> ${escapeHtml(round.location)}</p>
-            <p><strong>Spy guessed:</strong> ${escapeHtml(round.spyGuessedLocation)}</p>
+            <p>The spy successfully identified the location.</p>
+            <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
+            <p><strong>Spy's guess:</strong> ${escapeHtml(round.spyGuessedLocation)}</p>
         `;
     } else if (round.accusation) {
         const accusedPlayer = game.players.find(p => p.id === round.accusation.accusedId);
         const wasCorrect = round.accusation.accusedId === round.spyId;
 
-        if (wasCorrect) {
-            title.textContent = 'Spy Caught!';
-            resultText = `
-                <p>The spy ${escapeHtml(accusedPlayer.name)} was correctly identified!</p>
-                <p><strong>Location was:</strong> ${escapeHtml(round.location)}</p>
-            `;
+        if (round.accusation.type === 'vote') {
+            // Voting result
+            if (wasCorrect) {
+                title.textContent = 'SPY IDENTIFIED';
+                title.style.color = 'var(--color-success)';
+                resultText = `
+                    <p>Majority vote correctly identified the spy: <strong>${escapeHtml(accusedPlayer.name)}</strong></p>
+                    <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
+                `;
+                
+                // Show vote breakdown
+                if (round.accusation.voteCounts) {
+                    resultText += '<div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--color-border);">';
+                    resultText += '<p style="font-size: 0.9rem; color: var(--color-text-muted); margin-bottom: 10px;">VOTE BREAKDOWN:</p>';
+                    for (const [playerId, count] of Object.entries(round.accusation.voteCounts)) {
+                        const player = game.players.find(p => p.id === playerId);
+                        if (player) {
+                            resultText += `<p style="font-size: 0.95rem;">${escapeHtml(player.name)}: ${count} vote${count !== 1 ? 's' : ''}</p>`;
+                        }
+                    }
+                    resultText += '</div>';
+                }
+            } else {
+                title.textContent = 'INCORRECT VOTE';
+                title.style.color = 'var(--color-danger)';
+                resultText = `
+                    <p>${escapeHtml(accusedPlayer.name)} was not the spy.</p>
+                    <p>The spy <strong>${escapeHtml(game.players.find(p => p.id === round.spyId).name)}</strong> has evaded detection.</p>
+                    <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
+                `;
+            }
         } else {
-            title.textContent = 'Wrong Accusation!';
-            resultText = `
-                <p>${escapeHtml(accusedPlayer.name)} was not the spy!</p>
-                <p>The spy ${escapeHtml(game.players.find(p => p.id === round.spyId).name)} wins!</p>
-                <p><strong>Location was:</strong> ${escapeHtml(round.location)}</p>
-            `;
+            // Individual accusation
+            if (wasCorrect) {
+                title.textContent = 'SPY CAUGHT';
+                title.style.color = 'var(--color-success)';
+                resultText = `
+                    <p>The spy <strong>${escapeHtml(accusedPlayer.name)}</strong> was correctly identified.</p>
+                    <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
+                `;
+            } else {
+                title.textContent = 'INCORRECT ACCUSATION';
+                title.style.color = 'var(--color-danger)';
+                resultText = `
+                    <p>${escapeHtml(accusedPlayer.name)} was not the spy.</p>
+                    <p>The spy <strong>${escapeHtml(game.players.find(p => p.id === round.spyId).name)}</strong> wins.</p>
+                    <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
+                `;
+            }
         }
     } else if (spyWon) {
-        title.textContent = 'Spy Wins!';
+        title.textContent = 'TIME EXPIRED';
+        title.style.color = 'var(--color-danger)';
         resultText = `
-            <p>The spy survived until time ran out!</p>
-            <p><strong>Location was:</strong> ${escapeHtml(round.location)}</p>
+            <p>The spy survived until time ran out.</p>
+            <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
         `;
     } else {
-        title.textContent = 'Round Ended';
+        title.textContent = 'ROUND CONCLUDED';
+        title.style.color = 'var(--color-primary)';
         resultText = `
-            <p>The round has ended.</p>
-            <p><strong>Location was:</strong> ${escapeHtml(round.location)}</p>
-            <p><strong>Spy was:</strong> ${escapeHtml(game.players.find(p => p.id === round.spyId).name)}</p>
+            <p>The operation has concluded.</p>
+            <p style="margin-top: 20px;"><strong>Location:</strong> ${escapeHtml(round.location)}</p>
+            <p><strong>Spy:</strong> ${escapeHtml(game.players.find(p => p.id === round.spyId).name)}</p>
         `;
     }
 
