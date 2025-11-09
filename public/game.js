@@ -110,9 +110,20 @@ function setupEventListeners() {
     document.getElementById('next-round-btn').addEventListener('click', nextRound);
     document.getElementById('back-to-lobby-btn').addEventListener('click', () => {
         document.getElementById('game-result-modal').style.display = 'none';
-        showScreen('lobby');
+        // Clear game state but keep gameCode and playerName for potential rejoin
+        const gameCode = gameState.gameCode;
+        const playerName = gameState.playerName;
+        gameState.gameCode = null;
+        gameState.playerId = null;
+        gameState.game = null;
         stopPolling();
-        startPolling();
+        stopTimer();
+        // Store for potential rejoin
+        if (gameCode && playerName) {
+            sessionStorage.setItem('lastGameCode', gameCode);
+            sessionStorage.setItem('lastPlayerName', playerName);
+        }
+        showScreen('main-menu');
     });
 }
 
@@ -160,8 +171,22 @@ async function createGame() {
 }
 
 async function joinGame() {
-    const playerName = document.getElementById('player-name-join').value.trim();
-    const gameCode = document.getElementById('game-code-join').value.trim().toUpperCase();
+    // Check for stored game code/name from session (for rejoin after leaving)
+    const storedGameCode = sessionStorage.getItem('lastGameCode');
+    const storedPlayerName = sessionStorage.getItem('lastPlayerName');
+    
+    let playerName = document.getElementById('player-name-join').value.trim();
+    let gameCode = document.getElementById('game-code-join').value.trim().toUpperCase();
+    
+    // If inputs are empty but we have stored values, use those
+    if (!playerName && storedPlayerName) {
+        playerName = storedPlayerName;
+        document.getElementById('player-name-join').value = playerName;
+    }
+    if (!gameCode && storedGameCode) {
+        gameCode = storedGameCode;
+        document.getElementById('game-code-join').value = gameCode;
+    }
 
     if (!playerName) {
         showNotification('Please enter your codename', 'error');
@@ -194,6 +219,10 @@ async function joinGame() {
         document.getElementById('display-game-code').textContent = gameCode;
         showScreen('lobby');
         startPolling();
+        
+        // Clear stored values on successful join
+        sessionStorage.removeItem('lastGameCode');
+        sessionStorage.removeItem('lastPlayerName');
     } catch (error) {
         console.error('Error joining game:', error);
         showNotification('Failed to join operation. Verify the code and try again.', 'error');
@@ -419,8 +448,10 @@ function updateGameScreen(game) {
         updatePlayingState(game);
     } else if (game.status === 'roundEnd') {
         stopTimer(); // Stop timer when round ends
-        showScreen('game-screen');
+        // Always show result modal for all players including spies
         showRoundResult(game);
+        // Keep game screen visible behind modal
+        showScreen('game-screen');
     } else if (game.status === 'lobby') {
         stopTimer(); // Stop timer when back in lobby
     }
@@ -1245,8 +1276,9 @@ function showLocationManagement() {
         enabledLocations.clear();
         
         if (game?.settings) {
-            // If individual location selection exists, use that
-            if (game.settings.enabledLocationsList && Array.isArray(game.settings.enabledLocationsList) && game.settings.enabledLocationsList.length > 0) {
+            // ALWAYS prioritize enabledLocationsList if it exists (even if empty array)
+            if (game.settings.enabledLocationsList !== undefined && Array.isArray(game.settings.enabledLocationsList)) {
+                // Use individual location selection
                 game.settings.enabledLocationsList.forEach(locationId => {
                     enabledLocations.add(locationId);
                 });
@@ -1429,8 +1461,18 @@ async function saveLocationSettings(enabledSets, customLocations) {
     if (!gameState.gameCode || !gameState.playerId) return;
     
     try {
-        // Convert enabledLocations Set to array - use current state of the Set
+        // Convert enabledLocations Set to array - ALWAYS use current state of the Set
         const enabledLocationsList = Array.from(enabledLocations);
+        
+        // Ensure we're sending the actual current state, not stale data
+        const currentSettings = {
+            spyCount: gameState.game?.settings?.spyCount || 1,
+            showSpyCount: gameState.game?.settings?.showSpyCount !== false,
+            timerMinutes: gameState.game?.settings?.timerMinutes || 8,
+            customLocations: customLocations,
+            enabledLocationSets: enabledSets.length > 0 ? enabledSets : ['spyfall1'],
+            enabledLocationsList: enabledLocationsList // Always send the array, even if empty
+        };
         
         const response = await fetch(`${API_BASE}/update-game-settings`, {
             method: 'POST',
@@ -1438,34 +1480,34 @@ async function saveLocationSettings(enabledSets, customLocations) {
             body: JSON.stringify({
                 gameCode: gameState.gameCode,
                 playerId: gameState.playerId,
-                settings: {
-                    spyCount: gameState.game?.settings?.spyCount || 1,
-                    showSpyCount: gameState.game?.settings?.showSpyCount !== false,
-                    timerMinutes: gameState.game?.settings?.timerMinutes || 8,
-                    customLocations: customLocations,
-                    enabledLocationSets: enabledSets.length > 0 ? enabledSets : ['spyfall1'],
-                    enabledLocationsList: enabledLocationsList.length > 0 ? enabledLocationsList : null // Store individual location selection
-                }
+                settings: currentSettings
             })
         });
         
         const data = await response.json();
-        if (!data.error) {
-            // Settings saved successfully - update game state to reflect changes
-            await pollGameState();
-            // Update the enabledLocations Set from the refreshed game state
-            const game = gameState.game;
-            if (game?.settings?.enabledLocationsList) {
-                enabledLocations.clear();
-                game.settings.enabledLocationsList.forEach(locationId => {
+        if (!data.error && data.settings) {
+            // Settings saved successfully - immediately update local state
+            if (!gameState.game) gameState.game = {};
+            if (!gameState.game.settings) gameState.game.settings = {};
+            gameState.game.settings.enabledLocationsList = data.settings.enabledLocationsList || [];
+            
+            // Update the enabledLocations Set from the saved settings
+            enabledLocations.clear();
+            if (data.settings.enabledLocationsList && Array.isArray(data.settings.enabledLocationsList)) {
+                data.settings.enabledLocationsList.forEach(locationId => {
                     enabledLocations.add(locationId);
                 });
-                // Refresh checkboxes to match saved state
-                refreshLocationCheckboxes();
             }
+            
+            // Refresh checkboxes to match saved state
+            refreshLocationCheckboxes();
+        } else if (data.error) {
+            console.error('Error saving location settings:', data.error);
+            showNotification('Failed to save location settings', 'error');
         }
     } catch (error) {
         console.error('Error saving location settings:', error);
+        showNotification('Failed to save location settings', 'error');
     }
 }
 
