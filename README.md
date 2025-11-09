@@ -120,24 +120,24 @@ This game uses Neon (serverless Postgres) to store game state so players can con
    - Choose a region close to you
    - Click "Create Project"
 
-### Step 2: Get Your Connection String
+### Step 2: Connect Neon to Netlify
 
-1. In your Neon dashboard, you'll see your project
-2. Click on your project to open it
-3. Go to the "Connection Details" section
-4. Copy the connection string (it looks like: `postgresql://user:password@host/database`)
-5. The connection string is automatically formatted - just copy it!
+**Option A: Using Netlify UI (Recommended)**
+1. In your Netlify site dashboard, go to **Integrations**
+2. Search for "Neon" and click **Add integration**
+3. Connect your Neon account
+4. Select your Neon project
+5. Netlify will automatically set up the `NETLIFY_DATABASE_URL` environment variable
 
-### Step 3: Set Environment Variable in Netlify
-
-1. Go to your Netlify site dashboard
-2. Navigate to **Site settings** → **Environment variables**
+**Option B: Manual Setup**
+1. In your Neon dashboard, get your connection string from "Connection Details"
+2. In Netlify, go to **Site settings** → **Environment variables**
 3. Add a new variable:
-   - **Key**: `DATABASE_URL` (or `NEON_DATABASE_URL`)
-   - **Value**: Your Neon connection string (from Step 2)
+   - **Key**: `NETLIFY_DATABASE_URL`
+   - **Value**: Your Neon connection string
 4. Click **Save**
 
-### Step 4: Redeploy
+### Step 3: Redeploy
 
 After setting the environment variable, trigger a new deployment:
 - Go to **Deploys** tab
@@ -150,7 +150,7 @@ The database table will be created automatically on first use!
 For local testing, create a `.env` file in the project root:
 
 ```
-DATABASE_URL=postgresql://user:password@host/database
+NETLIFY_DATABASE_URL=postgresql://user:password@host/database
 ```
 
 **Note**: Never commit your `.env` file to Git! It's already in `.gitignore`.
