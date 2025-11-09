@@ -1,109 +1,144 @@
-// FaunaDB connection module for Netlify
-const faunadb = require('faunadb');
-const q = faunadb.query;
+// Neon (PostgreSQL) connection module for Netlify
+const { Pool } = require('pg');
 
-// Get FaunaDB secret from environment variable
-const FAUNA_SECRET = process.env.FAUNA_SECRET || process.env.FAUNADB_SECRET_KEY;
+// Get Neon database connection string from environment variable
+const DATABASE_URL = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL;
 
-let client = null;
+let pool = null;
 
-function getClient() {
-    if (!FAUNA_SECRET) {
-        throw new Error('FAUNA_SECRET or FAUNADB_SECRET_KEY environment variable is required');
+function getPool() {
+    if (!DATABASE_URL) {
+        throw new Error('DATABASE_URL or NEON_DATABASE_URL environment variable is required');
     }
     
-    if (!client) {
-        client = new faunadb.Client({ secret: FAUNA_SECRET });
+    if (!pool) {
+        pool = new Pool({
+            connectionString: DATABASE_URL,
+            ssl: {
+                rejectUnauthorized: false
+            }
+        });
     }
     
-    return client;
+    return pool;
 }
 
-// Game store functions using FaunaDB
+// Initialize database schema (create table if it doesn't exist)
+async function initializeSchema() {
+    const pool = getPool();
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS games (
+            code VARCHAR(10) PRIMARY KEY,
+            status VARCHAR(20) NOT NULL,
+            players JSONB NOT NULL,
+            current_round JSONB,
+            created_at BIGINT NOT NULL
+        )
+    `);
+    
+    // Create index on code for faster lookups
+    await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_games_code ON games(code)
+    `);
+    
+    // Create index on created_at for cleanup
+    await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_games_created_at ON games(created_at)
+    `);
+}
+
+// Initialize schema on first connection
+let schemaInitialized = false;
+async function ensureSchema() {
+    if (!schemaInitialized) {
+        await initializeSchema();
+        schemaInitialized = true;
+    }
+}
+
+// Game store functions using Neon PostgreSQL
 async function getGame(gameCode) {
+    await ensureSchema();
+    const pool = getPool();
+    
     try {
-        const client = getClient();
-        const result = await client.query(
-            q.Get(q.Match(q.Index('games_by_code'), gameCode.toUpperCase()))
+        const result = await pool.query(
+            'SELECT code, status, players, current_round, created_at FROM games WHERE code = $1',
+            [gameCode.toUpperCase()]
         );
-        return result.data;
-    } catch (error) {
-        if (error.name === 'NotFound') {
+        
+        if (result.rows.length === 0) {
             return null;
         }
+        
+        const row = result.rows[0];
+        return {
+            code: row.code,
+            status: row.status,
+            players: row.players,
+            currentRound: row.current_round,
+            createdAt: row.created_at
+        };
+    } catch (error) {
+        console.error('Error getting game:', error);
         throw error;
     }
 }
 
 async function saveGame(game) {
-    const client = getClient();
+    await ensureSchema();
+    const pool = getPool();
     const gameCode = game.code.toUpperCase();
     
     try {
-        // Try to get existing game
-        const existing = await client.query(
-            q.Get(q.Match(q.Index('games_by_code'), gameCode))
-        );
-        
-        // Update existing game
-        await client.query(
-            q.Update(existing.ref, {
-                data: game
-            })
+        await pool.query(
+            `INSERT INTO games (code, status, players, current_round, created_at)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT (code) 
+             DO UPDATE SET 
+                 status = EXCLUDED.status,
+                 players = EXCLUDED.players,
+                 current_round = EXCLUDED.current_round`,
+            [
+                gameCode,
+                game.status,
+                JSON.stringify(game.players),
+                game.currentRound ? JSON.stringify(game.currentRound) : null,
+                game.createdAt || Date.now()
+            ]
         );
     } catch (error) {
-        if (error.name === 'NotFound') {
-            // Create new game
-            await client.query(
-                q.Create(q.Collection('games'), {
-                    data: game
-                })
-            );
-        } else {
-            throw error;
-        }
+        console.error('Error saving game:', error);
+        throw error;
     }
 }
 
 async function deleteGame(gameCode) {
+    await ensureSchema();
+    const pool = getPool();
+    
     try {
-        const client = getClient();
-        const existing = await client.query(
-            q.Get(q.Match(q.Index('games_by_code'), gameCode.toUpperCase()))
+        await pool.query(
+            'DELETE FROM games WHERE code = $1',
+            [gameCode.toUpperCase()]
         );
-        await client.query(q.Delete(existing.ref));
     } catch (error) {
-        if (error.name === 'NotFound') {
-            // Game doesn't exist, nothing to delete
-            return;
-        }
+        console.error('Error deleting game:', error);
         throw error;
     }
 }
 
 async function cleanupOldGames() {
-    const client = getClient();
+    await ensureSchema();
+    const pool = getPool();
     const maxAge = 24 * 60 * 60 * 1000; // 24 hours
     const cutoffTime = Date.now() - maxAge;
     
     try {
-        // Get all games
-        const allGames = await client.query(
-            q.Paginate(q.Documents(q.Collection('games')))
+        await pool.query(
+            'DELETE FROM games WHERE created_at < $1',
+            [cutoffTime]
         );
-        
-        // Filter and delete old games
-        for (const gameRef of allGames.data) {
-            try {
-                const game = await client.query(q.Get(gameRef));
-                if (game.data.createdAt && game.data.createdAt < cutoffTime) {
-                    await client.query(q.Delete(gameRef));
-                }
-            } catch (error) {
-                // Skip if game was already deleted
-                console.error('Error deleting game:', error);
-            }
-        }
     } catch (error) {
         console.error('Error cleaning up old games:', error);
         // Don't throw - cleanup is not critical

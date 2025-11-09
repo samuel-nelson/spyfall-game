@@ -106,61 +106,51 @@ SPY/
 └── README.md           # This file
 ```
 
-## FaunaDB Setup (Required for Multiplayer)
+## Neon Database Setup (Required for Multiplayer)
 
-This game uses FaunaDB (Netlify's recommended database) to store game state so players can connect to each other across different server instances.
+This game uses Neon (serverless Postgres) to store game state so players can connect to each other across different server instances.
 
-### Step 1: Create a FaunaDB Account (Free)
+### Step 1: Create a Neon Account (Free)
 
-1. Go to [FaunaDB](https://fauna.com/)
+1. Go to [Neon](https://neon.tech/)
 2. Sign up for a free account
-3. Create a new database:
-   - Click "New Database"
+3. Create a new project:
+   - Click "Create Project"
    - Name it `spyfall` (or any name you prefer)
    - Choose a region close to you
-   - Click "Create"
+   - Click "Create Project"
 
-### Step 2: Create the Collection and Index
+### Step 2: Get Your Connection String
 
-1. In your database, click "New Collection"
-2. Name it `games` and click "Save"
-3. Create an index:
-   - Click "New Index" in the `games` collection
-   - Name: `games_by_code`
-   - Terms: `data.code`
-   - Unique: Check this box
-   - Click "Save"
+1. In your Neon dashboard, you'll see your project
+2. Click on your project to open it
+3. Go to the "Connection Details" section
+4. Copy the connection string (it looks like: `postgresql://user:password@host/database`)
+5. The connection string is automatically formatted - just copy it!
 
-### Step 3: Get Your Secret Key
-
-1. Click on "Security" in the left sidebar
-2. Click "New Key"
-3. Name it `Netlify` (or any name)
-4. Role: Select "Server" (not Admin - for security)
-5. Click "Save"
-6. **Copy the secret key** (you won't be able to see it again!)
-
-### Step 4: Set Environment Variable in Netlify
+### Step 3: Set Environment Variable in Netlify
 
 1. Go to your Netlify site dashboard
 2. Navigate to **Site settings** → **Environment variables**
 3. Add a new variable:
-   - **Key**: `FAUNA_SECRET` (or `FAUNADB_SECRET_KEY`)
-   - **Value**: Your FaunaDB secret key (from Step 3)
+   - **Key**: `DATABASE_URL` (or `NEON_DATABASE_URL`)
+   - **Value**: Your Neon connection string (from Step 2)
 4. Click **Save**
 
-### Step 5: Redeploy
+### Step 4: Redeploy
 
 After setting the environment variable, trigger a new deployment:
 - Go to **Deploys** tab
 - Click **Trigger deploy** → **Clear cache and deploy site**
 
-### Local Development with FaunaDB
+The database table will be created automatically on first use!
+
+### Local Development with Neon
 
 For local testing, create a `.env` file in the project root:
 
 ```
-FAUNA_SECRET=your_fauna_secret_key_here
+DATABASE_URL=postgresql://user:password@host/database
 ```
 
 **Note**: Never commit your `.env` file to Git! It's already in `.gitignore`.
@@ -169,11 +159,12 @@ FAUNA_SECRET=your_fauna_secret_key_here
 
 ### Game State Storage
 
-The game uses **FaunaDB** (Netlify's recommended database) for persistent storage, which allows:
+The game uses **Neon** (serverless Postgres) for persistent storage, which allows:
 - Multiple players to connect from different devices
 - Game state to persist across server restarts
 - Games to work across different Netlify Function instances
-- Fast, serverless-friendly database with generous free tier
+- Fast, serverless-friendly PostgreSQL database with generous free tier
+- Automatic schema creation on first use
 
 ### Multiplayer Synchronization
 
